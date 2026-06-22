@@ -1,0 +1,151 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/akira02/Chiaki-KeyKey-Lexicon/schemas/lexicon-manifest.schema.json",
+  "title": "Chiaki KeyKey Lexicon Manifest",
+  "type": "object",
+  "required": [
+    "schema",
+    "version",
+    "generated_at",
+    "minimum_app_version",
+    "database_schema_version",
+    "sources",
+    "artifacts"
+  ],
+  "properties": {
+    "schema": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "minimum_app_version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "database_schema_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/source"
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/artifact"
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "source": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "url",
+        "format",
+        "license",
+        "attribution",
+        "sha256",
+        "enabled",
+        "priority"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "url": {
+          "type": "string",
+          "minLength": 1
+        },
+        "format": {
+          "type": "string",
+          "enum": ["tsv", "csv", "json", "text", "sqlite"]
+        },
+        "license": {
+          "type": "string",
+          "minLength": 1
+        },
+        "attribution": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "minLength": 3
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "priority": {
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false
+    },
+    "artifact": {
+      "type": "object",
+      "required": [
+        "id",
+        "kind",
+        "url",
+        "filename",
+        "sha256",
+        "size",
+        "database_schema_version",
+        "language_model_version"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$"
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["keykey-source-db", "metadata", "checksum"]
+        },
+        "url": {
+          "type": "string",
+          "minLength": 1
+        },
+        "filename": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "minLength": 3
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "database_schema_version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "language_model_version": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

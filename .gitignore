@@ -1,0 +1,19 @@
+.DS_Store
+
+# Local downloads and generated outputs.
+sources/**/raw/*
+!sources/**/raw/.gitkeep
+Build/
+tmp/
+
+# Release assets should be uploaded to GitHub Releases, not committed by default.
+releases/**/*.db
+releases/**/*.sqlite
+releases/**/*.sqlite3
+releases/**/*.db-shm
+releases/**/*.db-wal
+
+# Keep directory placeholders.
+!releases/.gitkeep
+!sources/.gitkeep
+!normalized/.gitkeep

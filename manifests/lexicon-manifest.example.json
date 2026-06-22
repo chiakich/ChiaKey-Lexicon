@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "version": "2026.06.dev",
+  "generated_at": "2026-06-22T00:00:00Z",
+  "minimum_app_version": "0.1.0",
+  "database_schema_version": 1,
+  "sources": [
+    {
+      "id": "chiaki-modern-phrases",
+      "name": "Chiaki Modern Phrases Seed",
+      "url": "https://github.com/akira02/Chiaki-KeyKey/blob/main/YahooKeyKey-Source-1.1.2528/Distributions/Takao/DataSource/Modern/ChiakiModernPhrases.txt",
+      "format": "tsv",
+      "license": "TBD",
+      "attribution": "Chiaki KeyKey project seed data",
+      "sha256": "TBD",
+      "enabled": true,
+      "priority": 100
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "smart-mandarin-db",
+      "kind": "keykey-source-db",
+      "url": "https://github.com/akira02/Chiaki-KeyKey-Lexicon/releases/download/2026.06/KeyKeySource-2026.06.db",
+      "filename": "KeyKeySource-2026.06.db",
+      "sha256": "TBD",
+      "size": 0,
+      "database_schema_version": 1,
+      "language_model_version": "chiaki-modern-2026.06"
+    }
+  ]
+}
