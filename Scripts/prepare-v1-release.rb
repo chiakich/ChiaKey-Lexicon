@@ -6,12 +6,15 @@ require "fileutils"
 require "json"
 require "open3"
 require "pathname"
+require "set"
 require "time"
 
 ROOT = File.expand_path("..", __dir__)
-SOURCE_ID = "keykey-boneyard-bootstrap"
-SOURCE_NAME = "KeyKey Boneyard bootstrap data"
-RELEASE_VERSION = ENV.fetch("LEXICON_VERSION", "2026.06.1")
+BONEYARD_SOURCE_ID = "keykey-boneyard-bootstrap"
+BONEYARD_SOURCE_NAME = "KeyKey Boneyard bootstrap data"
+OVERLAY_SOURCE_ID = "chiaki-modern-overlay"
+OVERLAY_SOURCE_NAME = "Chiaki modern overlay phrases"
+RELEASE_VERSION = ENV.fetch("LEXICON_VERSION", "2026.06.2")
 LANGUAGE_MODEL_VERSION = "chiaki-modern-#{RELEASE_VERSION}"
 MINIMUM_APP_VERSION = ENV.fetch("MINIMUM_APP_VERSION", "0.1.0")
 DATABASE_SCHEMA_VERSION = 1
@@ -35,8 +38,10 @@ BONEYARD_DB = File.join(
 
 DIST_DIR = File.join(ROOT, "dist", RELEASE_VERSION)
 NORMALIZED_PATH = File.join(ROOT, "normalized", "smart-mandarin.tsv")
-SOURCE_DIR = File.join(ROOT, "sources", SOURCE_ID)
-SOURCE_INVENTORY_PATH = File.join(SOURCE_DIR, "source-inventory.sha256")
+BONEYARD_SOURCE_DIR = File.join(ROOT, "sources", BONEYARD_SOURCE_ID)
+OVERLAY_SOURCE_DIR = File.join(ROOT, "sources", OVERLAY_SOURCE_ID)
+OVERLAY_PHRASES_PATH = File.join(OVERLAY_SOURCE_DIR, "phrases.tsv")
+SOURCE_INVENTORY_PATH = File.join(BONEYARD_SOURCE_DIR, "source-inventory.sha256")
 MANIFEST_PATH = File.join(ROOT, "manifests", "lexicon-manifest.json")
 DIST_MANIFEST_PATH = File.join(DIST_DIR, "lexicon-manifest.json")
 DB_FILENAME = "KeyKeySource-#{RELEASE_VERSION}.db"
@@ -85,6 +90,82 @@ def relative_to(path, root)
   Pathname.new(path).relative_path_from(Pathname.new(root)).to_s
 end
 
+OverlayRecord = Struct.new(:phrase, :weight, :tags, :qstring, keyword_init: true)
+
+def parse_overlay(path)
+  return [] unless File.file?(path)
+
+  records = []
+  File.foreach(path, chomp: true).with_index(1) do |line, line_number|
+    next if line.strip.empty? || line.start_with?("#")
+
+    phrase, weight, tags = line.split("\t", 3)
+    if phrase.to_s.empty? || weight.to_s.empty?
+      warn "Invalid overlay row #{path}:#{line_number}"
+      exit 1
+    end
+
+    Float(weight)
+    records << OverlayRecord.new(phrase: phrase, weight: weight, tags: tags.to_s)
+  rescue ArgumentError
+    warn "Invalid overlay weight #{path}:#{line_number}: #{weight.inspect}"
+    exit 1
+  end
+
+  records
+end
+
+def infer_qstring_for_phrase(db_path, phrase)
+  qstrings = []
+
+  phrase.each_char do |char|
+    rows = run_sqlite_json(
+      db_path,
+      "SELECT qstring FROM unigrams WHERE current = #{sql(char)} ORDER BY probability DESC, qstring LIMIT 1;"
+    )
+    return nil if rows.empty?
+
+    qstrings << rows.first.fetch("qstring")
+  end
+
+  qstrings.join
+end
+
+def apply_overlay!(db_path, overlay_path)
+  records = parse_overlay(overlay_path)
+  return { records: [], seen: 0, added: 0, skipped: 0 } if records.empty?
+
+  sql_lines = ["BEGIN;"]
+  added = 0
+  skipped = 0
+
+  records.each do |record|
+    qstring = infer_qstring_for_phrase(db_path, record.phrase)
+    unless qstring
+      skipped += 1
+      next
+    end
+
+    record.qstring = qstring
+    sql_lines << "DELETE FROM unigrams WHERE qstring = #{sql(qstring)} AND current = #{sql(record.phrase)};"
+    sql_lines << "INSERT INTO unigrams VALUES(#{sql(qstring)}, #{sql(record.phrase)}, #{record.weight}, 0.0);"
+    sql_lines << "INSERT INTO 'Mandarin-bpmf-cin' SELECT #{sql(qstring)}, #{sql(record.phrase)} WHERE NOT EXISTS (SELECT 1 FROM 'Mandarin-bpmf-cin' WHERE key = #{sql(qstring)} AND value = #{sql(record.phrase)});"
+    added += 1
+  end
+
+  inventory_path = "sources/#{OVERLAY_SOURCE_ID}/phrases.tsv"
+  inventory_hash = sha256(overlay_path)
+  sql_lines << "DELETE FROM chiaki_db_sources WHERE source = #{sql(inventory_path)};"
+  sql_lines << "INSERT INTO chiaki_db_sources VALUES(#{sql(inventory_path)}, 'overlay', #{sql(inventory_hash)}, #{records.length}, #{added}, #{skipped});"
+  sql_lines << "DELETE FROM chiaki_db_metadata WHERE key IN ('unigram_count', 'candidate_count');"
+  sql_lines << "INSERT INTO chiaki_db_metadata VALUES('unigram_count', (SELECT COUNT(*) FROM unigrams));"
+  sql_lines << "INSERT INTO chiaki_db_metadata VALUES('candidate_count', (SELECT COUNT(*) FROM 'Mandarin-bpmf-cin' WHERE key NOT LIKE '__property_%'));"
+  sql_lines << "COMMIT;"
+
+  run_sqlite(db_path, sql_lines.join("\n"))
+  { records: records.select(&:qstring), seen: records.length, added: added, skipped: skipped }
+end
+
 def write_json(path, data)
   File.write(path, "#{JSON.pretty_generate(data)}\n")
 end
@@ -112,15 +193,21 @@ verify_required_files!([BONEYARD_DB, *source_files])
 
 FileUtils.mkdir_p(DIST_DIR)
 FileUtils.mkdir_p(File.dirname(NORMALIZED_PATH))
-FileUtils.mkdir_p(SOURCE_DIR)
+FileUtils.mkdir_p(BONEYARD_SOURCE_DIR)
+FileUtils.mkdir_p(OVERLAY_SOURCE_DIR)
 
 inventory_lines = source_files.map do |path|
   "#{sha256(path)}  #{relative_to(path, BONEYARD_ROOT)}"
 end
 File.write(SOURCE_INVENTORY_PATH, "#{inventory_lines.join("\n")}\n")
 source_inventory_info = file_info(SOURCE_INVENTORY_PATH)
+overlay_info = file_info(OVERLAY_PHRASES_PATH)
 
 FileUtils.cp(BONEYARD_DB, DB_PATH)
+overlay_result = apply_overlay!(DB_PATH, OVERLAY_PHRASES_PATH)
+overlay_keys = overlay_result.fetch(:records).each_with_object({}) do |record, hash|
+  hash[[record.qstring, record.phrase]] = record
+end
 
 run_sqlite(
   DB_PATH,
@@ -146,13 +233,16 @@ File.open(NORMALIZED_PATH, "w") do |file|
   unigrams.each do |row|
     phrase = row.fetch("phrase")
     next if phrase.include?("\t") || phrase.include?("\n")
+    overlay_record = overlay_keys[[row.fetch("reading"), phrase]]
+    source_id = overlay_record ? OVERLAY_SOURCE_ID : BONEYARD_SOURCE_ID
+    tags = overlay_record ? "unigram,#{overlay_record.tags}" : "unigram,keykey-boneyard"
 
     file.puts [
       row.fetch("reading"),
       phrase,
       row.fetch("weight"),
-      SOURCE_ID,
-      "unigram,keykey-boneyard"
+      source_id,
+      tags
     ].join("\t")
   end
 end
@@ -201,16 +291,30 @@ release_metadata = {
   },
   "sources" => [
     {
-      "id" => SOURCE_ID,
-      "name" => SOURCE_NAME,
+      "id" => BONEYARD_SOURCE_ID,
+      "name" => BONEYARD_SOURCE_NAME,
       "license" => "BSD-3-Clause-style",
       "attribution" => "Yahoo! Inc.; OpenVanilla contributors; KeyKey Boneyard / Chiaki KeyKey maintainers",
       "inventory" => {
-        "path" => "sources/#{SOURCE_ID}/source-inventory.sha256",
+        "path" => "sources/#{BONEYARD_SOURCE_ID}/source-inventory.sha256",
         "sha256" => source_inventory_info.fetch("sha256"),
         "size" => source_inventory_info.fetch("size")
       },
       "stats" => source_rows
+    },
+    {
+      "id" => OVERLAY_SOURCE_ID,
+      "name" => OVERLAY_SOURCE_NAME,
+      "license" => "CC0-1.0",
+      "attribution" => "Chiaki KeyKey Lexicon maintainers",
+      "path" => "sources/#{OVERLAY_SOURCE_ID}/phrases.tsv",
+      "sha256" => overlay_info.fetch("sha256"),
+      "size" => overlay_info.fetch("size"),
+      "stats" => {
+        "seen" => overlay_result.fetch(:seen),
+        "added" => overlay_result.fetch(:added),
+        "skipped" => overlay_result.fetch(:skipped)
+      }
     }
   ]
 }
@@ -232,8 +336,8 @@ manifest = {
   "database_schema_version" => DATABASE_SCHEMA_VERSION,
   "sources" => [
     {
-      "id" => SOURCE_ID,
-      "name" => SOURCE_NAME,
+      "id" => BONEYARD_SOURCE_ID,
+      "name" => BONEYARD_SOURCE_NAME,
       "url" => "https://github.com/vChewing/KeyKey-Boneyard",
       "format" => "sqlite",
       "license" => "BSD-3-Clause-style",
@@ -241,6 +345,17 @@ manifest = {
       "sha256" => source_inventory_info.fetch("sha256"),
       "enabled" => true,
       "priority" => 100
+    },
+    {
+      "id" => OVERLAY_SOURCE_ID,
+      "name" => OVERLAY_SOURCE_NAME,
+      "url" => "https://github.com/akira02/Chiaki-KeyKey-Lexicon/blob/main/sources/chiaki-modern-overlay/phrases.tsv",
+      "format" => "tsv",
+      "license" => "CC0-1.0",
+      "attribution" => "Chiaki KeyKey Lexicon maintainers",
+      "sha256" => overlay_info.fetch("sha256"),
+      "enabled" => true,
+      "priority" => 200
     }
   ],
   "artifacts" => [

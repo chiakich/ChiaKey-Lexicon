@@ -3165,6 +3165,8 @@
 9>T:SWgc}gp==1	中間小謝又清發	-1.35	keykey-boneyard-bootstrap	unigram,keykey-boneyard
 9>TJmOP_	中元普渡	-1.35	keykey-boneyard-bootstrap	unigram,keykey-boneyard
 9>TZ	中肯	-0.5	keykey-boneyard-bootstrap	unigram,keykey-boneyard
+9>Vjm0]_	中文輸入	-0.05	chiaki-modern-overlay	unigram,chiaki-modern-overlay,input-method
+9>Vjm0]_LP	中文輸入法	-0.05	chiaki-modern-overlay	unigram,chiaki-modern-overlay,input-method
 9>W=	中坑	-1.35	keykey-boneyard-bootstrap	unigram,keykey-boneyard
 9>WBQ=	中國風	-0.05	keykey-boneyard-bootstrap	unigram,keykey-boneyard
 9>WBu?ml	中國移動	-1.35	keykey-boneyard-bootstrap	unigram,keykey-boneyard
@@ -9436,8 +9438,11 @@ Nb	筴	-3.0	keykey-boneyard-bootstrap	unigram,keykey-boneyard
 Nb	粣	-3.0	keykey-boneyard-bootstrap	unigram,keykey-boneyard
 Nb	茦	-3.0	keykey-boneyard-bootstrap	unigram,keykey-boneyard
 Nb	蓛	-3.0	keykey-boneyard-bootstrap	unigram,keykey-boneyard
+Nb0_	測試	-0.05	chiaki-modern-overlay	unigram,chiaki-modern-overlay,qa
 Nb0_2@	測試集	-0.85	keykey-boneyard-bootstrap	unigram,keykey-boneyard
 Nb0_BY	測試版	-1.35	keykey-boneyard-bootstrap	unigram,keykey-boneyard
+Nb0_m0]_	測試輸入	-0.05	chiaki-modern-overlay	unigram,chiaki-modern-overlay,qa,input-method
+Nb0_m0]_LP	測試輸入法	-0.05	chiaki-modern-overlay	unigram,chiaki-modern-overlay,qa,input-method
 Nd	派	-3.0	keykey-boneyard-bootstrap	unigram,keykey-boneyard
 Nd	湃	-3.0	keykey-boneyard-bootstrap	unigram,keykey-boneyard
 Nd	蒎	-3.0	keykey-boneyard-bootstrap	unigram,keykey-boneyard
@@ -12778,7 +12783,8 @@ Z_	麆	-3.0	keykey-boneyard-bootstrap	unigram,keykey-boneyard
 Z_A_	註記	-1.35	keykey-boneyard-bootstrap	unigram,keykey-boneyard
 Z_D8	注銷	-0.5	keykey-boneyard-bootstrap	unigram,keykey-boneyard
 Z_LjlJf<:_K0A0	住近湓江地低濕	-1.35	keykey-boneyard-bootstrap	unigram,keykey-boneyard
-Z_Q;m0]_LP	注音輸入法	-0.85	keykey-boneyard-bootstrap	unigram,keykey-boneyard
+Z_Q;m0]_	注音輸入	-0.05	chiaki-modern-overlay	unigram,chiaki-modern-overlay,input-method
+Z_Q;m0]_LP	注音輸入法	-0.05	chiaki-modern-overlay	unigram,chiaki-modern-overlay,input-method
 Z_Vj	注文	-1.35	keykey-boneyard-bootstrap	unigram,keykey-boneyard
 Z_wI	駐顏	-1.35	keykey-boneyard-bootstrap	unigram,keykey-boneyard
 Z_wINX\_	駐顏有術	-1.35	keykey-boneyard-bootstrap	unigram,keykey-boneyard
@@ -17325,6 +17331,9 @@ m0C0	舒茲	-1.35	keykey-boneyard-bootstrap	unigram,keykey-boneyard
 m0O1	紓壓	-1.35	keykey-boneyard-bootstrap	unigram,keykey-boneyard
 m0O1	舒壓	-1.35	keykey-boneyard-bootstrap	unigram,keykey-boneyard
 m0R0	樞機	-1.35	keykey-boneyard-bootstrap	unigram,keykey-boneyard
+m0]_	輸入	-0.05	chiaki-modern-overlay	unigram,chiaki-modern-overlay,input-method
+m0]_LP	輸入法	-0.05	chiaki-modern-overlay	unigram,chiaki-modern-overlay,input-method
+m0]_Nb0_	輸入測試	-0.05	chiaki-modern-overlay	unigram,chiaki-modern-overlay,qa,input-method
 m0qq	輸了	-1.35	keykey-boneyard-bootstrap	unigram,keykey-boneyard
 m0{H	輸球	-1.35	keykey-boneyard-bootstrap	unigram,keykey-boneyard
 m4	乜	-3.0	keykey-boneyard-bootstrap	unigram,keykey-boneyard
@@ -19022,8 +19031,8 @@ rg6_x79>	後壁高中	-1.35	keykey-boneyard-bootstrap	unigram,keykey-boneyard
 rg=>	后綜	-1.35	keykey-boneyard-bootstrap	unigram,keykey-boneyard
 rg=>x79>	后綜高中	-1.35	keykey-boneyard-bootstrap	unigram,keykey-boneyard
 rg>Kg:	後勤官	-1.35	keykey-boneyard-bootstrap	unigram,keykey-boneyard
-rgBZ2_	候選字	-0.5	keykey-boneyard-bootstrap	unigram,keykey-boneyard
-rgBZs?	候選詞	-0.85	keykey-boneyard-bootstrap	unigram,keykey-boneyard
+rgBZ2_	候選字	-0.05	chiaki-modern-overlay	unigram,chiaki-modern-overlay,input-method
+rgBZs?	候選詞	-0.05	chiaki-modern-overlay	unigram,chiaki-modern-overlay,input-method
 rgC:6_	後山埤	-1.35	keykey-boneyard-bootstrap	unigram,keykey-boneyard
 rgCE	後台	-0.5	keykey-boneyard-bootstrap	unigram,keykey-boneyard
 rgL_CiEEiR	後不見來者	-1.35	keykey-boneyard-bootstrap	unigram,keykey-boneyard

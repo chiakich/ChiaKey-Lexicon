@@ -25,7 +25,7 @@ The main app repository should stay focused on the macOS input method runtime, d
 
 ## Current Status
 
-This repository now has a first seed release pipeline for `2026.06.1`.
+This repository now has a first seed release pipeline. The latest seed release is `2026.06.2`.
 
 The first release is intentionally conservative: it packages the known-working KeyKey Boneyard bootstrap database shape, exports a normalized TSV, records source checksums, and writes release-ready artifacts under `dist/`.
 

@@ -40,6 +40,18 @@ These sources are useful references, but they are not included as raw sources in
 
 Some bootstrap files inherited from the open KeyKey Boneyard tree have legacy names such as `Yahoo.txt` or `SinicaCorpusOverrides.txt`. In v1, these are treated as part of the BSD-style Boneyard bootstrap source. The repository does not copy private raw Yahoo search logs, Sinica corpus files, or CEROD binaries.
 
+## Included Starting in 2026.06.2
+
+### chiaki-modern-overlay
+
+- Name: Chiaki modern overlay phrases
+- Local source: `sources/chiaki-modern-overlay/phrases.tsv`
+- License: CC0-1.0
+- Attribution: Chiaki KeyKey Lexicon maintainers
+- Redistribution decision: included for public releases
+
+This source is intentionally small and project-owned. It is used for obvious seed lexicon misses discovered during hands-on testing, such as basic input-method phrases that should not depend on a future large frequency corpus.
+
 ## Reading Format
 
 The v1 normalized TSV uses the current KeyKey / Manjusri internal `qstring` reading representation in the first column. This is the two-byte-per-syllable ordering string produced by the legacy builder's `absolute_order_string` function, not literal Bopomofo text.
