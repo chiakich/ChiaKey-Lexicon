@@ -1,0 +1,52 @@
+{
+  "schema": 1,
+  "version": "2026.06.1",
+  "generated_at": "2026-06-22T07:50:13Z",
+  "minimum_app_version": "0.1.0",
+  "database_schema_version": 1,
+  "sources": [
+    {
+      "id": "keykey-boneyard-bootstrap",
+      "name": "KeyKey Boneyard bootstrap data",
+      "url": "https://github.com/vChewing/KeyKey-Boneyard",
+      "format": "sqlite",
+      "license": "BSD-3-Clause-style",
+      "attribution": "Yahoo! Inc.; OpenVanilla contributors; KeyKey Boneyard / Chiaki KeyKey maintainers",
+      "sha256": "175bec368615dc219e76c8d4941e96054126500dae1d9b4737559f3413a085ab",
+      "enabled": true,
+      "priority": 100
+    }
+  ],
+  "artifacts": [
+    {
+      "id": "smart-mandarin-db",
+      "kind": "keykey-source-db",
+      "url": "https://github.com/akira02/Chiaki-KeyKey-Lexicon/releases/download/2026.06.1/KeyKeySource-2026.06.1.db",
+      "filename": "KeyKeySource-2026.06.1.db",
+      "sha256": "199263aa7a8b97c3677741804cc77e64850499bc8b4ac77fb838f9812a84bf1b",
+      "size": 2514944,
+      "database_schema_version": 1,
+      "language_model_version": "chiaki-modern-2026.06.1"
+    },
+    {
+      "id": "smart-mandarin-metadata",
+      "kind": "metadata",
+      "url": "https://github.com/akira02/Chiaki-KeyKey-Lexicon/releases/download/2026.06.1/KeyKeySource-2026.06.1.json",
+      "filename": "KeyKeySource-2026.06.1.json",
+      "sha256": "7011986c5a2a933f656d12490799888b63490a79abbad245dda867f4ecd2559e",
+      "size": 11496,
+      "database_schema_version": 1,
+      "language_model_version": "chiaki-modern-2026.06.1"
+    },
+    {
+      "id": "smart-mandarin-checksums",
+      "kind": "checksum",
+      "url": "https://github.com/akira02/Chiaki-KeyKey-Lexicon/releases/download/2026.06.1/SHA256SUMS",
+      "filename": "SHA256SUMS",
+      "sha256": "516f32a1c921b009c21331ed5147cc39ec3d956973f4ebbdcc7079839aec25a6",
+      "size": 186,
+      "database_schema_version": 1,
+      "language_model_version": "chiaki-modern-2026.06.1"
+    }
+  ]
+}

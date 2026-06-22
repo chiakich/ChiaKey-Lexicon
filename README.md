@@ -25,9 +25,20 @@ The main app repository should stay focused on the macOS input method runtime, d
 
 ## Current Status
 
-This repository is a scaffold. It does not yet publish a production lexicon.
+This repository now has a first seed release pipeline for `2026.06.1`.
 
-The next implementer should start with [Docs/ImplementationGuide.md](Docs/ImplementationGuide.md).
+The first release is intentionally conservative: it packages the known-working KeyKey Boneyard bootstrap database shape, exports a normalized TSV, records source checksums, and writes release-ready artifacts under `dist/`.
+
+Start with:
+
+- [Docs/ImplementationGuide.md](Docs/ImplementationGuide.md)
+- [Docs/SourceReview.md](Docs/SourceReview.md)
+
+Build the local release package with:
+
+```sh
+Scripts/prepare-v1-release.rb
+```
 
 ## Proposed Layout
 

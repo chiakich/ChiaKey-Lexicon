@@ -14,4 +14,13 @@ Each source must document:
 
 Unknown-license data must not be included in public release artifacts.
 
+## Reviewed v1 Source Licenses
+
+### KeyKey Boneyard bootstrap data
+
+- Source id: `keykey-boneyard-bootstrap`
+- License file: [YahooKeyKey-BSD-3-Clause.txt](YahooKeyKey-BSD-3-Clause.txt)
+- Review notes: [Docs/SourceReview.md](../Docs/SourceReview.md)
+- Release decision: included in `2026.06.1`
+
 Code or scripts added later should declare their own license separately.
