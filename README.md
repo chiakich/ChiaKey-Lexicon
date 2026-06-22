@@ -40,17 +40,17 @@ manifests/
   lexicon-manifest.example.json
 normalized/
   .gitkeep
-releases/
-  .gitkeep
 schemas/
   lexicon-manifest.schema.json
 sources/
   .gitkeep
 ```
 
+Built release artifacts are not tracked in git. Use a local staging directory such as `dist/`, then upload the artifacts to GitHub Releases.
+
 ## Release Shape
 
-A release should publish:
+A GitHub Release should publish:
 
 ```text
 KeyKeySource-YYYY.MM.db

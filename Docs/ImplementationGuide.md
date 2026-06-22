@@ -60,11 +60,6 @@ manifests/
   lexicon-manifest.json
 normalized/
   smart-mandarin.tsv
-releases/
-  YYYY.MM/
-    KeyKeySource-YYYY.MM.db
-    KeyKeySource-YYYY.MM.json
-    SHA256SUMS
 schemas/
   lexicon-manifest.schema.json
 sources/
@@ -75,6 +70,8 @@ sources/
 ```
 
 `raw/` may be omitted or gitignored when raw files are large, generated, or license-sensitive. In that case, document how to fetch and verify them.
+
+Built release artifacts must not be committed to git. Use a local staging directory such as `dist/`, then upload `KeyKeySource` databases, metadata JSON, manifests, and checksum files to GitHub Releases.
 
 ## Phase 2: Manifest Contract
 
@@ -176,7 +173,7 @@ The metadata JSON should include:
 
 The output DB should remain compatible with the existing Manjusri/OVIMMandarin reader until a later schema migration is planned.
 
-## Phase 5: Release Workflow
+## Phase 5: GitHub Release Workflow
 
 A release should be reproducible.
 
@@ -193,7 +190,7 @@ Recommended workflow:
 9. Create a GitHub Release.
 10. Upload DB, metadata, manifest, and checksum files.
 
-Release assets:
+GitHub Release assets:
 
 ```text
 KeyKeySource-YYYY.MM.db
@@ -202,7 +199,7 @@ lexicon-manifest.json
 SHA256SUMS
 ```
 
-Do not rely on mutable branch URLs for production updates. Prefer immutable GitHub Release asset URLs.
+Do not commit these files to the repo. Do not rely on mutable branch URLs for production updates. Prefer immutable GitHub Release asset URLs.
 
 ## Phase 6: Main App Integration
 

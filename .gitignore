@@ -6,14 +6,15 @@ sources/**/raw/*
 Build/
 tmp/
 
-# Release assets should be uploaded to GitHub Releases, not committed by default.
-releases/**/*.db
-releases/**/*.sqlite
-releases/**/*.sqlite3
-releases/**/*.db-shm
-releases/**/*.db-wal
+# Local release staging. Final artifacts should be uploaded to GitHub Releases.
+dist/
+release-artifacts/
+*.db
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
 
 # Keep directory placeholders.
-!releases/.gitkeep
 !sources/.gitkeep
 !normalized/.gitkeep
