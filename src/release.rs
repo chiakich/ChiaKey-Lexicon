@@ -126,10 +126,12 @@ fn write_source_inventories(
     paths: &ReleasePaths,
     libchewing_files: &[crate::types::LibchewingFile],
 ) -> Result<()> {
-    let libchewing_paths = libchewing_files
+    let mut libchewing_paths = libchewing_files
         .iter()
         .map(|entry| entry.path.clone())
         .collect::<Vec<_>>();
+    libchewing_paths.sort();
+    libchewing_paths.dedup();
     write_inventory(
         &paths.libchewing_inventory,
         &paths.libchewing_source_dir,
@@ -159,17 +161,22 @@ fn import_libchewing(
     let max_score = importers::libchewing_max_score(&phrase_paths)?;
 
     for entry in files {
-        let existing_exact_keys = if entry.min_codepoints == 1 {
+        let existing_exact_keys = if entry.skip_existing_exact {
             Some(db::load_existing_exact_keys(conn)?)
         } else {
             None
         };
         let (records, seen, skipped) =
             importers::parse_libchewing_csv(entry, max_score, existing_exact_keys.as_ref())?;
+        let source_path = format!(
+            "{}{}",
+            repo_relative(&cfg.root, &entry.path)?,
+            entry.source_suffix
+        );
         let result = db::apply_records(
             conn,
             records,
-            &repo_relative(&cfg.root, &entry.path)?,
+            &source_path,
             entry.kind,
             &sha256_file(&entry.path)?,
             seen,

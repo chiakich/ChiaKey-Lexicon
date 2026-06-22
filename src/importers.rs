@@ -1,6 +1,6 @@
 use crate::config::{Config, LIBCHEWING_SOURCE_ID, OVERLAY_SOURCE_ID, RIME_ESSAY_SOURCE_ID};
 use crate::phonetics::{phrase_candidate, qstring_for_bpmf_sequence};
-use crate::types::{LibchewingFile, SourceRecord};
+use crate::types::{LibchewingFile, LibchewingWeightMode, SourceRecord};
 use anyhow::{Context, Result};
 use csv::StringRecord;
 use std::collections::{HashMap, HashSet};
@@ -231,10 +231,10 @@ fn parse_libchewing_row(
         return None;
     }
 
-    let weight = if phrase.chars().count() == 1 {
-        -3.2
-    } else {
-        libchewing_weight(score, max_score)
+    let weight = match entry.weight_mode {
+        LibchewingWeightMode::Frequency => libchewing_weight(score, max_score),
+        LibchewingWeightMode::CharacterFrequency => libchewing_character_weight(score, max_score),
+        LibchewingWeightMode::CharacterFallback => -3.2,
     };
     let tags = format!(
         "unigram,{LIBCHEWING_SOURCE_ID},{}",
@@ -255,6 +255,14 @@ fn libchewing_weight(score: i64, max_score: i64) -> f64 {
     }
     let ratio = ((score + 1) as f64).ln() / ((max_score + 1) as f64).ln();
     round6(-0.25 - (2.35 * (1.0 - ratio)))
+}
+
+fn libchewing_character_weight(score: i64, max_score: i64) -> f64 {
+    if score <= 0 {
+        return -3.2;
+    }
+    let ratio = ((score + 1) as f64).ln() / ((max_score + 1) as f64).ln();
+    round6(-0.35 - (2.85 * (1.0 - ratio)))
 }
 
 fn rime_weight(score: i64, max_score: i64) -> f64 {

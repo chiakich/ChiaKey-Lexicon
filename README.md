@@ -25,7 +25,7 @@ The main app repository should stay focused on the macOS input method runtime, d
 
 ## Current Status
 
-This repository now has a seed release pipeline. The latest seed release is `2026.06.4`.
+This repository now has a seed release pipeline. The latest seed release is `2026.06.5`.
 
 The current release packages the known-working KeyKey Boneyard database shape, then layers in libchewing-data as the main Traditional Chinese / Zhuyin lexicon source, Rime essay as a low-priority supplemental phrase source, and a small Chiaki-owned overlay for hands-on input-method fixes.
 

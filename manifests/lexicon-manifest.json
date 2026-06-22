@@ -2,37 +2,37 @@
   "artifacts": [
     {
       "database_schema_version": 1,
-      "filename": "KeyKeySource-2026.06.4.db",
+      "filename": "KeyKeySource-2026.06.5.db",
       "id": "smart-mandarin-db",
       "kind": "keykey-source-db",
-      "language_model_version": "chiaki-modern-2026.06.4",
-      "sha256": "3baee99c52af7e6b64aaf0159d1c154b961f3b9f51ff70afb7ab6198961a76a5",
-      "size": 44515328,
-      "url": "https://github.com/akira02/Chiaki-KeyKey-Lexicon/releases/download/2026.06.4/KeyKeySource-2026.06.4.db"
+      "language_model_version": "chiaki-modern-2026.06.5",
+      "sha256": "3e30204d3ac3e8bed80db8908de61d3194f11757697753ce243df0a3fbdb1211",
+      "size": 44777472,
+      "url": "https://github.com/akira02/Chiaki-KeyKey-Lexicon/releases/download/2026.06.5/KeyKeySource-2026.06.5.db"
     },
     {
       "database_schema_version": 1,
-      "filename": "KeyKeySource-2026.06.4.json",
+      "filename": "KeyKeySource-2026.06.5.json",
       "id": "smart-mandarin-metadata",
       "kind": "metadata",
-      "language_model_version": "chiaki-modern-2026.06.4",
-      "sha256": "a8dfbedd66ed11e3b6ac0223289bf04a3299c001f97040680d1c895bbd4a711a",
-      "size": 14153,
-      "url": "https://github.com/akira02/Chiaki-KeyKey-Lexicon/releases/download/2026.06.4/KeyKeySource-2026.06.4.json"
+      "language_model_version": "chiaki-modern-2026.06.5",
+      "sha256": "9b5bf54c3c146bc0db220f41545dac882cb117e8cab8d5690f9161f381bc71bb",
+      "size": 14477,
+      "url": "https://github.com/akira02/Chiaki-KeyKey-Lexicon/releases/download/2026.06.5/KeyKeySource-2026.06.5.json"
     },
     {
       "database_schema_version": 1,
       "filename": "SHA256SUMS",
       "id": "smart-mandarin-checksums",
       "kind": "checksum",
-      "language_model_version": "chiaki-modern-2026.06.4",
-      "sha256": "7c59c92f69ac88461b859fd8e809464006817ed022afead9739c15336587a53a",
+      "language_model_version": "chiaki-modern-2026.06.5",
+      "sha256": "a65c240368adf446121023c99b248c24bbf3597009bd4e5b6acfec480282c1d4",
       "size": 186,
-      "url": "https://github.com/akira02/Chiaki-KeyKey-Lexicon/releases/download/2026.06.4/SHA256SUMS"
+      "url": "https://github.com/akira02/Chiaki-KeyKey-Lexicon/releases/download/2026.06.5/SHA256SUMS"
     }
   ],
   "database_schema_version": 1,
-  "generated_at": "2026-06-22T09:36:05Z",
+  "generated_at": "2026-06-22T09:58:18Z",
   "minimum_app_version": "0.1.0",
   "schema": 1,
   "sources": [
@@ -81,5 +81,5 @@
       "url": "https://github.com/akira02/Chiaki-KeyKey-Lexicon/blob/main/sources/chiaki-modern-overlay/phrases.tsv"
     }
   ],
-  "version": "2026.06.4"
+  "version": "2026.06.5"
 }

@@ -11,9 +11,19 @@ pub struct SourceDownload {
 pub struct LibchewingFile {
     pub path: PathBuf,
     pub kind: &'static str,
+    pub source_suffix: &'static str,
     pub min_codepoints: usize,
     pub max_codepoints: usize,
     pub replace_phrases: bool,
+    pub skip_existing_exact: bool,
+    pub weight_mode: LibchewingWeightMode,
+}
+
+#[derive(Clone, Copy)]
+pub enum LibchewingWeightMode {
+    Frequency,
+    CharacterFrequency,
+    CharacterFallback,
 }
 
 #[derive(Clone)]

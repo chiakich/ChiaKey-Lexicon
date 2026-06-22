@@ -1,4 +1,4 @@
-use crate::types::{LibchewingFile, SourceDownload};
+use crate::types::{LibchewingFile, LibchewingWeightMode, SourceDownload};
 use anyhow::{Context, Result};
 use chrono::SecondsFormat;
 use std::env;
@@ -66,7 +66,7 @@ pub struct Config {
 
 pub fn load() -> Result<Config> {
     let root = env::current_dir().context("read current directory")?;
-    let release_version = env_or("LEXICON_VERSION", "2026.06.4");
+    let release_version = env_or("LEXICON_VERSION", "2026.06.5");
     let language_model_version = format!("chiaki-modern-{release_version}");
     let minimum_app_version = env_or("MINIMUM_APP_VERSION", "0.1.0");
     let generated_at = env::var("GENERATED_AT")
@@ -131,23 +131,42 @@ pub fn libchewing_files(cfg: &Config) -> Vec<LibchewingFile> {
         LibchewingFile {
             path: source_dir.join("raw/dict/chewing/tsi.csv"),
             kind: "libchewing-phrase",
+            source_suffix: "",
             min_codepoints: 2,
             max_codepoints: cfg.max_phrase_codepoints,
             replace_phrases: true,
+            skip_existing_exact: false,
+            weight_mode: LibchewingWeightMode::Frequency,
         },
         LibchewingFile {
             path: source_dir.join("raw/dict/chewing/alt.csv"),
             kind: "libchewing-alternate",
+            source_suffix: "",
             min_codepoints: 2,
             max_codepoints: cfg.max_phrase_codepoints,
             replace_phrases: true,
+            skip_existing_exact: false,
+            weight_mode: LibchewingWeightMode::Frequency,
         },
         LibchewingFile {
             path: source_dir.join("raw/dict/chewing/word.csv"),
             kind: "libchewing-character",
+            source_suffix: "",
             min_codepoints: 1,
             max_codepoints: 1,
             replace_phrases: false,
+            skip_existing_exact: true,
+            weight_mode: LibchewingWeightMode::CharacterFallback,
+        },
+        LibchewingFile {
+            path: source_dir.join("raw/dict/chewing/tsi.csv"),
+            kind: "libchewing-character-frequency",
+            source_suffix: "#characters",
+            min_codepoints: 1,
+            max_codepoints: 1,
+            replace_phrases: false,
+            skip_existing_exact: false,
+            weight_mode: LibchewingWeightMode::CharacterFrequency,
         },
     ]
 }

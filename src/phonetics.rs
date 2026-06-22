@@ -253,4 +253,9 @@ mod tests {
     fn accepts_comma_separated_bopomofo() {
         assert_eq!(qstring_for_bpmf_sequence("ㄕㄨ,ㄖㄨˋ").unwrap().0, "m0]_");
     }
+
+    #[test]
+    fn converts_wo3_to_expected_keykey_qstring() {
+        assert_eq!(qstring_for_bpmf_sequence("ㄨㄛˇ").unwrap().0, "}Q");
+    }
 }

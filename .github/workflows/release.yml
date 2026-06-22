@@ -120,6 +120,18 @@ jobs:
             fi
           done
 
+          wo3_top="$(sqlite3 "$db_name" "select current from unigrams where qstring = '}Q' order by probability desc, current limit 1;")"
+          if [[ "$wo3_top" != "我" ]]; then
+            echo "Unexpected top candidate for ㄨㄛˇ: ${wo3_top}" >&2
+            exit 1
+          fi
+
+          wo3_count="$(sqlite3 "$db_name" "select count(*) from unigrams where qstring = '}Q';")"
+          if [[ "$wo3_count" -lt 4 ]]; then
+            echo "Unexpectedly few ㄨㄛˇ candidates: ${wo3_count}" >&2
+            exit 1
+          fi
+
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
