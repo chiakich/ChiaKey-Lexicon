@@ -52,19 +52,75 @@ Some bootstrap files inherited from the open KeyKey Boneyard tree have legacy na
 
 This source is intentionally small and project-owned. It is used for obvious seed lexicon misses discovered during hands-on testing, such as basic input-method phrases that should not depend on a future large frequency corpus.
 
+## Included Starting in 2026.06.3
+
+### libchewing-data
+
+- Name: libchewing-data Traditional Chinese Zhuyin dictionary
+- Local source: `sources/libchewing-data/raw/`
+- Upstream release: <https://github.com/chewing/libchewing-data/releases/tag/v2026.3.22>
+- Current upstream home: <https://codeberg.org/chewing/libchewing-data>
+- License: LGPL-2.1-or-later
+- Attribution: libchewing Core Team
+- Redistribution decision: included for public releases starting in `2026.06.3`
+
+The release builder imports these pinned files:
+
+- `dict/chewing/tsi.csv`
+- `dict/chewing/alt.csv`
+- `dict/chewing/word.csv`
+
+`tsi.csv` and `alt.csv` are imported as the main modern phrase layer because they include explicit Zhuyin readings. For phrases present in libchewing-data, the builder replaces older inferred phrase readings from the bootstrap database with libchewing's explicit readings. `word.csv` is used only to add missing single-character readings; it does not demote existing bootstrap primary character readings.
+
+The raw files are fetched by:
+
+```text
+Scripts/fetch-modern-sources.rb
+```
+
+The generated source inventory is stored at:
+
+```text
+sources/libchewing-data/source-inventory.sha256
+```
+
+### rime-essay
+
+- Name: Rime essay shared vocabulary and language model
+- Local source: `sources/rime-essay/raw/essay.txt`
+- Upstream commit: <https://github.com/rime/rime-essay/tree/48c7538f0b760fcc8c9d6bf08711f82cfbd2e9ed>
+- License: LGPL-3.0
+- Attribution: Rime essay contributors
+- Redistribution decision: included for public releases starting in `2026.06.3`
+
+Rime essay is imported as a low-priority supplemental phrase layer. It has useful modern vocabulary and scores, but it does not include Zhuyin readings. The release builder therefore imports only entries that satisfy all of these constraints:
+
+1. The phrase is not already present after the libchewing-data import.
+2. The phrase length is between 2 and 7 Unicode codepoints.
+3. The Rime score is at least `40`.
+4. Every character has a primary single-character reading in the current database.
+
+This avoids replacing libchewing's explicit Zhuyin data with inferred readings, while still adding modern terms such as social, news, and technology vocabulary when the reading can be inferred safely enough for a supplemental layer.
+
+The generated source inventory is stored at:
+
+```text
+sources/rime-essay/source-inventory.sha256
+```
+
 ## Reading Format
 
 The v1 normalized TSV uses the current KeyKey / Manjusri internal `qstring` reading representation in the first column. This is the two-byte-per-syllable ordering string produced by the legacy builder's `absolute_order_string` function, not literal Bopomofo text.
 
 This keeps the first release directly compatible with the current database reader. A later source-normalization pass can add a human-readable Bopomofo column if the builder contract changes.
 
-## v1 Risk Notes
+## Current Risk Notes
 
-This release is intentionally a seed lexicon. It keeps the known-working KeyKey data shape and avoids adding external frequency corpora before the user has tried the input method in real typing.
+This release is still a seed lexicon, but it now includes a substantially larger modern Traditional Chinese / Zhuyin layer.
 
 Expected follow-up work:
 
 1. Add Taiwan-specific modern phrases based on actual misses.
-2. Add a clear frequency normalization strategy before importing larger public corpora.
-3. Review CC BY-SA and research-only sources before any future public release includes them.
-4. Split source attribution more granularly if the source mix grows beyond the bootstrap set.
+2. Tune the cross-source weight mapping after real typing tests.
+3. Review LGPL redistribution requirements whenever release packaging changes.
+4. Review CC BY-SA and research-only sources before any future public release includes them.

@@ -30,4 +30,18 @@ Unknown-license data must not be included in public release artifacts.
 - Review notes: [Docs/SourceReview.md](../Docs/SourceReview.md)
 - Release decision: included starting in `2026.06.2`
 
+### libchewing-data
+
+- Source id: `libchewing-data`
+- License file: [libchewing-data-LGPL-2.1-or-later.txt](libchewing-data-LGPL-2.1-or-later.txt)
+- Review notes: [Docs/SourceReview.md](../Docs/SourceReview.md)
+- Release decision: included starting in `2026.06.3`
+
+### Rime essay
+
+- Source id: `rime-essay`
+- License file: [rime-essay-LGPL-3.0.txt](rime-essay-LGPL-3.0.txt)
+- Review notes: [Docs/SourceReview.md](../Docs/SourceReview.md)
+- Release decision: included starting in `2026.06.3`
+
 Code or scripts added later should declare their own license separately.

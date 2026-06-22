@@ -25,16 +25,22 @@ The main app repository should stay focused on the macOS input method runtime, d
 
 ## Current Status
 
-This repository now has a first seed release pipeline. The latest seed release is `2026.06.2`.
+This repository now has a first seed release pipeline. The latest seed release is `2026.06.3`.
 
-The first release is intentionally conservative: it packages the known-working KeyKey Boneyard bootstrap database shape, exports a normalized TSV, records source checksums, and writes release-ready artifacts under `dist/`.
+The current release packages the known-working KeyKey Boneyard database shape, then layers in libchewing-data as the main Traditional Chinese / Zhuyin lexicon source, Rime essay as a low-priority supplemental phrase source, and a small Chiaki-owned overlay for hands-on input-method fixes.
 
 Start with:
 
 - [Docs/ImplementationGuide.md](Docs/ImplementationGuide.md)
 - [Docs/SourceReview.md](Docs/SourceReview.md)
 
-Build the local release package with:
+Fetch pinned external source files with:
+
+```sh
+Scripts/fetch-modern-sources.rb
+```
+
+Then build the local release package with:
 
 ```sh
 Scripts/prepare-v1-release.rb

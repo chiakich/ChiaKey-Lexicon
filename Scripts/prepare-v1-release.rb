@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
+require "csv"
 require "digest"
 require "fileutils"
 require "json"
@@ -10,11 +11,17 @@ require "set"
 require "time"
 
 ROOT = File.expand_path("..", __dir__)
+
 BONEYARD_SOURCE_ID = "keykey-boneyard-bootstrap"
 BONEYARD_SOURCE_NAME = "KeyKey Boneyard bootstrap data"
+LIBCHEWING_SOURCE_ID = "libchewing-data"
+LIBCHEWING_SOURCE_NAME = "libchewing-data Traditional Chinese Zhuyin dictionary"
+RIME_ESSAY_SOURCE_ID = "rime-essay"
+RIME_ESSAY_SOURCE_NAME = "Rime essay shared vocabulary and language model"
 OVERLAY_SOURCE_ID = "chiaki-modern-overlay"
 OVERLAY_SOURCE_NAME = "Chiaki modern overlay phrases"
-RELEASE_VERSION = ENV.fetch("LEXICON_VERSION", "2026.06.2")
+
+RELEASE_VERSION = ENV.fetch("LEXICON_VERSION", "2026.06.3")
 LANGUAGE_MODEL_VERSION = "chiaki-modern-#{RELEASE_VERSION}"
 MINIMUM_APP_VERSION = ENV.fetch("MINIMUM_APP_VERSION", "0.1.0")
 DATABASE_SCHEMA_VERSION = 1
@@ -23,6 +30,9 @@ RELEASE_BASE_URL = ENV.fetch(
   "RELEASE_BASE_URL",
   "https://github.com/akira02/Chiaki-KeyKey-Lexicon/releases/download/#{RELEASE_VERSION}"
 )
+
+MAX_PHRASE_CODEPOINTS = Integer(ENV.fetch("MAX_PHRASE_CODEPOINTS", "7"))
+RIME_ESSAY_MIN_SCORE = Integer(ENV.fetch("RIME_ESSAY_MIN_SCORE", "40"))
 
 BONEYARD_ROOT = File.expand_path(
   ENV.fetch("KEYKEY_BONEYARD_ROOT", File.join(ROOT, "..", "KeyKey-Boneyard"))
@@ -39,9 +49,13 @@ BONEYARD_DB = File.join(
 DIST_DIR = File.join(ROOT, "dist", RELEASE_VERSION)
 NORMALIZED_PATH = File.join(ROOT, "normalized", "smart-mandarin.tsv")
 BONEYARD_SOURCE_DIR = File.join(ROOT, "sources", BONEYARD_SOURCE_ID)
+LIBCHEWING_SOURCE_DIR = File.join(ROOT, "sources", LIBCHEWING_SOURCE_ID)
+RIME_ESSAY_SOURCE_DIR = File.join(ROOT, "sources", RIME_ESSAY_SOURCE_ID)
 OVERLAY_SOURCE_DIR = File.join(ROOT, "sources", OVERLAY_SOURCE_ID)
 OVERLAY_PHRASES_PATH = File.join(OVERLAY_SOURCE_DIR, "phrases.tsv")
-SOURCE_INVENTORY_PATH = File.join(BONEYARD_SOURCE_DIR, "source-inventory.sha256")
+BONEYARD_SOURCE_INVENTORY_PATH = File.join(BONEYARD_SOURCE_DIR, "source-inventory.sha256")
+LIBCHEWING_SOURCE_INVENTORY_PATH = File.join(LIBCHEWING_SOURCE_DIR, "source-inventory.sha256")
+RIME_ESSAY_SOURCE_INVENTORY_PATH = File.join(RIME_ESSAY_SOURCE_DIR, "source-inventory.sha256")
 MANIFEST_PATH = File.join(ROOT, "manifests", "lexicon-manifest.json")
 DIST_MANIFEST_PATH = File.join(DIST_DIR, "lexicon-manifest.json")
 DB_FILENAME = "KeyKeySource-#{RELEASE_VERSION}.db"
@@ -50,6 +64,51 @@ CHECKSUM_FILENAME = "SHA256SUMS"
 DB_PATH = File.join(DIST_DIR, DB_FILENAME)
 METADATA_PATH = File.join(DIST_DIR, METADATA_FILENAME)
 CHECKSUM_PATH = File.join(DIST_DIR, CHECKSUM_FILENAME)
+
+LIBCHEWING_RAW_FILES = [
+  {
+    path: File.join(LIBCHEWING_SOURCE_DIR, "raw", "dict", "chewing", "tsi.csv"),
+    kind: "libchewing-phrase",
+    min_codepoints: 2,
+    max_codepoints: MAX_PHRASE_CODEPOINTS,
+    replace_phrases: true
+  },
+  {
+    path: File.join(LIBCHEWING_SOURCE_DIR, "raw", "dict", "chewing", "alt.csv"),
+    kind: "libchewing-alternate",
+    min_codepoints: 2,
+    max_codepoints: MAX_PHRASE_CODEPOINTS,
+    replace_phrases: true
+  },
+  {
+    path: File.join(LIBCHEWING_SOURCE_DIR, "raw", "dict", "chewing", "word.csv"),
+    kind: "libchewing-character",
+    min_codepoints: 1,
+    max_codepoints: 1,
+    replace_phrases: false
+  }
+].freeze
+
+RIME_ESSAY_RAW_PATH = File.join(RIME_ESSAY_SOURCE_DIR, "raw", "essay.txt")
+
+COMPONENTS = {
+  "ㄅ" => 0x0001, "ㄆ" => 0x0002, "ㄇ" => 0x0003, "ㄈ" => 0x0004,
+  "ㄉ" => 0x0005, "ㄊ" => 0x0006, "ㄋ" => 0x0007, "ㄌ" => 0x0008,
+  "ㄍ" => 0x0009, "ㄎ" => 0x000a, "ㄏ" => 0x000b, "ㄐ" => 0x000c,
+  "ㄑ" => 0x000d, "ㄒ" => 0x000e, "ㄓ" => 0x000f, "ㄔ" => 0x0010,
+  "ㄕ" => 0x0011, "ㄖ" => 0x0012, "ㄗ" => 0x0013, "ㄘ" => 0x0014,
+  "ㄙ" => 0x0015, "ㄧ" => 0x0020, "ㄨ" => 0x0040, "ㄩ" => 0x0060,
+  "ㄚ" => 0x0080, "ㄛ" => 0x0100, "ㄜ" => 0x0180, "ㄝ" => 0x0200,
+  "ㄞ" => 0x0280, "ㄟ" => 0x0300, "ㄠ" => 0x0380, "ㄡ" => 0x0400,
+  "ㄢ" => 0x0480, "ㄣ" => 0x0500, "ㄤ" => 0x0580, "ㄥ" => 0x0600,
+  "ㄦ" => 0x0680, "ˊ" => 0x0800, "ˇ" => 0x1000, "ˋ" => 0x1800,
+  "˙" => 0x2000
+}.freeze
+
+BPMF_COMPONENTS = COMPONENTS.keys.freeze
+
+SourceRecord = Struct.new(:qstring, :phrase, :weight, :source_id, :source_path, :kind, :tags, keyword_init: true)
+ImportResult = Struct.new(:source_path, :kind, :sha256, :seen, :added, :skipped, :records, keyword_init: true)
 
 def sql(value)
   "'#{value.to_s.gsub("'", "''")}'"
@@ -90,84 +149,55 @@ def relative_to(path, root)
   Pathname.new(path).relative_path_from(Pathname.new(root)).to_s
 end
 
-OverlayRecord = Struct.new(:phrase, :weight, :tags, :qstring, keyword_init: true)
-
-def parse_overlay(path)
-  return [] unless File.file?(path)
-
-  records = []
-  File.foreach(path, chomp: true).with_index(1) do |line, line_number|
-    next if line.strip.empty? || line.start_with?("#")
-
-    phrase, weight, tags = line.split("\t", 3)
-    if phrase.to_s.empty? || weight.to_s.empty?
-      warn "Invalid overlay row #{path}:#{line_number}"
-      exit 1
-    end
-
-    Float(weight)
-    records << OverlayRecord.new(phrase: phrase, weight: weight, tags: tags.to_s)
-  rescue ArgumentError
-    warn "Invalid overlay weight #{path}:#{line_number}: #{weight.inspect}"
-    exit 1
-  end
-
-  records
+def repo_relative(path)
+  relative_to(path, ROOT)
 end
 
-def infer_qstring_for_phrase(db_path, phrase)
-  qstrings = []
-
-  phrase.each_char do |char|
-    rows = run_sqlite_json(
-      db_path,
-      "SELECT qstring FROM unigrams WHERE current = #{sql(char)} ORDER BY probability DESC, qstring LIMIT 1;"
-    )
-    return nil if rows.empty?
-
-    qstrings << rows.first.fetch("qstring")
-  end
-
-  qstrings.join
+def phrase_codepoints(phrase)
+  phrase.each_char.count
 end
 
-def apply_overlay!(db_path, overlay_path)
-  records = parse_overlay(overlay_path)
-  return { records: [], seen: 0, added: 0, skipped: 0 } if records.empty?
+def absolute_order_string(components)
+  syllable = 0
+  components.each { |component| syllable |= COMPONENTS.fetch(component) }
+  order = (syllable & 0x001f) +
+          (((syllable & 0x0060) >> 5) * 22) +
+          (((syllable & 0x0780) >> 7) * 22 * 4) +
+          (((syllable & 0x3800) >> 11) * 22 * 4 * 14)
 
-  sql_lines = ["BEGIN;"]
-  added = 0
-  skipped = 0
-
-  records.each do |record|
-    qstring = infer_qstring_for_phrase(db_path, record.phrase)
-    unless qstring
-      skipped += 1
-      next
-    end
-
-    record.qstring = qstring
-    sql_lines << "DELETE FROM unigrams WHERE qstring = #{sql(qstring)} AND current = #{sql(record.phrase)};"
-    sql_lines << "INSERT INTO unigrams VALUES(#{sql(qstring)}, #{sql(record.phrase)}, #{record.weight}, 0.0);"
-    sql_lines << "INSERT INTO 'Mandarin-bpmf-cin' SELECT #{sql(qstring)}, #{sql(record.phrase)} WHERE NOT EXISTS (SELECT 1 FROM 'Mandarin-bpmf-cin' WHERE key = #{sql(qstring)} AND value = #{sql(record.phrase)});"
-    added += 1
-  end
-
-  inventory_path = "sources/#{OVERLAY_SOURCE_ID}/phrases.tsv"
-  inventory_hash = sha256(overlay_path)
-  sql_lines << "DELETE FROM chiaki_db_sources WHERE source = #{sql(inventory_path)};"
-  sql_lines << "INSERT INTO chiaki_db_sources VALUES(#{sql(inventory_path)}, 'overlay', #{sql(inventory_hash)}, #{records.length}, #{added}, #{skipped});"
-  sql_lines << "DELETE FROM chiaki_db_metadata WHERE key IN ('unigram_count', 'candidate_count');"
-  sql_lines << "INSERT INTO chiaki_db_metadata VALUES('unigram_count', (SELECT COUNT(*) FROM unigrams));"
-  sql_lines << "INSERT INTO chiaki_db_metadata VALUES('candidate_count', (SELECT COUNT(*) FROM 'Mandarin-bpmf-cin' WHERE key NOT LIKE '__property_%'));"
-  sql_lines << "COMMIT;"
-
-  run_sqlite(db_path, sql_lines.join("\n"))
-  { records: records.select(&:qstring), seen: records.length, added: added, skipped: skipped }
+  (48 + (order % 79)).chr + (48 + (order / 79)).chr
 end
 
-def write_json(path, data)
-  File.write(path, "#{JSON.pretty_generate(data)}\n")
+def qstring_for_bpmf_syllable(syllable)
+  components = syllable.each_char.select { |char| COMPONENTS.key?(char) }
+  return nil if components.empty?
+
+  absolute_order_string(components)
+rescue KeyError
+  nil
+end
+
+def qstring_for_bpmf_sequence(sequence)
+  syllables = sequence.to_s.split(/[,\s]+/).reject(&:empty?)
+  return nil if syllables.empty?
+
+  qstrings = syllables.map { |syllable| qstring_for_bpmf_syllable(syllable) }
+  return nil if qstrings.any?(&:nil?)
+
+  [qstrings.join, syllables.length]
+end
+
+def bopomofo_candidate?(text)
+  text.each_char.any? { |char| BPMF_COMPONENTS.include?(char) }
+end
+
+def phrase_candidate?(text, min_codepoints: 1, max_codepoints: MAX_PHRASE_CODEPOINTS)
+  return false if text.empty? || text.include?("\t") || text.include?("\n")
+  return false if bopomofo_candidate?(text)
+  return false if text =~ %r{https?://}
+
+  length = phrase_codepoints(text)
+  length >= min_codepoints && length <= max_codepoints
 end
 
 def source_files
@@ -186,28 +216,399 @@ def verify_required_files!(paths)
 
   warn "Missing required file(s):"
   missing.each { |path| warn "  #{path}" }
+  if missing.any? { |path| path.include?("/sources/#{LIBCHEWING_SOURCE_ID}/raw/") || path.include?("/sources/#{RIME_ESSAY_SOURCE_ID}/raw/") }
+    warn ""
+    warn "Run Scripts/fetch-modern-sources.rb to download pinned modern lexicon sources."
+  end
   exit 1
 end
 
-verify_required_files!([BONEYARD_DB, *source_files])
+def write_inventory(path, root, files, sort: false)
+  source_files = sort ? files.sort_by { |source_file| relative_to(source_file, root) } : files
+  lines = source_files.map do |source_file|
+    "#{sha256(source_file)}  #{relative_to(source_file, root)}"
+  end
+  File.write(path, "#{lines.join("\n")}\n")
+end
+
+def libchewing_max_score(paths)
+  max_score = 1
+
+  paths.each do |path|
+    File.foreach(path, chomp: true) do |line|
+      next if line.strip.empty? || line.start_with?("#")
+
+      row = CSV.parse_line(line)
+      next unless row && row.length >= 2
+
+      score = Integer(row[1], exception: false)
+      max_score = score if score && score > max_score
+    end
+  end
+
+  max_score
+end
+
+def libchewing_weight(score, max_score)
+  return -2.8 if score <= 0
+
+  ratio = Math.log(score + 1) / Math.log(max_score + 1)
+  (-0.25 - (2.35 * (1.0 - ratio))).round(6)
+end
+
+def rime_weight(score, max_score)
+  ratio = Math.log(score + 1) / Math.log(max_score + 1)
+  (-1.35 - (1.85 * (1.0 - ratio))).round(6)
+end
+
+def dedupe_records(records)
+  records.each_with_object({}) do |record, hash|
+    key = [record.qstring, record.phrase]
+    existing = hash[key]
+    hash[key] = record if existing.nil? || record.weight > existing.weight
+  end.values
+end
+
+def parse_libchewing_csv(path, kind:, source_id:, max_score:, min_codepoints:, max_codepoints:, existing_exact_keys: nil)
+  source_path = repo_relative(path)
+  seen = 0
+  skipped = 0
+  records = []
+
+  File.foreach(path, chomp: true) do |line|
+    next if line.strip.empty? || line.start_with?("#")
+
+    seen += 1
+    row = CSV.parse_line(line)
+    unless row && row.length >= 3
+      skipped += 1
+      next
+    end
+
+    phrase = row[0].to_s
+    score = Integer(row[1], exception: false)
+    reading = row[2].to_s
+    qstring_result = qstring_for_bpmf_sequence(reading)
+
+    unless score && qstring_result && phrase_candidate?(phrase, min_codepoints: min_codepoints, max_codepoints: max_codepoints)
+      skipped += 1
+      next
+    end
+
+    qstring, syllable_count = qstring_result
+    unless syllable_count == phrase_codepoints(phrase)
+      skipped += 1
+      next
+    end
+
+    if existing_exact_keys&.include?([qstring, phrase])
+      skipped += 1
+      next
+    end
+
+    length = phrase_codepoints(phrase)
+    weight = length == 1 ? -3.2 : libchewing_weight(score, max_score)
+    tags = ["unigram", LIBCHEWING_SOURCE_ID, kind.delete_prefix("libchewing-")]
+
+    records << SourceRecord.new(
+      qstring: qstring,
+      phrase: phrase,
+      weight: weight,
+      source_id: source_id,
+      source_path: source_path,
+      kind: kind,
+      tags: tags.join(",")
+    )
+  end
+
+  [dedupe_records(records), seen, skipped]
+end
+
+def load_existing_exact_keys(db_path)
+  run_sqlite_json(
+    db_path,
+    "SELECT qstring, current AS phrase FROM unigrams WHERE current <> '';"
+  ).each_with_object(Set.new) do |row, set|
+    set << [row.fetch("qstring"), row.fetch("phrase")]
+  end
+end
+
+def load_existing_phrases(db_path)
+  run_sqlite_json(
+    db_path,
+    "SELECT DISTINCT current AS phrase FROM unigrams WHERE current <> '';"
+  ).each_with_object(Set.new) do |row, set|
+    set << row.fetch("phrase")
+  end
+end
+
+def load_primary_character_readings(db_path)
+  rows = run_sqlite_json(
+    db_path,
+    "SELECT qstring, current AS phrase, probability AS weight FROM unigrams WHERE current <> '' ORDER BY current, probability DESC, qstring;"
+  )
+
+  rows.each_with_object({}) do |row, hash|
+    phrase = row.fetch("phrase")
+    next unless phrase_codepoints(phrase) == 1
+    next if hash.key?(phrase)
+
+    hash[phrase] = row.fetch("qstring")
+  end
+end
+
+def parse_rime_essay(path, char_readings:, existing_phrases:)
+  source_path = repo_relative(path)
+  raw_rows = []
+  seen = 0
+  skipped = 0
+  max_score = 1
+
+  File.foreach(path, chomp: true) do |line|
+    next if line.strip.empty? || line.start_with?("#")
+
+    seen += 1
+    phrase, score_text = line.split("\t", 2)
+    score = Integer(score_text, exception: false)
+    unless score && score >= RIME_ESSAY_MIN_SCORE &&
+           phrase_candidate?(phrase, min_codepoints: 2, max_codepoints: MAX_PHRASE_CODEPOINTS) &&
+           !existing_phrases.include?(phrase)
+      skipped += 1
+      next
+    end
+
+    qstrings = phrase.each_char.map { |char| char_readings[char] }
+    if qstrings.any?(&:nil?)
+      skipped += 1
+      next
+    end
+
+    max_score = score if score > max_score
+    raw_rows << [phrase, score, qstrings.join]
+  end
+
+  records = raw_rows.map do |phrase, score, qstring|
+    SourceRecord.new(
+      qstring: qstring,
+      phrase: phrase,
+      weight: rime_weight(score, max_score),
+      source_id: RIME_ESSAY_SOURCE_ID,
+      source_path: source_path,
+      kind: "rime-supplement",
+      tags: "unigram,#{RIME_ESSAY_SOURCE_ID},supplemental"
+    )
+  end
+
+  [dedupe_records(records), seen, skipped]
+end
+
+def parse_overlay(path)
+  return [[], 0, 0] unless File.file?(path)
+
+  seen = 0
+  skipped = 0
+  records = []
+
+  File.foreach(path, chomp: true).with_index(1) do |line, line_number|
+    next if line.strip.empty? || line.start_with?("#")
+
+    seen += 1
+    phrase, weight, tags = line.split("\t", 3)
+    unless phrase && weight && phrase_candidate?(phrase, min_codepoints: 1, max_codepoints: MAX_PHRASE_CODEPOINTS)
+      skipped += 1
+      next
+    end
+
+    Float(weight)
+    records << SourceRecord.new(
+      phrase: phrase,
+      weight: weight.to_f,
+      source_id: OVERLAY_SOURCE_ID,
+      source_path: repo_relative(path),
+      kind: "overlay",
+      tags: "unigram,#{tags}"
+    )
+  rescue ArgumentError
+    warn "Invalid overlay weight #{path}:#{line_number}: #{weight.inspect}"
+    exit 1
+  end
+
+  [records, seen, skipped]
+end
+
+def infer_overlay_qstrings(records, db_path)
+  char_readings = load_primary_character_readings(db_path)
+  skipped = 0
+  inferred = []
+
+  records.each do |record|
+    qstrings = record.phrase.each_char.map { |char| char_readings[char] }
+    if qstrings.any?(&:nil?)
+      skipped += 1
+      next
+    end
+
+    record.qstring = qstrings.join
+    inferred << record
+  end
+
+  [dedupe_records(inferred), skipped]
+end
+
+def apply_records!(db_path, records, source_path:, kind:, source_sha256:, seen:, skipped:, replace_phrases: false)
+  records = dedupe_records(records)
+  sql_lines = ["BEGIN;"]
+
+  if replace_phrases && records.any?
+    sql_lines << "CREATE TEMP TABLE chiaki_import_replace_phrases (phrase TEXT PRIMARY KEY);"
+    records.map(&:phrase).uniq.each do |phrase|
+      sql_lines << "INSERT OR IGNORE INTO chiaki_import_replace_phrases VALUES(#{sql(phrase)});"
+    end
+    sql_lines << "DELETE FROM unigrams WHERE current IN (SELECT phrase FROM chiaki_import_replace_phrases);"
+    sql_lines << "DELETE FROM 'Mandarin-bpmf-cin' WHERE value IN (SELECT phrase FROM chiaki_import_replace_phrases);"
+  end
+
+  records.each do |record|
+    sql_lines << "DELETE FROM unigrams WHERE qstring = #{sql(record.qstring)} AND current = #{sql(record.phrase)};"
+    sql_lines << "INSERT INTO unigrams VALUES(#{sql(record.qstring)}, #{sql(record.phrase)}, #{record.weight}, 0.0);"
+    sql_lines << "INSERT INTO 'Mandarin-bpmf-cin' SELECT #{sql(record.qstring)}, #{sql(record.phrase)} WHERE NOT EXISTS (SELECT 1 FROM 'Mandarin-bpmf-cin' WHERE key = #{sql(record.qstring)} AND value = #{sql(record.phrase)});"
+  end
+
+  sql_lines << "DROP TABLE IF EXISTS chiaki_import_replace_phrases;" if replace_phrases
+  sql_lines << "DELETE FROM chiaki_db_sources WHERE source = #{sql(source_path)};"
+  sql_lines << "INSERT INTO chiaki_db_sources VALUES(#{sql(source_path)}, #{sql(kind)}, #{sql(source_sha256)}, #{seen}, #{records.length}, #{skipped});"
+  sql_lines << "COMMIT;"
+
+  run_sqlite(db_path, sql_lines.join("\n"))
+
+  ImportResult.new(
+    source_path: source_path,
+    kind: kind,
+    sha256: source_sha256,
+    seen: seen,
+    added: records.length,
+    skipped: skipped,
+    records: records
+  )
+end
+
+def refresh_metadata_counts!(db_path)
+  run_sqlite(
+    db_path,
+    [
+      "BEGIN;",
+      "DELETE FROM chiaki_db_metadata WHERE key IN ('unigram_count', 'candidate_count');",
+      "INSERT INTO chiaki_db_metadata VALUES('unigram_count', (SELECT COUNT(*) FROM unigrams));",
+      "INSERT INTO chiaki_db_metadata VALUES('candidate_count', (SELECT COUNT(*) FROM 'Mandarin-bpmf-cin' WHERE key NOT LIKE '__property_%'));",
+      "COMMIT;"
+    ].join("\n")
+  )
+end
+
+def write_json(path, data)
+  File.write(path, "#{JSON.pretty_generate(data)}\n")
+end
+
+def stats_for_source_rows(source_rows, prefix_or_path)
+  source_rows.select do |row|
+    source = row.fetch("source")
+    source == prefix_or_path || source.start_with?(prefix_or_path)
+  end
+end
+
+verify_required_files!([
+  BONEYARD_DB,
+  *source_files,
+  *LIBCHEWING_RAW_FILES.map { |entry| entry.fetch(:path) },
+  RIME_ESSAY_RAW_PATH,
+  OVERLAY_PHRASES_PATH
+])
 
 FileUtils.mkdir_p(DIST_DIR)
 FileUtils.mkdir_p(File.dirname(NORMALIZED_PATH))
 FileUtils.mkdir_p(BONEYARD_SOURCE_DIR)
+FileUtils.mkdir_p(LIBCHEWING_SOURCE_DIR)
+FileUtils.mkdir_p(RIME_ESSAY_SOURCE_DIR)
 FileUtils.mkdir_p(OVERLAY_SOURCE_DIR)
 
-inventory_lines = source_files.map do |path|
-  "#{sha256(path)}  #{relative_to(path, BONEYARD_ROOT)}"
-end
-File.write(SOURCE_INVENTORY_PATH, "#{inventory_lines.join("\n")}\n")
-source_inventory_info = file_info(SOURCE_INVENTORY_PATH)
+write_inventory(BONEYARD_SOURCE_INVENTORY_PATH, BONEYARD_ROOT, source_files)
+write_inventory(LIBCHEWING_SOURCE_INVENTORY_PATH, LIBCHEWING_SOURCE_DIR, LIBCHEWING_RAW_FILES.map { |entry| entry.fetch(:path) }, sort: true)
+write_inventory(RIME_ESSAY_SOURCE_INVENTORY_PATH, RIME_ESSAY_SOURCE_DIR, [RIME_ESSAY_RAW_PATH], sort: true)
+
+boneyard_source_inventory_info = file_info(BONEYARD_SOURCE_INVENTORY_PATH)
+libchewing_source_inventory_info = file_info(LIBCHEWING_SOURCE_INVENTORY_PATH)
+rime_essay_source_inventory_info = file_info(RIME_ESSAY_SOURCE_INVENTORY_PATH)
 overlay_info = file_info(OVERLAY_PHRASES_PATH)
 
 FileUtils.cp(BONEYARD_DB, DB_PATH)
-overlay_result = apply_overlay!(DB_PATH, OVERLAY_PHRASES_PATH)
-overlay_keys = overlay_result.fetch(:records).each_with_object({}) do |record, hash|
-  hash[[record.qstring, record.phrase]] = record
+
+source_keys = {}
+import_results = []
+libchewing_phrase_max_score = libchewing_max_score(
+  LIBCHEWING_RAW_FILES
+    .select { |entry| entry.fetch(:min_codepoints) >= 2 }
+    .map { |entry| entry.fetch(:path) }
+)
+
+LIBCHEWING_RAW_FILES.each do |entry|
+  existing_exact_keys = entry.fetch(:min_codepoints) == 1 ? load_existing_exact_keys(DB_PATH) : nil
+  records, seen, skipped = parse_libchewing_csv(
+    entry.fetch(:path),
+    kind: entry.fetch(:kind),
+    source_id: LIBCHEWING_SOURCE_ID,
+    max_score: libchewing_phrase_max_score,
+    min_codepoints: entry.fetch(:min_codepoints),
+    max_codepoints: entry.fetch(:max_codepoints),
+    existing_exact_keys: existing_exact_keys
+  )
+  result = apply_records!(
+    DB_PATH,
+    records,
+    source_path: repo_relative(entry.fetch(:path)),
+    kind: entry.fetch(:kind),
+    source_sha256: sha256(entry.fetch(:path)),
+    seen: seen,
+    skipped: skipped,
+    replace_phrases: entry.fetch(:replace_phrases)
+  )
+  import_results << result
+  result.records.each { |record| source_keys[[record.qstring, record.phrase]] = record }
 end
+
+rime_records, rime_seen, rime_skipped = parse_rime_essay(
+  RIME_ESSAY_RAW_PATH,
+  char_readings: load_primary_character_readings(DB_PATH),
+  existing_phrases: load_existing_phrases(DB_PATH)
+)
+rime_result = apply_records!(
+  DB_PATH,
+  rime_records,
+  source_path: repo_relative(RIME_ESSAY_RAW_PATH),
+  kind: "rime-supplement",
+  source_sha256: sha256(RIME_ESSAY_RAW_PATH),
+  seen: rime_seen,
+  skipped: rime_skipped,
+  replace_phrases: false
+)
+import_results << rime_result
+rime_result.records.each { |record| source_keys[[record.qstring, record.phrase]] = record }
+
+overlay_records, overlay_seen, overlay_skipped = parse_overlay(OVERLAY_PHRASES_PATH)
+overlay_records, overlay_infer_skipped = infer_overlay_qstrings(overlay_records, DB_PATH)
+overlay_result = apply_records!(
+  DB_PATH,
+  overlay_records,
+  source_path: repo_relative(OVERLAY_PHRASES_PATH),
+  kind: "overlay",
+  source_sha256: sha256(OVERLAY_PHRASES_PATH),
+  seen: overlay_seen,
+  skipped: overlay_skipped + overlay_infer_skipped,
+  replace_phrases: true
+)
+import_results << overlay_result
+overlay_result.records.each { |record| source_keys[[record.qstring, record.phrase]] = record }
+
+refresh_metadata_counts!(DB_PATH)
 
 run_sqlite(
   DB_PATH,
@@ -233,9 +634,10 @@ File.open(NORMALIZED_PATH, "w") do |file|
   unigrams.each do |row|
     phrase = row.fetch("phrase")
     next if phrase.include?("\t") || phrase.include?("\n")
-    overlay_record = overlay_keys[[row.fetch("reading"), phrase]]
-    source_id = overlay_record ? OVERLAY_SOURCE_ID : BONEYARD_SOURCE_ID
-    tags = overlay_record ? "unigram,#{overlay_record.tags}" : "unigram,keykey-boneyard"
+
+    source_record = source_keys[[row.fetch("reading"), phrase]]
+    source_id = source_record ? source_record.source_id : BONEYARD_SOURCE_ID
+    tags = source_record ? source_record.tags : "unigram,keykey-boneyard"
 
     file.puts [
       row.fetch("reading"),
@@ -297,10 +699,34 @@ release_metadata = {
       "attribution" => "Yahoo! Inc.; OpenVanilla contributors; KeyKey Boneyard / Chiaki KeyKey maintainers",
       "inventory" => {
         "path" => "sources/#{BONEYARD_SOURCE_ID}/source-inventory.sha256",
-        "sha256" => source_inventory_info.fetch("sha256"),
-        "size" => source_inventory_info.fetch("size")
+        "sha256" => boneyard_source_inventory_info.fetch("sha256"),
+        "size" => boneyard_source_inventory_info.fetch("size")
       },
-      "stats" => source_rows
+      "stats" => stats_for_source_rows(source_rows, "YahooKeyKey-Source-1.1.2528/")
+    },
+    {
+      "id" => LIBCHEWING_SOURCE_ID,
+      "name" => LIBCHEWING_SOURCE_NAME,
+      "license" => "LGPL-2.1-or-later",
+      "attribution" => "libchewing Core Team",
+      "inventory" => {
+        "path" => "sources/#{LIBCHEWING_SOURCE_ID}/source-inventory.sha256",
+        "sha256" => libchewing_source_inventory_info.fetch("sha256"),
+        "size" => libchewing_source_inventory_info.fetch("size")
+      },
+      "stats" => stats_for_source_rows(source_rows, "sources/#{LIBCHEWING_SOURCE_ID}/raw/")
+    },
+    {
+      "id" => RIME_ESSAY_SOURCE_ID,
+      "name" => RIME_ESSAY_SOURCE_NAME,
+      "license" => "LGPL-3.0",
+      "attribution" => "Rime essay contributors",
+      "inventory" => {
+        "path" => "sources/#{RIME_ESSAY_SOURCE_ID}/source-inventory.sha256",
+        "sha256" => rime_essay_source_inventory_info.fetch("sha256"),
+        "size" => rime_essay_source_inventory_info.fetch("size")
+      },
+      "stats" => stats_for_source_rows(source_rows, "sources/#{RIME_ESSAY_SOURCE_ID}/raw/")
     },
     {
       "id" => OVERLAY_SOURCE_ID,
@@ -310,11 +736,7 @@ release_metadata = {
       "path" => "sources/#{OVERLAY_SOURCE_ID}/phrases.tsv",
       "sha256" => overlay_info.fetch("sha256"),
       "size" => overlay_info.fetch("size"),
-      "stats" => {
-        "seen" => overlay_result.fetch(:seen),
-        "added" => overlay_result.fetch(:added),
-        "skipped" => overlay_result.fetch(:skipped)
-      }
+      "stats" => stats_for_source_rows(source_rows, "sources/#{OVERLAY_SOURCE_ID}/phrases.tsv")
     }
   ]
 }
@@ -342,9 +764,31 @@ manifest = {
       "format" => "sqlite",
       "license" => "BSD-3-Clause-style",
       "attribution" => "Yahoo! Inc.; OpenVanilla contributors; KeyKey Boneyard / Chiaki KeyKey maintainers",
-      "sha256" => source_inventory_info.fetch("sha256"),
+      "sha256" => boneyard_source_inventory_info.fetch("sha256"),
       "enabled" => true,
       "priority" => 100
+    },
+    {
+      "id" => LIBCHEWING_SOURCE_ID,
+      "name" => LIBCHEWING_SOURCE_NAME,
+      "url" => "https://github.com/chewing/libchewing-data/releases/tag/v2026.3.22",
+      "format" => "csv",
+      "license" => "LGPL-2.1-or-later",
+      "attribution" => "libchewing Core Team",
+      "sha256" => libchewing_source_inventory_info.fetch("sha256"),
+      "enabled" => true,
+      "priority" => 250
+    },
+    {
+      "id" => RIME_ESSAY_SOURCE_ID,
+      "name" => RIME_ESSAY_SOURCE_NAME,
+      "url" => "https://github.com/rime/rime-essay/tree/48c7538f0b760fcc8c9d6bf08711f82cfbd2e9ed",
+      "format" => "text",
+      "license" => "LGPL-3.0",
+      "attribution" => "Rime essay contributors",
+      "sha256" => rime_essay_source_inventory_info.fetch("sha256"),
+      "enabled" => true,
+      "priority" => 220
     },
     {
       "id" => OVERLAY_SOURCE_ID,
@@ -355,7 +799,7 @@ manifest = {
       "attribution" => "Chiaki KeyKey Lexicon maintainers",
       "sha256" => overlay_info.fetch("sha256"),
       "enabled" => true,
-      "priority" => 200
+      "priority" => 300
     }
   ],
   "artifacts" => [
@@ -401,3 +845,7 @@ puts "  Metadata: #{METADATA_PATH}"
 puts "  Manifest: #{MANIFEST_PATH}"
 puts "  Checksums: #{CHECKSUM_PATH}"
 puts "  Normalized TSV: #{NORMALIZED_PATH} (#{counts.fetch("normalized_rows")} rows)"
+puts "  Imported:"
+import_results.each do |result|
+  puts "    #{result.source_path}: seen=#{result.seen} added=#{result.added} skipped=#{result.skipped}"
+end
