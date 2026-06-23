@@ -27,7 +27,7 @@ The main app repository should stay focused on the macOS input method runtime, d
 
 This repository now has a seed release pipeline. The latest seed release is `2026.06.6`.
 
-The current release packages the known-working KeyKey Boneyard database shape, restores the original KeyKey BPMF punctuation CIN rows needed by runtime punctuation lookup, then layers in libchewing-data as the main Traditional Chinese / Zhuyin lexicon source, a public-domain extended BPMF character table for missing single-character readings, Rime essay as a low-priority supplemental phrase source, and a small Chiaki-owned overlay for hands-on input-method fixes.
+The current release packages the known-working KeyKey Boneyard database shape, restores the original KeyKey BPMF punctuation CIN rows, canned-message prepopulated service data, and module CIN tables needed by runtime punctuation, symbol, generic-input, and correction lookup, then layers in libchewing-data as the main Traditional Chinese / Zhuyin lexicon source, a public-domain extended BPMF character table for missing single-character readings, Rime essay as a low-priority supplemental phrase source, and a small Chiaki-owned overlay for hands-on input-method fixes.
 
 Start with:
 

@@ -12,6 +12,20 @@ pub const PUNCTUATION_SOURCE_ID: &str = "keykey-punctuations-cin";
 pub const PUNCTUATION_SOURCE_NAME: &str = "KeyKey BPMF punctuation table";
 pub const PUNCTUATION_VENDOR_PATH: &str =
     "sources/keykey-punctuations-cin/vendor/bpmf-punctuations.cin";
+pub const PREPOPULATED_SERVICE_SOURCE_ID: &str = "keykey-prepopulated-service-data";
+pub const PREPOPULATED_SERVICE_SOURCE_NAME: &str = "KeyKey prepopulated service data";
+pub const CANNED_MESSAGES_VENDOR_PATH: &str =
+    "sources/keykey-prepopulated-service-data/vendor/CannedMessages.plist";
+pub const MODULE_CIN_SOURCE_ID: &str = "keykey-module-cin";
+pub const MODULE_CIN_SOURCE_NAME: &str = "KeyKey module CIN tables";
+pub const CJ_EXT_VENDOR_PATH: &str = "sources/keykey-module-cin/vendor/cj-ext.cin";
+pub const SIMPLEX_EXT_VENDOR_PATH: &str = "sources/keykey-module-cin/vendor/simplex-ext.cin";
+pub const CJ_PUNCTUATIONS_HALFWIDTH_VENDOR_PATH: &str =
+    "sources/keykey-module-cin/vendor/cj-punctuations-halfwidth.cin";
+pub const CJ_PUNCTUATIONS_MIXEDWIDTH_VENDOR_PATH: &str =
+    "sources/keykey-module-cin/vendor/cj-punctuations-mixedwidth.cin";
+pub const BOPOMOFO_CORRECTION_VENDOR_PATH: &str =
+    "sources/keykey-module-cin/vendor/bopomofo-correction.cin";
 pub const BPMF_EXT_SOURCE_ID: &str = "bpmf-ext-cin";
 pub const BPMF_EXT_SOURCE_NAME: &str = "Public domain extended BPMF character table";
 pub const BPMF_EXT_VENDOR_PATH: &str = "sources/bpmf-ext-cin/vendor/bpmf-ext.cin";
@@ -90,10 +104,10 @@ pub fn load() -> Result<Config> {
     let rime_essay_min_score = env_or("RIME_ESSAY_MIN_SCORE", "40")
         .parse()
         .context("parse RIME_ESSAY_MIN_SCORE")?;
-    let legacy_boneyard_root = env::var("KEYKEY_BONEYARD_ROOT")
+    let boneyard_checkout_root = env::var("KEYKEY_BONEYARD_ROOT")
         .map(PathBuf::from)
         .unwrap_or_else(|_| root.join("..").join("KeyKey-Boneyard"));
-    let legacy_boneyard_db = legacy_boneyard_root
+    let boneyard_checkout_db = boneyard_checkout_root
         .join("YahooKeyKey-Source-1.1.2528")
         .join("Distributions/Takao/CookedDatabase/KeyKeySource.db");
     let boneyard_db = env::var("BONEYARD_DB")
@@ -103,7 +117,7 @@ pub fn load() -> Result<Config> {
             if vendored.is_file() {
                 vendored
             } else {
-                legacy_boneyard_db
+                boneyard_checkout_db
             }
         });
     let dist_dir = env::var("DIST_DIR")
