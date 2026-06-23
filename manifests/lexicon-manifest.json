@@ -2,37 +2,37 @@
   "artifacts": [
     {
       "database_schema_version": 1,
-      "filename": "KeyKeySource-2026.06.6.db",
+      "filename": "KeyKeySource-2026.06.7.db",
       "id": "smart-mandarin-db",
       "kind": "keykey-source-db",
-      "language_model_version": "chiaki-modern-2026.06.6",
-      "sha256": "809cec25bf66daf1ad71e3ee0f2c709a1da8849dd64b26082f0935fce2512102",
-      "size": 46039040,
-      "url": "https://github.com/akira02/Chiaki-KeyKey-Lexicon/releases/download/2026.06.6/KeyKeySource-2026.06.6.db"
+      "language_model_version": "chiaki-modern-2026.06.7",
+      "sha256": "497373fdd4d62f87d0c242415ce23a23ff61a9a528d321dd2619ce5ce1da085f",
+      "size": 51314688,
+      "url": "https://github.com/akira02/Chiaki-KeyKey-Lexicon/releases/download/2026.06.7/KeyKeySource-2026.06.7.db"
     },
     {
       "database_schema_version": 1,
-      "filename": "KeyKeySource-2026.06.6.json",
+      "filename": "KeyKeySource-2026.06.7.json",
       "id": "smart-mandarin-metadata",
       "kind": "metadata",
-      "language_model_version": "chiaki-modern-2026.06.6",
-      "sha256": "2cff2b3eaa2c2431f0d39b30f6d15e645a12cc0b69d07674630ced32f62d52b9",
-      "size": 16019,
-      "url": "https://github.com/akira02/Chiaki-KeyKey-Lexicon/releases/download/2026.06.6/KeyKeySource-2026.06.6.json"
+      "language_model_version": "chiaki-modern-2026.06.7",
+      "sha256": "b510bdbad280fe26b41ff52caaa32a24b93ae8fce7650c7cdcc723c63d7b2873",
+      "size": 18876,
+      "url": "https://github.com/akira02/Chiaki-KeyKey-Lexicon/releases/download/2026.06.7/KeyKeySource-2026.06.7.json"
     },
     {
       "database_schema_version": 1,
       "filename": "SHA256SUMS",
       "id": "smart-mandarin-checksums",
       "kind": "checksum",
-      "language_model_version": "chiaki-modern-2026.06.6",
-      "sha256": "0795511c5522ce9f36e1371806f5b195ac6d7c9a9f0606ef0913d0a38f06e048",
+      "language_model_version": "chiaki-modern-2026.06.7",
+      "sha256": "3b8fc607eb4a1da7e0900c1ee9c1fd0b00c870efc3b65ed588650dd6be33d15d",
       "size": 186,
-      "url": "https://github.com/akira02/Chiaki-KeyKey-Lexicon/releases/download/2026.06.6/SHA256SUMS"
+      "url": "https://github.com/akira02/Chiaki-KeyKey-Lexicon/releases/download/2026.06.7/SHA256SUMS"
     }
   ],
   "database_schema_version": 1,
-  "generated_at": "2026-06-22T10:51:05Z",
+  "generated_at": "2026-06-23T03:34:42Z",
   "minimum_app_version": "0.1.0",
   "schema": 1,
   "sources": [
@@ -57,6 +57,28 @@
       "priority": 120,
       "sha256": "c1861f127d7d1c3f3dee84faf2039df1f8e66e588a6d6f5f5b16eab74391c38a",
       "url": "https://github.com/vChewing/KeyKey-Boneyard/blob/master/YahooKeyKey-Source-1.1.2528/DataTables/bpmf-punctuations.cin"
+    },
+    {
+      "attribution": "Yahoo! Inc.; OpenVanilla contributors; KeyKey Boneyard / Chiaki KeyKey maintainers",
+      "enabled": true,
+      "format": "plist",
+      "id": "keykey-prepopulated-service-data",
+      "license": "BSD-3-Clause-style",
+      "name": "KeyKey prepopulated service data",
+      "priority": 130,
+      "sha256": "a53fa4866b02a87d1558c089c644314a2e234482913e11a00126e7ea12fcbca2",
+      "url": "https://github.com/vChewing/KeyKey-Boneyard/tree/master/YahooKeyKey-Source-1.1.2528/Distributions/Takao/OnlineData"
+    },
+    {
+      "attribution": "Yahoo! Inc.; OpenVanilla contributors; opendesktop.org.tw CIN contributors; KeyKey Boneyard / Chiaki KeyKey maintainers",
+      "enabled": true,
+      "format": "cin",
+      "id": "keykey-module-cin",
+      "license": "BSD-3-Clause-style / Public Domain source tables",
+      "name": "KeyKey module CIN tables",
+      "priority": 140,
+      "sha256": "7705bee4672d562b0536d0bacf559ae065fabdabaa9895e05a73b44bfa16070d",
+      "url": "https://github.com/vChewing/KeyKey-Boneyard/tree/master/YahooKeyKey-Source-1.1.2528/DataTables"
     },
     {
       "attribution": "libchewing Core Team",
@@ -103,5 +125,5 @@
       "url": "https://github.com/akira02/Chiaki-KeyKey-Lexicon/blob/main/sources/chiaki-modern-overlay/phrases.tsv"
     }
   ],
-  "version": "2026.06.6"
+  "version": "2026.06.7"
 }

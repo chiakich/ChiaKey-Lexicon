@@ -164,6 +164,72 @@ jobs:
             exit 1
           fi
 
+          punctuation_list_count="$(sqlite3 "$db_name" "select count(*) from unigrams where qstring = '_punctuation_list';")"
+          if [[ "$punctuation_list_count" -lt 50 ]]; then
+            echo "Missing _punctuation_list rows in unigrams: ${punctuation_list_count}" >&2
+            exit 1
+          fi
+
+          cin_punctuation_list_count="$(sqlite3 "$db_name" "select count(*) from 'Mandarin-bpmf-cin' where key = '_punctuation_list';")"
+          if [[ "$cin_punctuation_list_count" -lt 50 ]]; then
+            echo "Missing _punctuation_list rows in Mandarin-bpmf-cin: ${cin_punctuation_list_count}" >&2
+            exit 1
+          fi
+
+          bpmf_cname_count="$(sqlite3 "$db_name" "select count(*) from 'Mandarin-bpmf-cin' where key = '__property_cname' and value = '注音';")"
+          if [[ "$bpmf_cname_count" -lt 1 ]]; then
+            echo "Missing Mandarin-bpmf-cin __property_cname metadata" >&2
+            exit 1
+          fi
+
+          canned_messages_count="$(sqlite3 "$db_name" "select count(*) from prepopulated_service_data where key = 'canned_messages' and length(value) > 1000;")"
+          if [[ "$canned_messages_count" -lt 1 ]]; then
+            echo "Missing prepopulated_service_data/canned_messages payload" >&2
+            exit 1
+          fi
+
+          canned_messages_timestamp_count="$(sqlite3 "$db_name" "select count(*) from prepopulated_service_data where key = 'canned_messages_timestamp' and cast(value as integer) > 0;")"
+          if [[ "$canned_messages_timestamp_count" -lt 1 ]]; then
+            echo "Missing positive prepopulated_service_data/canned_messages_timestamp" >&2
+            exit 1
+          fi
+
+          obsolete_onekey_count="$(sqlite3 "$db_name" "select count(*) from prepopulated_service_data where key in ('onekey_services', 'onekey_services_timestamp');")"
+          if [[ "$obsolete_onekey_count" -ne 0 ]]; then
+            echo "Obsolete OneKey service data must not be shipped: ${obsolete_onekey_count} rows" >&2
+            exit 1
+          fi
+
+          generic_cj_count="$(sqlite3 "$db_name" "select count(*) from 'Generic-cj-cin';")"
+          if [[ "$generic_cj_count" -lt 70000 ]]; then
+            echo "Unexpectedly low Generic-cj-cin row count: ${generic_cj_count}" >&2
+            exit 1
+          fi
+
+          generic_simplex_count="$(sqlite3 "$db_name" "select count(*) from 'Generic-simplex-cin';")"
+          if [[ "$generic_simplex_count" -lt 55000 ]]; then
+            echo "Unexpectedly low Generic-simplex-cin row count: ${generic_simplex_count}" >&2
+            exit 1
+          fi
+
+          bopomofo_correction_count="$(sqlite3 "$db_name" "select count(*) from 'BopomofoCorrection-bopomofo-correction-cin' where key = 'ㄅ' and value = '不';")"
+          if [[ "$bopomofo_correction_count" -lt 1 ]]; then
+            echo "Missing BopomofoCorrection ㄅ -> 不 row" >&2
+            exit 1
+          fi
+
+          punctuation_halfwidth_count="$(sqlite3 "$db_name" "select count(*) from 'Punctuations-cj-halfwidth-cin' where key = ',' and value = ',';")"
+          if [[ "$punctuation_halfwidth_count" -lt 1 ]]; then
+            echo "Missing Punctuations-cj-halfwidth-cin comma row" >&2
+            exit 1
+          fi
+
+          punctuation_mixedwidth_count="$(sqlite3 "$db_name" "select count(*) from 'Punctuations-cj-mixedwidth-cin' where key = ',' and value = '，';")"
+          if [[ "$punctuation_mixedwidth_count" -lt 1 ]]; then
+            echo "Missing Punctuations-cj-mixedwidth-cin comma row" >&2
+            exit 1
+          fi
+
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}

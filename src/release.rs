@@ -7,7 +7,9 @@ use crate::files::{
 };
 use crate::importers;
 use crate::manifest;
+use crate::module_cin;
 use crate::paths::ReleasePaths;
+use crate::prepopulated;
 use crate::punctuations;
 use crate::types::{ImportResult, SourceRecord};
 use anyhow::{Context, Result};
@@ -71,9 +73,13 @@ pub fn run() -> Result<()> {
         &mut source_keys,
         &mut import_results,
     )?;
+    import_prepopulated_service_data(&mut conn, &cfg, &paths, &mut import_results)?;
+    import_module_cin_tables(&mut conn, &cfg, &paths, &mut import_results)?;
 
     db::refresh_metadata_counts(&conn)?;
     db::update_release_metadata_rows(&conn, &cfg)?;
+    prepopulated::validate_runtime_required_data(&conn)?;
+    module_cin::validate_runtime_required_data(&conn)?;
     db::write_normalized(&conn, &cfg.normalized_path, &source_keys)?;
 
     let metadata = db::db_metadata(&conn)?;
@@ -120,10 +126,12 @@ fn verify_inputs(
         cfg.boneyard_db.clone(),
         paths.boneyard_inventory.clone(),
         paths.punctuation_cin.clone(),
+        paths.canned_messages_plist.clone(),
         paths.bpmf_ext_cin.clone(),
         paths.overlay_phrases.clone(),
         paths.rime_essay_raw.clone(),
     ];
+    required.extend(module_cin_files(paths));
     required.extend(libchewing_files.iter().map(|entry| entry.path.clone()));
     verify_required_files(&required)
 }
@@ -135,6 +143,8 @@ fn create_output_dirs(cfg: &Config, paths: &ReleasePaths) -> Result<()> {
     }
     fs::create_dir_all(&paths.boneyard_source_dir)?;
     fs::create_dir_all(&paths.punctuation_source_dir)?;
+    fs::create_dir_all(&paths.prepopulated_service_source_dir)?;
+    fs::create_dir_all(&paths.module_cin_source_dir)?;
     fs::create_dir_all(&paths.bpmf_ext_source_dir)?;
     fs::create_dir_all(&paths.libchewing_source_dir)?;
     fs::create_dir_all(&paths.rime_essay_source_dir)?;
@@ -162,6 +172,18 @@ fn write_source_inventories(
         &paths.punctuation_inventory,
         &paths.punctuation_source_dir,
         std::slice::from_ref(&paths.punctuation_cin),
+        true,
+    )?;
+    write_inventory(
+        &paths.prepopulated_service_inventory,
+        &paths.prepopulated_service_source_dir,
+        std::slice::from_ref(&paths.canned_messages_plist),
+        true,
+    )?;
+    write_inventory(
+        &paths.module_cin_inventory,
+        &paths.module_cin_source_dir,
+        &module_cin_files(paths),
         true,
     )?;
     write_inventory(
@@ -241,6 +263,105 @@ fn import_punctuations(
     )?;
     remember_records(source_keys, &result);
     import_results.push(result);
+    Ok(())
+}
+
+fn import_prepopulated_service_data(
+    conn: &mut Connection,
+    cfg: &Config,
+    paths: &ReleasePaths,
+    import_results: &mut Vec<ImportResult>,
+) -> Result<()> {
+    let data = prepopulated::load(&paths.canned_messages_plist, &cfg.generated_at)?;
+    prepopulated::validate_payload(&data)?;
+
+    let source_rows = vec![(
+        repo_relative(&cfg.root, &paths.canned_messages_plist)?,
+        prepopulated::source_kind().to_string(),
+        sha256_file(&paths.canned_messages_plist)?,
+    )];
+    db::apply_prepopulated_service_data(conn, &data, &source_rows)?;
+
+    import_results.push(ImportResult {
+        source_path: format!(
+            "{}/vendor",
+            repo_relative(&cfg.root, &paths.prepopulated_service_source_dir)?
+        ),
+        seen: 1,
+        added: 2,
+        skipped: 0,
+        records: Vec::new(),
+    });
+    Ok(())
+}
+
+const GENERIC_CJ_INDEXES: &[(&str, &str)] = &[
+    ("Generic-cj-cin-index-on-key", "key"),
+    ("Generic-cj-cin-index-on-value", "value"),
+];
+const GENERIC_SIMPLEX_INDEXES: &[(&str, &str)] = &[("Generic-simplex-cin-index", "key")];
+const CJ_PUNCTUATIONS_HALFWIDTH_INDEXES: &[(&str, &str)] =
+    &[("Punctuations-cj-halfwidth-cin-index", "key")];
+const CJ_PUNCTUATIONS_MIXEDWIDTH_INDEXES: &[(&str, &str)] =
+    &[("Punctuations-cj-mixedwidth-cin-index", "key")];
+const BOPOMOFO_CORRECTION_INDEXES: &[(&str, &str)] =
+    &[("BopomofoCorrection-bopomofo-correction-cin-index", "key")];
+
+fn import_module_cin_tables(
+    conn: &mut Connection,
+    cfg: &Config,
+    paths: &ReleasePaths,
+    import_results: &mut Vec<ImportResult>,
+) -> Result<()> {
+    let specs = [
+        (
+            &paths.cj_ext_cin,
+            "Generic-cj-cin",
+            "module-cj-cin",
+            GENERIC_CJ_INDEXES,
+        ),
+        (
+            &paths.simplex_ext_cin,
+            "Generic-simplex-cin",
+            "module-simplex-cin",
+            GENERIC_SIMPLEX_INDEXES,
+        ),
+        (
+            &paths.cj_punctuations_halfwidth_cin,
+            "Punctuations-cj-halfwidth-cin",
+            "module-punctuation-cin",
+            CJ_PUNCTUATIONS_HALFWIDTH_INDEXES,
+        ),
+        (
+            &paths.cj_punctuations_mixedwidth_cin,
+            "Punctuations-cj-mixedwidth-cin",
+            "module-punctuation-cin",
+            CJ_PUNCTUATIONS_MIXEDWIDTH_INDEXES,
+        ),
+        (
+            &paths.bopomofo_correction_cin,
+            "BopomofoCorrection-bopomofo-correction-cin",
+            "module-bopomofo-correction-cin",
+            BOPOMOFO_CORRECTION_INDEXES,
+        ),
+    ];
+
+    for (path, table_name, kind, indexes) in specs {
+        let (records, seen, skipped) = module_cin::parse_cin(path)?;
+        let result = db::apply_key_value_records(
+            conn,
+            table_name,
+            &records,
+            &repo_relative(&cfg.root, path)?,
+            kind,
+            &sha256_file(path)?,
+            seen,
+            skipped,
+            indexes,
+        )?;
+        import_results.push(result);
+    }
+
     Ok(())
 }
 
@@ -333,6 +454,16 @@ fn remember_records(
             record.clone(),
         );
     }
+}
+
+fn module_cin_files(paths: &ReleasePaths) -> Vec<std::path::PathBuf> {
+    vec![
+        paths.bopomofo_correction_cin.clone(),
+        paths.cj_ext_cin.clone(),
+        paths.cj_punctuations_halfwidth_cin.clone(),
+        paths.cj_punctuations_mixedwidth_cin.clone(),
+        paths.simplex_ext_cin.clone(),
+    ]
 }
 
 fn print_summary(

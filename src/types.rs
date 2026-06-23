@@ -35,6 +35,11 @@ pub struct SourceRecord {
     pub tags: String,
 }
 
+pub struct KeyValueRecord {
+    pub key: String,
+    pub value: String,
+}
+
 pub struct ImportResult {
     pub source_path: String,
     pub seen: usize,

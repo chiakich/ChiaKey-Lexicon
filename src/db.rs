@@ -1,7 +1,8 @@
 use crate::config::{Config, BONEYARD_SOURCE_ID};
 use crate::files::count_lines;
 use crate::importers::{dedupe_records, format_weight};
-use crate::types::{ImportResult, SourceRecord};
+use crate::prepopulated::ServiceData;
+use crate::types::{ImportResult, KeyValueRecord, SourceRecord};
 use anyhow::Result;
 use rusqlite::types::ValueRef;
 use rusqlite::{params, Connection};
@@ -47,7 +48,9 @@ pub fn apply_records(
             [],
         )?;
         tx.execute(
-            "DELETE FROM 'Mandarin-bpmf-cin' WHERE value IN (SELECT phrase FROM chiaki_import_replace_phrases)",
+            "DELETE FROM 'Mandarin-bpmf-cin'
+             WHERE value IN (SELECT phrase FROM chiaki_import_replace_phrases)
+               AND key NOT LIKE '__property_%'",
             [],
         )?;
     }
@@ -112,6 +115,112 @@ pub fn refresh_metadata_counts(conn: &Connection) -> Result<()> {
         [],
     )?;
     Ok(())
+}
+
+pub fn apply_prepopulated_service_data(
+    conn: &mut Connection,
+    data: &ServiceData,
+    source_rows: &[(String, String, String)],
+) -> Result<()> {
+    let tx = conn.transaction()?;
+    tx.execute(
+        "CREATE TABLE IF NOT EXISTS prepopulated_service_data (key, value)",
+        [],
+    )?;
+
+    let timestamp = data.timestamp.to_string();
+    let rows = [
+        ("canned_messages", data.canned_messages.as_str()),
+        ("canned_messages_timestamp", timestamp.as_str()),
+    ];
+
+    {
+        let mut delete = tx.prepare("DELETE FROM prepopulated_service_data WHERE key = ?1")?;
+        let mut insert = tx.prepare("INSERT INTO prepopulated_service_data VALUES(?1, ?2)")?;
+        for (key, value) in rows {
+            delete.execute(params![key])?;
+            insert.execute(params![key, value])?;
+        }
+    }
+    tx.execute(
+        "DELETE FROM prepopulated_service_data
+         WHERE key IN ('onekey_services', 'onekey_services_timestamp')",
+        [],
+    )?;
+
+    {
+        let mut delete = tx.prepare("DELETE FROM chiaki_db_sources WHERE source = ?1")?;
+        let mut insert =
+            tx.prepare("INSERT INTO chiaki_db_sources VALUES(?1, ?2, ?3, ?4, ?5, ?6)")?;
+        for (source, kind, sha256) in source_rows {
+            delete.execute(params![source])?;
+            insert.execute(params![source, kind, sha256, 1_i64, 2_i64, 0_i64])?;
+        }
+    }
+
+    tx.commit()?;
+    Ok(())
+}
+
+pub fn apply_key_value_records(
+    conn: &mut Connection,
+    table_name: &str,
+    records: &[KeyValueRecord],
+    source_path: &str,
+    kind: &str,
+    source_sha256: &str,
+    seen: usize,
+    skipped: usize,
+    indexes: &[(&str, &str)],
+) -> Result<ImportResult> {
+    let table = quote_identifier(table_name);
+    let tx = conn.transaction()?;
+
+    tx.execute(&format!("DROP TABLE IF EXISTS {table}"), [])?;
+    tx.execute(&format!("CREATE TABLE {table} (key, value)"), [])?;
+
+    {
+        let mut insert = tx.prepare(&format!("INSERT INTO {table} VALUES(?1, ?2)"))?;
+        for record in records {
+            insert.execute(params![record.key, record.value])?;
+        }
+    }
+
+    for (index_name, column) in indexes {
+        tx.execute(
+            &format!(
+                "CREATE INDEX {} ON {table} ({})",
+                quote_identifier(index_name),
+                quote_identifier(column)
+            ),
+            [],
+        )?;
+    }
+
+    tx.execute(
+        "DELETE FROM chiaki_db_sources WHERE source = ?1",
+        params![source_path],
+    )?;
+    tx.execute(
+        "INSERT INTO chiaki_db_sources VALUES(?1, ?2, ?3, ?4, ?5, ?6)",
+        params![
+            source_path,
+            kind,
+            source_sha256,
+            seen as i64,
+            records.len() as i64,
+            skipped as i64
+        ],
+    )?;
+
+    tx.commit()?;
+    Ok(ImportResult {
+        source_path: source_path.to_string(),
+        seen,
+        added: records.len(),
+        skipped,
+        records: Vec::new(),
+    })
 }
 
 pub fn update_release_metadata_rows(conn: &Connection, cfg: &Config) -> Result<()> {
@@ -269,6 +378,10 @@ pub fn db_counts(
 
 fn hex_string(bytes: &[u8]) -> String {
     bytes.iter().map(|byte| format!("{byte:02x}")).collect()
+}
+
+fn quote_identifier(identifier: &str) -> String {
+    format!("\"{}\"", identifier.replace('"', "\"\""))
 }
 
 pub fn load_existing_exact_keys(conn: &Connection) -> Result<HashSet<(String, String)>> {

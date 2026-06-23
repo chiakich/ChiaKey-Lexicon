@@ -1,6 +1,6 @@
 # Source Review
 
-Last reviewed: 2026-06-22
+Last reviewed: 2026-06-23
 
 ## Included in v1
 
@@ -64,6 +64,50 @@ The generated source inventory is stored at:
 sources/keykey-punctuations-cin/source-inventory.sha256
 ```
 
+### keykey-prepopulated-service-data
+
+- Name: KeyKey prepopulated service data
+- Local source: `sources/keykey-prepopulated-service-data/vendor/`
+- Upstream source directory: <https://github.com/vChewing/KeyKey-Boneyard/tree/master/YahooKeyKey-Source-1.1.2528/Distributions/Takao/OnlineData>
+- License: BSD-3-Clause-style Yahoo! KeyKey upstream license
+- Attribution: Yahoo! Inc., OpenVanilla contributors, KeyKey Boneyard / Chiaki KeyKey maintainers
+- Redistribution decision: included for public releases starting in `2026.06.6`
+
+This source restores the original KeyKey prepopulated canned-message payload. The release builder writes the complete `CannedMessages.plist` contents to `prepopulated_service_data` as `canned_messages`, then writes a positive release timestamp as `canned_messages_timestamp`.
+
+`OneKey.plist` is intentionally omitted from public releases. OneKey was a Yahoo-era URL launcher rather than input lexicon data, and modern Chiaki KeyKey no longer loads it. New release databases must not contain `onekey_services` or `onekey_services_timestamp`.
+
+The generated source inventory is stored at:
+
+```text
+sources/keykey-prepopulated-service-data/source-inventory.sha256
+```
+
+### keykey-module-cin
+
+- Name: KeyKey module CIN tables
+- Local source: `sources/keykey-module-cin/vendor/`
+- Upstream source directory: <https://github.com/vChewing/KeyKey-Boneyard/tree/master/YahooKeyKey-Source-1.1.2528/DataTables>
+- License: BSD-3-Clause-style Yahoo! KeyKey upstream license / Public Domain source tables
+- Attribution: Yahoo! Inc., OpenVanilla contributors, opendesktop.org.tw CIN contributors, KeyKey Boneyard / Chiaki KeyKey maintainers
+- Redistribution decision: included for public releases starting in `2026.06.6`
+
+This source restores module SQLite tables used by KeyKey runtime modules outside the Smart Mandarin language model:
+
+```text
+Generic-cj-cin
+Generic-simplex-cin
+Punctuations-cj-halfwidth-cin
+Punctuations-cj-mixedwidth-cin
+BopomofoCorrection-bopomofo-correction-cin
+```
+
+The generated source inventory is stored at:
+
+```text
+sources/keykey-module-cin/source-inventory.sha256
+```
+
 ## Excluded from v1
 
 These sources are useful references, but they are not included as raw sources in the first release artifacts:
@@ -73,7 +117,7 @@ These sources are useful references, but they are not included as raw sources in
 - Commercial CEROD / SQLite extension assets.
 - CC-CEDICT, moedict, Wikimedia, Tatoeba, wordfreq, SUBTLEX-CH, Google Books Ngram, and Google Chinese Web 5-gram.
 
-Some bootstrap files inherited from the open KeyKey Boneyard tree have legacy names such as `Yahoo.txt` or `SinicaCorpusOverrides.txt`. In v1, these are treated as part of the BSD-style Boneyard bootstrap source. The repository does not copy private raw Yahoo search logs, Sinica corpus files, or CEROD binaries.
+Some bootstrap files inherited from the open KeyKey Boneyard tree have historical names such as `Yahoo.txt` or `SinicaCorpusOverrides.txt`. In v1, these are treated as part of the BSD-style Boneyard bootstrap source. The repository does not copy private raw Yahoo search logs, Sinica corpus files, or CEROD binaries.
 
 ## Included Starting in 2026.06.2
 
@@ -175,7 +219,7 @@ sources/rime-essay/source-inventory.sha256
 
 ## Reading Format
 
-The v1 normalized TSV uses the current KeyKey / Manjusri internal `qstring` reading representation in the first column. This is the two-byte-per-syllable ordering string produced by the legacy builder's `absolute_order_string` function, not literal Bopomofo text.
+The v1 normalized TSV uses the current KeyKey / Manjusri internal `qstring` reading representation in the first column. This is the two-byte-per-syllable ordering string produced by the historical builder's `absolute_order_string` function, not literal Bopomofo text.
 
 This keeps the first release directly compatible with the current database reader. A later source-normalization pass can add a human-readable Bopomofo column if the builder contract changes.
 
