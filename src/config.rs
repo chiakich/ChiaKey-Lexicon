@@ -33,8 +33,10 @@ pub const LIBCHEWING_SOURCE_ID: &str = "libchewing-data";
 pub const LIBCHEWING_SOURCE_NAME: &str = "libchewing-data Traditional Chinese Zhuyin dictionary";
 pub const RIME_ESSAY_SOURCE_ID: &str = "rime-essay";
 pub const RIME_ESSAY_SOURCE_NAME: &str = "Rime essay shared vocabulary and language model";
-pub const OVERLAY_SOURCE_ID: &str = "chiaki-modern-overlay";
-pub const OVERLAY_SOURCE_NAME: &str = "Chiaki modern overlay phrases";
+pub const OVERLAY_SOURCE_ID: &str = "chiakey-modern-overlay";
+pub const OVERLAY_SOURCE_NAME: &str = "ChiaKey modern overlay phrases";
+pub const OPENCC_VARIANT_SOURCE_ID: &str = "opencc-variant-policy";
+pub const OPENCC_VARIANT_SOURCE_NAME: &str = "OpenCC-derived Traditional Chinese variant policy";
 pub const DATABASE_SCHEMA_VERSION: i64 = 1;
 
 pub const DOWNLOADS: &[SourceDownload] = &[
@@ -87,16 +89,14 @@ pub struct Config {
 
 pub fn load() -> Result<Config> {
     let root = env::current_dir().context("read current directory")?;
-    let release_version = env_or("LEXICON_VERSION", "2026.06.6");
-    let language_model_version = format!("chiaki-modern-{release_version}");
+    let release_version = env_or("LEXICON_VERSION", "2026.06.7");
+    let language_model_version = format!("chiakey-modern-{release_version}");
     let minimum_app_version = env_or("MINIMUM_APP_VERSION", "0.1.0");
     let generated_at = env::var("GENERATED_AT")
         .unwrap_or_else(|_| chrono::Utc::now().to_rfc3339_opts(SecondsFormat::Secs, true));
     let release_base_url = env_or(
         "RELEASE_BASE_URL",
-        format!(
-            "https://github.com/akira02/Chiaki-KeyKey-Lexicon/releases/download/{release_version}"
-        ),
+        format!("https://github.com/akira02/ChiaKey-Lexicon/releases/download/{release_version}"),
     );
     let max_phrase_codepoints = env_or("MAX_PHRASE_CODEPOINTS", "7")
         .parse()

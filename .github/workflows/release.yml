@@ -140,6 +140,12 @@ jobs:
             exit 1
           fi
 
+          neutral_ge_top="$(sqlite3 "$db_name" "select current from unigrams where qstring = 'rq' order by probability desc, current limit 1;")"
+          if [[ "$neutral_ge_top" != "個" ]]; then
+            echo "Unexpected top candidate for ㄍㄜ˙ / ek7: ${neutral_ge_top}" >&2
+            exit 1
+          fi
+
           punctuation="$(sqlite3 "$db_name" "select current from unigrams where qstring = '_punctuation_<' order by probability desc, current limit 1;")"
           if [[ "$punctuation" != "，" ]]; then
             echo "Missing _punctuation_< full-width comma in unigrams: ${punctuation}" >&2

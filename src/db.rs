@@ -2,7 +2,7 @@ use crate::config::{Config, BONEYARD_SOURCE_ID};
 use crate::files::count_lines;
 use crate::importers::{dedupe_records, format_weight};
 use crate::prepopulated::ServiceData;
-use crate::types::{ImportResult, KeyValueRecord, SourceRecord};
+use crate::types::{ImportResult, KeyValueRecord, SourceRecord, VariantDemotionRecord};
 use anyhow::Result;
 use rusqlite::types::ValueRef;
 use rusqlite::{params, Connection};
@@ -220,6 +220,74 @@ pub fn apply_key_value_records(
         added: records.len(),
         skipped,
         records: Vec::new(),
+    })
+}
+
+pub fn apply_variant_demotions(
+    conn: &mut Connection,
+    records: &[VariantDemotionRecord],
+    source_path: &str,
+    kind: &str,
+    source_sha256: &str,
+    seen: usize,
+    skipped: usize,
+    source_id: &'static str,
+) -> Result<ImportResult> {
+    let tx = conn.transaction()?;
+    let mut affected = Vec::new();
+
+    for record in records {
+        {
+            let mut stmt = tx.prepare(
+                "SELECT qstring, current
+                 FROM unigrams
+                 WHERE current = ?1 AND probability > ?2",
+            )?;
+            let rows = stmt.query_map(params![record.phrase, record.max_weight], |row| {
+                Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?))
+            })?;
+            for row in rows {
+                let (qstring, phrase) = row?;
+                affected.push(SourceRecord {
+                    qstring,
+                    phrase,
+                    weight: record.max_weight,
+                    source_id,
+                    tags: record.tags.clone(),
+                });
+            }
+        }
+        tx.execute(
+            "UPDATE unigrams
+             SET probability = ?2
+             WHERE current = ?1 AND probability > ?2",
+            params![record.phrase, record.max_weight],
+        )?;
+    }
+
+    tx.execute(
+        "DELETE FROM chiaki_db_sources WHERE source = ?1",
+        params![source_path],
+    )?;
+    tx.execute(
+        "INSERT INTO chiaki_db_sources VALUES(?1, ?2, ?3, ?4, ?5, ?6)",
+        params![
+            source_path,
+            kind,
+            source_sha256,
+            seen as i64,
+            affected.len() as i64,
+            skipped as i64
+        ],
+    )?;
+
+    tx.commit()?;
+    Ok(ImportResult {
+        source_path: source_path.to_string(),
+        seen,
+        added: affected.len(),
+        skipped,
+        records: affected,
     })
 }
 

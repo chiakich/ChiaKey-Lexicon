@@ -1,7 +1,8 @@
 use crate::config::{
     Config, BONEYARD_SOURCE_ID, BONEYARD_SOURCE_NAME, BPMF_EXT_SOURCE_ID, BPMF_EXT_SOURCE_NAME,
     DATABASE_SCHEMA_VERSION, LIBCHEWING_SOURCE_ID, LIBCHEWING_SOURCE_NAME, MODULE_CIN_SOURCE_ID,
-    MODULE_CIN_SOURCE_NAME, OVERLAY_SOURCE_ID, OVERLAY_SOURCE_NAME, PREPOPULATED_SERVICE_SOURCE_ID,
+    MODULE_CIN_SOURCE_NAME, OPENCC_VARIANT_SOURCE_ID, OPENCC_VARIANT_SOURCE_NAME,
+    OVERLAY_SOURCE_ID, OVERLAY_SOURCE_NAME, PREPOPULATED_SERVICE_SOURCE_ID,
     PREPOPULATED_SERVICE_SOURCE_NAME, PUNCTUATION_SOURCE_ID, PUNCTUATION_SOURCE_NAME,
     RIME_ESSAY_SOURCE_ID, RIME_ESSAY_SOURCE_NAME,
 };
@@ -12,7 +13,6 @@ use crate::types::FileInfo;
 use anyhow::Result;
 use serde_json::{json, Value};
 use std::collections::BTreeMap;
-use std::fs;
 use std::path::Path;
 
 pub fn release_metadata(
@@ -29,7 +29,7 @@ pub fn release_metadata(
             BONEYARD_SOURCE_ID,
             BONEYARD_SOURCE_NAME,
             "BSD-3-Clause-style",
-            "Yahoo! Inc.; OpenVanilla contributors; KeyKey Boneyard / Chiaki KeyKey maintainers",
+            "Yahoo! Inc.; OpenVanilla contributors; KeyKey Boneyard / ChiaKey maintainers",
             &paths.boneyard_inventory,
             db::stats_for_source_rows(source_rows, "YahooKeyKey-Source-1.1.2528/"),
         )?,
@@ -37,7 +37,7 @@ pub fn release_metadata(
             PUNCTUATION_SOURCE_ID,
             PUNCTUATION_SOURCE_NAME,
             "BSD-3-Clause-style",
-            "Yahoo! Inc.; OpenVanilla contributors; KeyKey Boneyard / Chiaki KeyKey maintainers",
+            "Yahoo! Inc.; OpenVanilla contributors; KeyKey Boneyard / ChiaKey maintainers",
             &paths.punctuation_inventory,
             db::stats_for_source_rows(
                 source_rows,
@@ -48,7 +48,7 @@ pub fn release_metadata(
             PREPOPULATED_SERVICE_SOURCE_ID,
             PREPOPULATED_SERVICE_SOURCE_NAME,
             "BSD-3-Clause-style",
-            "Yahoo! Inc.; OpenVanilla contributors; KeyKey Boneyard / Chiaki KeyKey maintainers",
+            "Yahoo! Inc.; OpenVanilla contributors; KeyKey Boneyard / ChiaKey maintainers",
             &paths.prepopulated_service_inventory,
             db::stats_for_source_rows(
                 source_rows,
@@ -59,7 +59,7 @@ pub fn release_metadata(
             MODULE_CIN_SOURCE_ID,
             MODULE_CIN_SOURCE_NAME,
             "BSD-3-Clause-style / Public Domain source tables",
-            "Yahoo! Inc.; OpenVanilla contributors; opendesktop.org.tw CIN contributors; KeyKey Boneyard / Chiaki KeyKey maintainers",
+            "Yahoo! Inc.; OpenVanilla contributors; opendesktop.org.tw CIN contributors; KeyKey Boneyard / ChiaKey maintainers",
             &paths.module_cin_inventory,
             db::stats_for_source_rows(source_rows, "sources/keykey-module-cin/vendor/"),
         )?,
@@ -87,16 +87,22 @@ pub fn release_metadata(
             &paths.rime_essay_inventory,
             db::stats_for_source_rows(source_rows, "sources/rime-essay/raw/"),
         )?,
-        json!({
-            "id": OVERLAY_SOURCE_ID,
-            "name": OVERLAY_SOURCE_NAME,
-            "license": "CC0-1.0",
-            "attribution": "Chiaki KeyKey Lexicon maintainers",
-            "path": "sources/chiaki-modern-overlay/phrases.tsv",
-            "sha256": sha256_file(&paths.overlay_phrases)?,
-            "size": fs::metadata(&paths.overlay_phrases)?.len(),
-            "stats": db::stats_for_source_rows(source_rows, "sources/chiaki-modern-overlay/phrases.tsv")
-        }),
+        release_source(
+            OVERLAY_SOURCE_ID,
+            OVERLAY_SOURCE_NAME,
+            "CC0-1.0",
+            "ChiaKey Lexicon maintainers",
+            &paths.overlay_inventory,
+            db::stats_for_source_rows(source_rows, "sources/chiakey-modern-overlay/"),
+        )?,
+        release_source(
+            OPENCC_VARIANT_SOURCE_ID,
+            OPENCC_VARIANT_SOURCE_NAME,
+            "Apache-2.0-derived policy",
+            "OpenCC contributors; ChiaKey Lexicon maintainers",
+            &paths.opencc_variant_inventory,
+            db::stats_for_source_rows(source_rows, "sources/opencc-variant-policy/"),
+        )?,
     ];
 
     Ok(json!({
@@ -137,7 +143,7 @@ pub fn manifest(
             "https://github.com/vChewing/KeyKey-Boneyard",
             "sqlite",
             "BSD-3-Clause-style",
-            "Yahoo! Inc.; OpenVanilla contributors; KeyKey Boneyard / Chiaki KeyKey maintainers",
+            "Yahoo! Inc.; OpenVanilla contributors; KeyKey Boneyard / ChiaKey maintainers",
             &paths.boneyard_inventory,
             100,
         )?,
@@ -147,7 +153,7 @@ pub fn manifest(
             "https://github.com/vChewing/KeyKey-Boneyard/blob/master/YahooKeyKey-Source-1.1.2528/DataTables/bpmf-punctuations.cin",
             "cin",
             "BSD-3-Clause-style",
-            "Yahoo! Inc.; OpenVanilla contributors; KeyKey Boneyard / Chiaki KeyKey maintainers",
+            "Yahoo! Inc.; OpenVanilla contributors; KeyKey Boneyard / ChiaKey maintainers",
             &paths.punctuation_inventory,
             120,
         )?,
@@ -157,7 +163,7 @@ pub fn manifest(
             "https://github.com/vChewing/KeyKey-Boneyard/tree/master/YahooKeyKey-Source-1.1.2528/Distributions/Takao/OnlineData",
             "plist",
             "BSD-3-Clause-style",
-            "Yahoo! Inc.; OpenVanilla contributors; KeyKey Boneyard / Chiaki KeyKey maintainers",
+            "Yahoo! Inc.; OpenVanilla contributors; KeyKey Boneyard / ChiaKey maintainers",
             &paths.prepopulated_service_inventory,
             130,
         )?,
@@ -167,7 +173,7 @@ pub fn manifest(
             "https://github.com/vChewing/KeyKey-Boneyard/tree/master/YahooKeyKey-Source-1.1.2528/DataTables",
             "cin",
             "BSD-3-Clause-style / Public Domain source tables",
-            "Yahoo! Inc.; OpenVanilla contributors; opendesktop.org.tw CIN contributors; KeyKey Boneyard / Chiaki KeyKey maintainers",
+            "Yahoo! Inc.; OpenVanilla contributors; opendesktop.org.tw CIN contributors; KeyKey Boneyard / ChiaKey maintainers",
             &paths.module_cin_inventory,
             140,
         )?,
@@ -201,17 +207,26 @@ pub fn manifest(
             &paths.rime_essay_inventory,
             220,
         )?,
-        json!({
-            "id": OVERLAY_SOURCE_ID,
-            "name": OVERLAY_SOURCE_NAME,
-            "url": "https://github.com/akira02/Chiaki-KeyKey-Lexicon/blob/main/sources/chiaki-modern-overlay/phrases.tsv",
-            "format": "tsv",
-            "license": "CC0-1.0",
-            "attribution": "Chiaki KeyKey Lexicon maintainers",
-            "sha256": sha256_file(&paths.overlay_phrases)?,
-            "enabled": true,
-            "priority": 300
-        }),
+        manifest_source(
+            OVERLAY_SOURCE_ID,
+            OVERLAY_SOURCE_NAME,
+            "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiakey-modern-overlay",
+            "tsv",
+            "CC0-1.0",
+            "ChiaKey Lexicon maintainers",
+            &paths.overlay_inventory,
+            300,
+        )?,
+        manifest_source(
+            OPENCC_VARIANT_SOURCE_ID,
+            OPENCC_VARIANT_SOURCE_NAME,
+            "https://github.com/BYVoid/OpenCC",
+            "tsv",
+            "Apache-2.0-derived policy",
+            "OpenCC contributors; ChiaKey Lexicon maintainers",
+            &paths.opencc_variant_inventory,
+            310,
+        )?,
     ];
 
     Ok(json!({

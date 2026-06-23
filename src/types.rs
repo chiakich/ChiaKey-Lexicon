@@ -40,6 +40,12 @@ pub struct KeyValueRecord {
     pub value: String,
 }
 
+pub struct VariantDemotionRecord {
+    pub phrase: String,
+    pub max_weight: f64,
+    pub tags: String,
+}
+
 pub struct ImportResult {
     pub source_path: String,
     pub seen: usize,

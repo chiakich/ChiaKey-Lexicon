@@ -5,39 +5,39 @@
       "filename": "KeyKeySource-2026.06.7.db",
       "id": "smart-mandarin-db",
       "kind": "keykey-source-db",
-      "language_model_version": "chiaki-modern-2026.06.7",
-      "sha256": "497373fdd4d62f87d0c242415ce23a23ff61a9a528d321dd2619ce5ce1da085f",
-      "size": 51314688,
-      "url": "https://github.com/akira02/Chiaki-KeyKey-Lexicon/releases/download/2026.06.7/KeyKeySource-2026.06.7.db"
+      "language_model_version": "chiakey-modern-2026.06.7",
+      "sha256": "dafdb9c0744e3a6a8740b5343a41599f4f4c375c41cb28b6f73aa2858b31a133",
+      "size": 51183616,
+      "url": "https://github.com/akira02/ChiaKey-Lexicon/releases/download/2026.06.7/KeyKeySource-2026.06.7.db"
     },
     {
       "database_schema_version": 1,
       "filename": "KeyKeySource-2026.06.7.json",
       "id": "smart-mandarin-metadata",
       "kind": "metadata",
-      "language_model_version": "chiaki-modern-2026.06.7",
-      "sha256": "b510bdbad280fe26b41ff52caaa32a24b93ae8fce7650c7cdcc723c63d7b2873",
-      "size": 18876,
-      "url": "https://github.com/akira02/Chiaki-KeyKey-Lexicon/releases/download/2026.06.7/KeyKeySource-2026.06.7.json"
+      "language_model_version": "chiakey-modern-2026.06.7",
+      "sha256": "26a83194db719a2dd77e02e47d3dc7f642ddab471c7a2e50032256c77e745f54",
+      "size": 19950,
+      "url": "https://github.com/akira02/ChiaKey-Lexicon/releases/download/2026.06.7/KeyKeySource-2026.06.7.json"
     },
     {
       "database_schema_version": 1,
       "filename": "SHA256SUMS",
       "id": "smart-mandarin-checksums",
       "kind": "checksum",
-      "language_model_version": "chiaki-modern-2026.06.7",
-      "sha256": "3b8fc607eb4a1da7e0900c1ee9c1fd0b00c870efc3b65ed588650dd6be33d15d",
+      "language_model_version": "chiakey-modern-2026.06.7",
+      "sha256": "0b4a9c035dfa2a3a4a5a4780c7f6419e3e2fad225f9813da182a9bb53aa88377",
       "size": 186,
-      "url": "https://github.com/akira02/Chiaki-KeyKey-Lexicon/releases/download/2026.06.7/SHA256SUMS"
+      "url": "https://github.com/akira02/ChiaKey-Lexicon/releases/download/2026.06.7/SHA256SUMS"
     }
   ],
   "database_schema_version": 1,
-  "generated_at": "2026-06-23T03:34:42Z",
+  "generated_at": "2026-06-23T04:27:46Z",
   "minimum_app_version": "0.1.0",
   "schema": 1,
   "sources": [
     {
-      "attribution": "Yahoo! Inc.; OpenVanilla contributors; KeyKey Boneyard / Chiaki KeyKey maintainers",
+      "attribution": "Yahoo! Inc.; OpenVanilla contributors; KeyKey Boneyard / ChiaKey maintainers",
       "enabled": true,
       "format": "sqlite",
       "id": "keykey-boneyard-bootstrap",
@@ -48,7 +48,7 @@
       "url": "https://github.com/vChewing/KeyKey-Boneyard"
     },
     {
-      "attribution": "Yahoo! Inc.; OpenVanilla contributors; KeyKey Boneyard / Chiaki KeyKey maintainers",
+      "attribution": "Yahoo! Inc.; OpenVanilla contributors; KeyKey Boneyard / ChiaKey maintainers",
       "enabled": true,
       "format": "cin",
       "id": "keykey-punctuations-cin",
@@ -59,7 +59,7 @@
       "url": "https://github.com/vChewing/KeyKey-Boneyard/blob/master/YahooKeyKey-Source-1.1.2528/DataTables/bpmf-punctuations.cin"
     },
     {
-      "attribution": "Yahoo! Inc.; OpenVanilla contributors; KeyKey Boneyard / Chiaki KeyKey maintainers",
+      "attribution": "Yahoo! Inc.; OpenVanilla contributors; KeyKey Boneyard / ChiaKey maintainers",
       "enabled": true,
       "format": "plist",
       "id": "keykey-prepopulated-service-data",
@@ -70,7 +70,7 @@
       "url": "https://github.com/vChewing/KeyKey-Boneyard/tree/master/YahooKeyKey-Source-1.1.2528/Distributions/Takao/OnlineData"
     },
     {
-      "attribution": "Yahoo! Inc.; OpenVanilla contributors; opendesktop.org.tw CIN contributors; KeyKey Boneyard / Chiaki KeyKey maintainers",
+      "attribution": "Yahoo! Inc.; OpenVanilla contributors; opendesktop.org.tw CIN contributors; KeyKey Boneyard / ChiaKey maintainers",
       "enabled": true,
       "format": "cin",
       "id": "keykey-module-cin",
@@ -114,15 +114,26 @@
       "url": "https://github.com/rime/rime-essay/tree/48c7538f0b760fcc8c9d6bf08711f82cfbd2e9ed"
     },
     {
-      "attribution": "Chiaki KeyKey Lexicon maintainers",
+      "attribution": "ChiaKey Lexicon maintainers",
       "enabled": true,
       "format": "tsv",
-      "id": "chiaki-modern-overlay",
+      "id": "chiakey-modern-overlay",
       "license": "CC0-1.0",
-      "name": "Chiaki modern overlay phrases",
+      "name": "ChiaKey modern overlay phrases",
       "priority": 300,
-      "sha256": "1f4f57794cdfeeb598d3c67f457430663e90686d68f712f3d8afaa25c7bf667b",
-      "url": "https://github.com/akira02/Chiaki-KeyKey-Lexicon/blob/main/sources/chiaki-modern-overlay/phrases.tsv"
+      "sha256": "f3e4e68b72ea6881955e25f73aebc23048f1e16282833482a6cea81db5be7471",
+      "url": "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiakey-modern-overlay"
+    },
+    {
+      "attribution": "OpenCC contributors; ChiaKey Lexicon maintainers",
+      "enabled": true,
+      "format": "tsv",
+      "id": "opencc-variant-policy",
+      "license": "Apache-2.0-derived policy",
+      "name": "OpenCC-derived Traditional Chinese variant policy",
+      "priority": 310,
+      "sha256": "47c7ace0320131cec8858fb6213abe5d903577804dc7ebc86bdaca79b6e9a802",
+      "url": "https://github.com/BYVoid/OpenCC"
     }
   ],
   "version": "2026.06.7"

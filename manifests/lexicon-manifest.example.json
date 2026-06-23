@@ -6,12 +6,12 @@
   "database_schema_version": 1,
   "sources": [
     {
-      "id": "chiaki-modern-phrases",
-      "name": "Chiaki Modern Phrases Seed",
-      "url": "https://github.com/akira02/Chiaki-KeyKey/blob/main/YahooKeyKey-Source-1.1.2528/Distributions/Takao/DataSource/Modern/ChiakiModernPhrases.txt",
+      "id": "chiakey-modern-overlay",
+      "name": "ChiaKey Modern Overlay Seed",
+      "url": "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiakey-modern-overlay",
       "format": "tsv",
       "license": "TBD",
-      "attribution": "Chiaki KeyKey project seed data",
+      "attribution": "ChiaKey Lexicon project seed data",
       "sha256": "TBD",
       "enabled": true,
       "priority": 100
@@ -21,12 +21,12 @@
     {
       "id": "smart-mandarin-db",
       "kind": "keykey-source-db",
-      "url": "https://github.com/akira02/Chiaki-KeyKey-Lexicon/releases/download/2026.06/KeyKeySource-2026.06.db",
+      "url": "https://github.com/akira02/ChiaKey-Lexicon/releases/download/2026.06/KeyKeySource-2026.06.db",
       "filename": "KeyKeySource-2026.06.db",
       "sha256": "TBD",
       "size": 0,
       "database_schema_version": 1,
-      "language_model_version": "chiaki-modern-2026.06"
+      "language_model_version": "chiakey-modern-2026.06"
     }
   ]
 }

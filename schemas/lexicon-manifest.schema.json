@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/akira02/Chiaki-KeyKey-Lexicon/schemas/lexicon-manifest.schema.json",
-  "title": "Chiaki KeyKey Lexicon Manifest",
+  "$id": "https://github.com/akira02/ChiaKey-Lexicon/schemas/lexicon-manifest.schema.json",
+  "title": "ChiaKey Lexicon Manifest",
   "type": "object",
   "required": [
     "schema",

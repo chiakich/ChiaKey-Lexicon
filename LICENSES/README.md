@@ -46,12 +46,19 @@ Unknown-license data must not be included in public release artifacts.
 - Review notes: [Docs/SourceReview.md](../Docs/SourceReview.md)
 - Release decision: included starting in `2026.06.6`
 
-### Chiaki modern overlay phrases
+### ChiaKey modern overlay phrases
 
-- Source id: `chiaki-modern-overlay`
+- Source id: `chiakey-modern-overlay`
 - License file: [CC0-1.0.txt](CC0-1.0.txt)
 - Review notes: [Docs/SourceReview.md](../Docs/SourceReview.md)
 - Release decision: included starting in `2026.06.2`
+
+### OpenCC-derived Traditional Chinese variant policy
+
+- Source id: `opencc-variant-policy`
+- License file: [opencc-Apache-2.0.txt](opencc-Apache-2.0.txt)
+- Review notes: [Docs/SourceReview.md](../Docs/SourceReview.md)
+- Release decision: included starting in `2026.06.7`
 
 ### libchewing-data
 

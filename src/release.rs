@@ -66,6 +66,20 @@ pub fn run() -> Result<()> {
         &mut source_keys,
         &mut import_results,
     )?;
+    import_opencc_variant_policy(
+        &mut conn,
+        &cfg,
+        &paths,
+        &mut source_keys,
+        &mut import_results,
+    )?;
+    import_explicit_overlay(
+        &mut conn,
+        &cfg,
+        &paths,
+        &mut source_keys,
+        &mut import_results,
+    )?;
     import_punctuations(
         &mut conn,
         &cfg,
@@ -129,6 +143,8 @@ fn verify_inputs(
         paths.canned_messages_plist.clone(),
         paths.bpmf_ext_cin.clone(),
         paths.overlay_phrases.clone(),
+        paths.overlay_explicit.clone(),
+        paths.opencc_variant_demotions.clone(),
         paths.rime_essay_raw.clone(),
     ];
     required.extend(module_cin_files(paths));
@@ -149,6 +165,7 @@ fn create_output_dirs(cfg: &Config, paths: &ReleasePaths) -> Result<()> {
     fs::create_dir_all(&paths.libchewing_source_dir)?;
     fs::create_dir_all(&paths.rime_essay_source_dir)?;
     fs::create_dir_all(&paths.overlay_source_dir)?;
+    fs::create_dir_all(&paths.opencc_variant_source_dir)?;
     Ok(())
 }
 
@@ -196,6 +213,21 @@ fn write_source_inventories(
         &paths.rime_essay_inventory,
         &paths.rime_essay_source_dir,
         std::slice::from_ref(&paths.rime_essay_raw),
+        true,
+    )?;
+    write_inventory(
+        &paths.overlay_inventory,
+        &paths.overlay_source_dir,
+        &[
+            paths.overlay_phrases.clone(),
+            paths.overlay_explicit.clone(),
+        ],
+        true,
+    )?;
+    write_inventory(
+        &paths.opencc_variant_inventory,
+        &paths.opencc_variant_source_dir,
+        std::slice::from_ref(&paths.opencc_variant_demotions),
         true,
     )
 }
@@ -444,6 +476,53 @@ fn import_overlay(
     Ok(())
 }
 
+fn import_opencc_variant_policy(
+    conn: &mut Connection,
+    cfg: &Config,
+    paths: &ReleasePaths,
+    source_keys: &mut HashMap<(String, String), SourceRecord>,
+    import_results: &mut Vec<ImportResult>,
+) -> Result<()> {
+    let (records, seen, skipped) =
+        importers::parse_variant_demotions(&paths.opencc_variant_demotions)?;
+    let result = db::apply_variant_demotions(
+        conn,
+        &records,
+        &repo_relative(&cfg.root, &paths.opencc_variant_demotions)?,
+        "opencc-variant-demotion",
+        &sha256_file(&paths.opencc_variant_demotions)?,
+        seen,
+        skipped,
+        config::OPENCC_VARIANT_SOURCE_ID,
+    )?;
+    remember_records(source_keys, &result);
+    import_results.push(result);
+    Ok(())
+}
+
+fn import_explicit_overlay(
+    conn: &mut Connection,
+    cfg: &Config,
+    paths: &ReleasePaths,
+    source_keys: &mut HashMap<(String, String), SourceRecord>,
+    import_results: &mut Vec<ImportResult>,
+) -> Result<()> {
+    let (records, seen, skipped) = importers::parse_explicit_overlay(&paths.overlay_explicit, cfg)?;
+    let result = db::apply_records(
+        conn,
+        records,
+        &repo_relative(&cfg.root, &paths.overlay_explicit)?,
+        "overlay-explicit-qstring",
+        &sha256_file(&paths.overlay_explicit)?,
+        seen,
+        skipped,
+        false,
+    )?;
+    remember_records(source_keys, &result);
+    import_results.push(result);
+    Ok(())
+}
+
 fn remember_records(
     source_keys: &mut HashMap<(String, String), SourceRecord>,
     result: &ImportResult,
@@ -472,7 +551,7 @@ fn print_summary(
     counts: &Value,
     import_results: &[ImportResult],
 ) {
-    println!("Prepared Chiaki KeyKey Lexicon {}", cfg.release_version);
+    println!("Prepared ChiaKey Lexicon {}", cfg.release_version);
     println!("  DB: {}", paths.db.display());
     println!("  Metadata: {}", paths.metadata.display());
     println!("  Manifest: {}", cfg.manifest_path.display());

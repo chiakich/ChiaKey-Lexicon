@@ -1,7 +1,7 @@
 use crate::config::{Config, LIBCHEWING_SOURCE_ID, OVERLAY_SOURCE_ID, RIME_ESSAY_SOURCE_ID};
 use crate::phonetics::{phrase_candidate, qstring_for_bpmf_sequence};
-use crate::types::{LibchewingFile, LibchewingWeightMode, SourceRecord};
-use anyhow::{Context, Result};
+use crate::types::{LibchewingFile, LibchewingWeightMode, SourceRecord, VariantDemotionRecord};
+use anyhow::{bail, Context, Result};
 use csv::StringRecord;
 use std::collections::{HashMap, HashSet};
 use std::fs::File;
@@ -159,6 +159,91 @@ pub fn parse_overlay(path: &Path, cfg: &Config) -> Result<(Vec<SourceRecord>, us
     Ok((records, seen, skipped))
 }
 
+pub fn parse_explicit_overlay(
+    path: &Path,
+    cfg: &Config,
+) -> Result<(Vec<SourceRecord>, usize, usize)> {
+    let file = File::open(path).with_context(|| format!("read {}", path.display()))?;
+    let reader = BufReader::new(file);
+    let mut seen = 0;
+    let mut skipped = 0;
+    let mut records = Vec::new();
+
+    for (line_number, line) in reader.lines().enumerate() {
+        let line = line?;
+        if line.trim().is_empty() || line.starts_with('#') {
+            continue;
+        }
+        seen += 1;
+        let parts = line.splitn(4, '\t').collect::<Vec<_>>();
+        if parts.len() < 4
+            || parts[0].is_empty()
+            || !phrase_candidate(parts[1], 1, cfg.max_phrase_codepoints)
+        {
+            skipped += 1;
+            continue;
+        }
+        let weight: f64 = parts[2].parse().with_context(|| {
+            format!(
+                "invalid explicit overlay weight {}:{}",
+                path.display(),
+                line_number + 1
+            )
+        })?;
+        records.push(SourceRecord {
+            qstring: parts[0].to_string(),
+            phrase: parts[1].to_string(),
+            weight,
+            source_id: OVERLAY_SOURCE_ID,
+            tags: format!("unigram,{}", parts[3]),
+        });
+    }
+
+    Ok((dedupe_records(records), seen, skipped))
+}
+
+pub fn parse_variant_demotions(path: &Path) -> Result<(Vec<VariantDemotionRecord>, usize, usize)> {
+    let file = File::open(path).with_context(|| format!("read {}", path.display()))?;
+    let reader = BufReader::new(file);
+    let mut seen = 0;
+    let mut skipped = 0;
+    let mut records = Vec::new();
+
+    for (line_number, line) in reader.lines().enumerate() {
+        let line = line?;
+        if line.trim().is_empty() || line.starts_with('#') {
+            continue;
+        }
+        seen += 1;
+        let parts = line.splitn(3, '\t').collect::<Vec<_>>();
+        if parts.len() < 3 || !phrase_candidate(parts[0], 1, 1) {
+            skipped += 1;
+            continue;
+        }
+        let max_weight: f64 = parts[1].parse().with_context(|| {
+            format!(
+                "invalid variant demotion weight {}:{}",
+                path.display(),
+                line_number + 1
+            )
+        })?;
+        if !max_weight.is_finite() {
+            bail!(
+                "invalid non-finite variant demotion weight {}:{}",
+                path.display(),
+                line_number + 1
+            );
+        }
+        records.push(VariantDemotionRecord {
+            phrase: parts[0].to_string(),
+            max_weight,
+            tags: format!("unigram,{}", parts[2]),
+        });
+    }
+
+    Ok((records, seen, skipped))
+}
+
 pub fn infer_overlay_qstrings(
     records: Vec<SourceRecord>,
     char_readings: &HashMap<String, String>,
@@ -272,6 +357,81 @@ fn rime_weight(score: i64, max_score: i64) -> f64 {
 
 fn round6(value: f64) -> f64 {
     (value * 1_000_000.0).round() / 1_000_000.0
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{parse_explicit_overlay, parse_variant_demotions};
+    use crate::config::Config;
+    use std::fs;
+    use std::path::PathBuf;
+
+    #[test]
+    fn parses_explicit_overlay_rows() {
+        let path = temp_file(
+            "explicit-overlay",
+            "# qstring\tphrase\tweight\ttags\nrq\t個\t-2.9\tmanual,neutral-tone\n",
+        );
+        let cfg = test_config();
+
+        let (records, seen, skipped) = parse_explicit_overlay(&path, &cfg).unwrap();
+
+        assert_eq!(seen, 1);
+        assert_eq!(skipped, 0);
+        assert_eq!(records.len(), 1);
+        assert_eq!(records[0].qstring, "rq");
+        assert_eq!(records[0].phrase, "個");
+        assert_eq!(records[0].weight, -2.9);
+        assert_eq!(records[0].tags, "unigram,manual,neutral-tone");
+
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn parses_variant_demotion_rows() {
+        let path = temp_file(
+            "variant-demotions",
+            "# phrase\tmax_weight\ttags\n个\t-3.6\topencc-variant-policy,simplified-form\n",
+        );
+
+        let (records, seen, skipped) = parse_variant_demotions(&path).unwrap();
+
+        assert_eq!(seen, 1);
+        assert_eq!(skipped, 0);
+        assert_eq!(records.len(), 1);
+        assert_eq!(records[0].phrase, "个");
+        assert_eq!(records[0].max_weight, -3.6);
+        assert_eq!(
+            records[0].tags,
+            "unigram,opencc-variant-policy,simplified-form"
+        );
+
+        let _ = fs::remove_file(path);
+    }
+
+    fn temp_file(name: &str, content: &str) -> PathBuf {
+        let path =
+            std::env::temp_dir().join(format!("chiakey-lexicon-{name}-{}.tsv", std::process::id()));
+        fs::write(&path, content).unwrap();
+        path
+    }
+
+    fn test_config() -> Config {
+        Config {
+            root: PathBuf::new(),
+            boneyard_db: PathBuf::new(),
+            release_version: "test".to_string(),
+            language_model_version: "test".to_string(),
+            minimum_app_version: "test".to_string(),
+            generated_at: "2026-06-23T00:00:00Z".to_string(),
+            release_base_url: "https://example.invalid".to_string(),
+            max_phrase_codepoints: 7,
+            rime_essay_min_score: 40,
+            dist_dir: PathBuf::new(),
+            normalized_path: PathBuf::new(),
+            manifest_path: PathBuf::new(),
+        }
+    }
 }
 
 fn parse_i64(value: impl AsRef<str>) -> Option<i64> {

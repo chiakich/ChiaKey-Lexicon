@@ -1,57 +1,112 @@
-# Chiaki KeyKey Lexicon
+# 千秋輸入法詞庫
 
-Chiaki KeyKey Lexicon is the data-side repository for Chiaki KeyKey.
+[English](README.en.md)
 
-The main app repository should stay focused on the macOS input method runtime, database reader, builder scripts, installation tooling, and a small bundled fallback database. This repository owns the evolving lexicon data, source manifests, license notes, normalized intermediate data, release database artifacts, checksums, and changelog.
+千秋輸入法詞庫（ChiaKey Lexicon）是千秋輸入法（ChiaKey）的詞庫資料 repository。
 
-## Intended Split
+主 app repository 應該專注在 macOS 輸入法 runtime、資料庫讀取、builder script、安裝工具，以及一份小型 bundled fallback database。這個 repository 則負責持續演進的詞庫資料、來源 manifest、授權紀錄、normalized intermediate data、release database artifacts、checksums 與 changelog。
 
-`Chiaki-KeyKey` owns:
+## 分工
 
-1. macOS IMK runtime.
-2. Input engine integration.
-3. Database schema and reader.
-4. Builder scripts that can consume this repo's normalized data.
-5. A bundled fallback `KeyKeySource.db`.
+`ChiaKey` 負責：
 
-`Chiaki-KeyKey-Lexicon` owns:
+1. macOS IMK runtime。
+2. 輸入引擎整合。
+3. 資料庫 schema 與 reader。
+4. 可消費此 repo normalized data 的 builder script。
+5. bundled fallback `KeyKeySource.db`。
 
-1. Source manifests.
-2. Source license and attribution records.
-3. Normalized lexicon data.
-4. Release-ready `KeyKeySource` database artifacts.
-5. Checksums or signatures.
-6. Lexicon release changelog.
+`ChiaKey-Lexicon` 負責：
 
-## Current Status
+1. source manifests。
+2. source license 與 attribution records。
+3. normalized lexicon data。
+4. release-ready `KeyKeySource` database artifacts。
+5. checksums 或 signatures。
+6. lexicon release changelog。
 
-This repository now has a seed release pipeline. The latest seed release is `2026.06.6`.
+## 目前狀態
 
-The current release packages the known-working KeyKey Boneyard database shape, restores the original KeyKey BPMF punctuation CIN rows, canned-message prepopulated service data, and module CIN tables needed by runtime punctuation, symbol, generic-input, and correction lookup, then layers in libchewing-data as the main Traditional Chinese / Zhuyin lexicon source, a public-domain extended BPMF character table for missing single-character readings, Rime essay as a low-priority supplemental phrase source, and a small Chiaki-owned overlay for hands-on input-method fixes.
+這個 repository 已有可運作的 seed release pipeline。push 到 `main` 會透過 GitHub Actions 建置並發布版本化詞庫 release。
 
-Start with:
+目前 pipeline 會從已審查來源資料、專案維護修正、生成 metadata、source inventories 與 checksum manifests 建出完整的 `KeyKeySource.db`。本機 release artifacts 會輸出到 `dist/<version>/`，CI 則會上傳到 GitHub Releases。
 
-- [Docs/ImplementationGuide.md](Docs/ImplementationGuide.md)
+建議先看：
+
 - [Docs/ReleaseFlow.zh-TW.md](Docs/ReleaseFlow.zh-TW.md)
 - [Docs/SourceReview.md](Docs/SourceReview.md)
 
-Fetch pinned external source files with:
+下載 pinned external source files：
 
 ```sh
 cargo run --release -- fetch-modern-sources
 ```
 
-Then build the local release package with:
+建立本機 release package：
 
 ```sh
 cargo run --release -- prepare-release
 ```
 
-## Proposed Layout
+## 架構
+
+這個 repository 以可重現的資料 pipeline 為核心：
+
+1. `sources/<source-id>/` 放每個已審查 input source、本地 README，以及 `source-inventory.sha256` provenance file。
+2. `LICENSES/` 記錄每個可公開 release source 所需的 license text 或 license notes。
+3. `src/` 是 Rust release toolchain，負責驗證 inputs、將資料層匯入 KeyKey database shape、寫出 normalized TSV、更新 release metadata、產生 manifests。
+4. `normalized/smart-mandarin.tsv` 是 Smart Mandarin language-model rows 的 generated normalized interchange view。
+5. `manifests/lexicon-manifest.json` 是 app 端消費的 generated update contract。
+6. `dist/<version>/` 是本機 release artifacts staging 目錄，不 commit。
+
+資料層大致分成四類：
+
+1. **Runtime compatibility data**：app 既有 database reader 與 input modules 需要的 KeyKey-origin data。
+2. **Lexicon sources**：現代繁中 / 注音詞彙，以及補充字詞 coverage。
+3. **Project-owned corrections**：小型 overlay，用來修已知輸入缺漏、指定讀音、調整候選排序。
+4. **Policy layers**：小型已審查規則，讓預設繁中 release 符合 app 的語言與地區期待。
+
+## 目前資料來源
+
+這個 repository 目前採用的資料來源分成「相容性基底」、「現代詞庫」、「補充 coverage」與「維護政策」幾層。每個 source 都有明確責任，release builder 會按固定順序整合，避免不同來源互相覆蓋到不可追蹤。
+
+| Source | 為什麼選用 | 負責什麼 |
+| --- | --- | --- |
+| `keykey-boneyard-bootstrap` | ChiaKey 的 runtime 和 database reader 原本就建立在 KeyKey / Yahoo KeyKey 的資料形狀上；用 cooked bootstrap DB 可以保留既有 schema、metadata 與基本注音資料。 | 作為 release DB 的初始基底。builder 先複製這份 `KeyKeySource.db`，後續 sources 再疊加或替換資料。 |
+| `keykey-punctuations-cin` | 標點不是一般詞彙，但 Smart Mandarin runtime 會查 `_punctuation_*`、`_ctrl_*` 等 key；缺少時 app 端會拒絕或得到空符號表。 | 從原始 `bpmf-punctuations.cin` 匯入 BPMF 標點與符號列表，寫入 `unigrams` 和 `Mandarin-bpmf-cin`。 |
+| `keykey-prepopulated-service-data` | canned messages 仍是 ChiaKey 會讀取的預載資料，需要跟 release DB 一起提供，並帶正值 timestamp 才不會被 user DB 空資料蓋掉。 | 寫入 `prepopulated_service_data/canned_messages` 和 `canned_messages_timestamp`。已移除不用的 OneKey service data。 |
+| `keykey-module-cin` | KeyKey runtime 不只讀 Smart Mandarin 詞庫，也可能讀其他 module tables；這些表不是主要注音詞庫，但缺少會造成相容性破洞。 | 匯入 `Generic-cj-cin`、`Generic-simplex-cin`、倉頡標點表與 `BopomofoCorrection-bopomofo-correction-cin`。 |
+| `libchewing-data` | libchewing-data 是活躍維護的繁中注音資料來源，包含明確注音讀音，比只靠舊 KeyKey bootstrap 推導更可靠。 | 作為主要現代詞庫層。`tsi.csv`、`alt.csv` 提供詞與替代讀音；`word.csv` 補單字讀音；單字頻率也用來修正常用字排序。 |
+| `bpmf-ext-cin` | libchewing 和 bootstrap 仍可能缺少單字候選；這份 public-domain CIN 表可以補足單字 coverage。 | 只補 CJK BMP 單字的缺失 `(reading, character)` pair，不覆蓋 libchewing 或 bootstrap 既有權重。 |
+| `rime-essay` | Rime essay 有較廣的現代詞彙與語言模型分數，但沒有注音讀音；適合當低優先補充層，而不是主詞庫。 | 僅在詞尚未存在、分數達門檻、長度合理，且每個字都能從目前 DB 推得 primary reading 時匯入。 |
+| `chiakey-modern-overlay` | 真實打字測試會發現少量立即需要修的缺漏或排序問題；這些修正應由專案自己維護，不能等大型來源更新。 | 補專案自有詞、指定明確 qstring，或針對已知 case 調整候選排序，例如 neutral-tone `ㄍㄜ˙` / `ek7`。 |
+| `opencc-variant-policy` | 預設繁中輸入法不應讓簡體或非台灣慣用字因 tie-break 排在繁體字前面。OpenCC 可作為 variant knowledge 的參考，但不當作頻率詞典匯入。 | 用小型 policy table 降低指定 variant 的最大權重，例如讓 `个` 不會排在 `個` 前面。 |
+
+## 整合方式
+
+release builder 的整合流程是 deterministic 的：
+
+1. 先驗證每個必要 source file 存在，並為各 source 產生 `source-inventory.sha256`。
+2. 複製 `keykey-boneyard-bootstrap` 的 cooked `KeyKeySource.db` 作為基底。
+3. 匯入 `libchewing-data`，以明確注音資料補強現代詞彙；libchewing phrase 會替換 bootstrap 中同詞的舊推導資料。
+4. 匯入 `bpmf-ext-cin`，只補缺少的單字讀音，不覆蓋既有資料。
+5. 匯入 `rime-essay`，只加入目前 DB 尚無、且能安全推得注音的補充詞。
+6. 匯入 `chiakey-modern-overlay/phrases.tsv`，讓專案自有修正可以替換已知問題詞。
+7. 套用 `opencc-variant-policy`，降低不符合預設繁中期待的 variant 權重。
+8. 匯入 `chiakey-modern-overlay/explicit.tsv`，處理需要指定 qstring 或排序的精準修正。
+9. 補入 runtime compatibility data：BPMF 標點、canned messages、module CIN tables。
+10. 執行 runtime-required validations，寫出 normalized TSV、release metadata、manifest 與 checksums。
+
+整合後，每筆可追蹤的詞庫 row 會帶有 source path、source kind、checksum 與 tags；app 端消費的是最後生成的 `KeyKeySource.db` 和 `lexicon-manifest.json`，維護端則可從 `normalized/smart-mandarin.tsv` 和 metadata 回查來源。
+
+各來源的授權、redistribution decision 與風險紀錄放在 [Docs/SourceReview.md](Docs/SourceReview.md)。日常 release 操作放在 [Docs/ReleaseFlow.zh-TW.md](Docs/ReleaseFlow.zh-TW.md)。
+
+## Repository 目錄
 
 ```text
 Docs/
-  ImplementationGuide.md
+  ReleaseFlow.zh-TW.md
+  SourceReview.md
 LICENSES/
   README.md
 src/
@@ -66,11 +121,11 @@ sources/
   .gitkeep
 ```
 
-Built release artifacts are not tracked in git. Use a local staging directory such as `dist/`, then upload the artifacts to GitHub Releases.
+建置完成的 release artifacts 不會 commit 進 git。請用 `dist/` 之類的本機 staging 目錄，再由 GitHub Releases 發布 artifacts。
 
-## Release Shape
+## Release 內容
 
-A GitHub Release should publish:
+GitHub Release 應發布：
 
 ```text
 KeyKeySource-YYYY.MM.N.db
@@ -79,18 +134,18 @@ lexicon-manifest.json
 SHA256SUMS
 ```
 
-The main app should download and verify `lexicon-manifest.json`, then install a compatible `KeyKeySource` database into:
+主 app 應下載並驗證 `lexicon-manifest.json`，再把相容的 `KeyKeySource` database 安裝到：
 
 ```text
-~/Library/Application Support/Chiaki KeyKey/Lexicons/
+~/Library/Application Support/ChiaKey/Lexicons/
 ```
 
-Runtime database loading should fall back to the bundled database if the active external database is missing, invalid, or incompatible.
+runtime 載入資料庫時，若 active external database 不存在、無效或不相容，應 fallback 到 bundled database。
 
-## License Policy
+## 授權政策
 
-Rust release tooling and repository scripts are licensed under the MIT License; see [LICENSE-CODE](LICENSE-CODE).
+Rust release tooling 與 repository scripts 使用 MIT License；見 [LICENSE-CODE](LICENSE-CODE)。
 
-There is no repository-wide data license yet.
+詞庫資料沒有單一 repository-wide license。
 
-Every source must declare its own license before it can be used in a public release. Unknown-license data may be used only for local experiments and must not be included in release artifacts.
+每個 source 都必須在公開 release 前宣告自己的 license。未知授權資料只能做本機實驗，不可包含在 public release artifacts。

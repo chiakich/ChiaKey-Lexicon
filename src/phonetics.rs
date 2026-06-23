@@ -258,4 +258,9 @@ mod tests {
     fn converts_wo3_to_expected_keykey_qstring() {
         assert_eq!(qstring_for_bpmf_sequence("ㄨㄛˇ").unwrap().0, "}Q");
     }
+
+    #[test]
+    fn converts_neutral_ge_to_expected_keykey_qstring() {
+        assert_eq!(qstring_for_bpmf_sequence("ㄍㄜ˙").unwrap().0, "rq");
+    }
 }
