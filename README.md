@@ -25,13 +25,12 @@ The main app repository should stay focused on the macOS input method runtime, d
 
 ## Current Status
 
-This repository now has a seed release pipeline. The latest seed release is `2026.06.6`.
+This repository has an active seed release pipeline. Pushes to `main` build and publish versioned lexicon releases through GitHub Actions.
 
-The current release packages the known-working KeyKey Boneyard database shape, restores the original KeyKey BPMF punctuation CIN rows, canned-message prepopulated service data, and module CIN tables needed by runtime punctuation, symbol, generic-input, and correction lookup, then layers in libchewing-data as the main Traditional Chinese / Zhuyin lexicon source, a public-domain extended BPMF character table for missing single-character readings, Rime essay as a low-priority supplemental phrase source, a small Chiaki-owned overlay for hands-on input-method fixes, and an OpenCC-derived Traditional Chinese variant policy for obvious simplified-form demotions.
+The current pipeline builds a complete `KeyKeySource.db` from reviewed source data, project-owned corrections, generated metadata, source inventories, and checksum manifests. Release artifacts are produced under `dist/<version>/` locally and uploaded to GitHub Releases by CI.
 
 Start with:
 
-- [Docs/ImplementationGuide.md](Docs/ImplementationGuide.md)
 - [Docs/ReleaseFlow.zh-TW.md](Docs/ReleaseFlow.zh-TW.md)
 - [Docs/SourceReview.md](Docs/SourceReview.md)
 
@@ -47,11 +46,32 @@ Then build the local release package with:
 cargo run --release -- prepare-release
 ```
 
-## Proposed Layout
+## Architecture
+
+The repository is organized around a reproducible data pipeline:
+
+1. `sources/<source-id>/` holds each reviewed input source, its local README, and a `source-inventory.sha256` provenance file.
+2. `LICENSES/` records the license text or license notes needed for every source that can ship in a public release.
+3. `src/` contains the Rust release toolchain. It verifies inputs, imports data layers into the KeyKey database shape, writes normalized TSV output, updates release metadata, and generates manifests.
+4. `normalized/smart-mandarin.tsv` is the generated normalized interchange view of the Smart Mandarin language-model rows.
+5. `manifests/lexicon-manifest.json` is the generated update contract consumed by the app.
+6. `dist/<version>/` is local staging for release artifacts and is not committed.
+
+The data layers fall into four broad groups:
+
+1. **Runtime compatibility data**: reviewed KeyKey-origin data needed by the app's existing database reader and input modules.
+2. **Lexicon sources**: modern Traditional Chinese / Zhuyin vocabulary and supplemental character or phrase coverage.
+3. **Project-owned corrections**: small overlays for known typing misses, explicit reading fixes, and candidate ordering adjustments.
+4. **Policy layers**: small reviewed rules that keep the default Traditional Chinese release aligned with the app's language and region expectations.
+
+Detailed source-by-source license and redistribution decisions live in [Docs/SourceReview.md](Docs/SourceReview.md). Day-to-day release mechanics live in [Docs/ReleaseFlow.zh-TW.md](Docs/ReleaseFlow.zh-TW.md).
+
+## Repository Layout
 
 ```text
 Docs/
-  ImplementationGuide.md
+  ReleaseFlow.zh-TW.md
+  SourceReview.md
 LICENSES/
   README.md
 src/

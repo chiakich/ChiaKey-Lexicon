@@ -8,21 +8,11 @@
 - `main`：release 分支。合併到 `main` 代表要發一版新的公開詞庫。
 - feature branch：較大的實驗或調整可以先從 `dev` 分出，完成後開 PR 回 `dev`。
 
-## 來源策略
+## 文件分工
 
-目前詞庫由九層組成：
-
-1. KeyKey Boneyard bootstrap：repo 內 vendored 一份 cooked DB，路徑是 `sources/keykey-boneyard-bootstrap/vendor/KeyKeySource.db`。這讓 CI 和 release build 不需要依賴本機的 `../KeyKey-Boneyard` checkout。
-2. KeyKey BPMF punctuation table：repo 內 vendored 原始 KeyKey 標點 CIN，路徑是 `sources/keykey-punctuations-cin/vendor/bpmf-punctuations.cin`。release builder 只匯入 `%chardef` 裡 `_punctuation_` / `_ctrl_` 開頭的 rows，供 Smart Mandarin runtime 查標點候選。
-3. KeyKey prepopulated service data：repo 內 vendored 原始 KeyKey `CannedMessages.plist`，路徑是 `sources/keykey-prepopulated-service-data/vendor/`。release builder 會把完整 plist 內容寫進 `prepopulated_service_data`，並補上正值 timestamp。OneKey 是 Yahoo 時代的 URL launcher，不屬於輸入詞庫資料，現代 Chiaki KeyKey 不再載入，因此 release 不產生 `onekey_services` 或 `onekey_services_timestamp`。
-4. KeyKey module CIN tables：repo 內 vendored 原始 KeyKey 泛用輸入法、標點與注音文校正 CIN，路徑是 `sources/keykey-module-cin/vendor/`。release builder 會建立 module SQLite tables，例如 `Generic-cj-cin`、`Generic-simplex-cin`、`BopomofoCorrection-bopomofo-correction-cin`，不併入 Smart Mandarin language model。
-5. libchewing-data：維持 upstream pinned source，不把完整 upstream repo 複製進來。用 `cargo run --release -- fetch-modern-sources` 下載固定版本與 SHA-256。
-6. bpmf-ext-cin：repo 內 vendored 一份 Public Domain extended BPMF 單字表，路徑是 `sources/bpmf-ext-cin/vendor/bpmf-ext.cin`，只用來補缺的 CJK BMP 單字讀音。
-7. Rime essay：維持 upstream pinned source，只抓固定 commit 的 `essay.txt` 與 license。
-8. Chiaki modern overlay：repo 直接維護的小型人工補詞與指定 qstring 修正，路徑是 `sources/chiaki-modern-overlay/phrases.tsv` 與 `sources/chiaki-modern-overlay/explicit.tsv`。
-9. OpenCC-derived Traditional Chinese variant policy：repo 內維護的小型字形偏好表，路徑是 `sources/opencc-variant-policy/variant-demotions.tsv`。這層不是頻率詞庫，只用來在繁中 release 裡降低簡體或非台灣偏好異體的排序。
-
-`sources/keykey-boneyard-bootstrap/source-inventory.sha256` 是 bootstrap DB 的 provenance，記錄當初 cooked DB 來自哪些 KeyKey Boneyard 檔案與 SHA-256。release builder 實際讀取的是 vendored cooked DB。
+- 專案架構與資料管線總覽放在 [README.md](../README.md)。
+- 來源授權、redistribution decision、source inventory 說明放在 [SourceReview.md](SourceReview.md)。
+- 這份文件只記錄 release branch、CI/CD、建置與發布流程。
 
 ## 本機建置
 
@@ -86,7 +76,7 @@ workflow 會做：
 4. 執行 `cargo run --release -- fetch-modern-sources`。
 5. 執行 `cargo run --release -- prepare-release`。
 6. 驗證 `SHA256SUMS`。
-7. 用 SQLite smoke test 確認基本候選詞存在。
+7. 用 SQLite smoke tests 確認 release DB 符合 app 端需要的基本合約。
 8. 建立 GitHub Release 並上傳 DB、metadata、manifest、checksum。
 
 `dist/` 是本機與 CI 的 staging 目錄，不 commit 進 git。公開 artifacts 以 GitHub Release 為準。
@@ -115,9 +105,6 @@ dev -> main
 
 - GitHub Release 有四個 artifacts：`KeyKeySource-<version>.db`、`KeyKeySource-<version>.json`、`lexicon-manifest.json`、`SHA256SUMS`。
 - `SHA256SUMS` 驗證通過。
-- `lexicon-manifest.json` 裡的 artifact URL 指向該 release tag。
-- 常見測試詞如 `測試輸入`、`輸入法`、`台灣`、`人工智慧`、`小紅書` 存在於 `unigrams.current`。
-- `ㄍㄜ˙` / `ek7` 的 top candidate 是 `個`，避免 `个` 因同分排序跑到前面。
-- Smart Mandarin 標點查表 key 存在於 `unigrams` 與 `Mandarin-bpmf-cin`，至少包含 `_punctuation_< -> ，`、`_punctuation_Standard_< -> ，`，且 `_punctuation_list` 至少 50 筆。
-- `prepopulated_service_data` 存在 `canned_messages`、`canned_messages_timestamp`，plist payload 長度大於 1000，timestamp 是正整數；且不得包含 obsolete OneKey keys：`onekey_services`、`onekey_services_timestamp`。
-- Module CIN tables 存在且有合理 row count：`Generic-cj-cin`、`Generic-simplex-cin`、`Punctuations-cj-halfwidth-cin`、`Punctuations-cj-mixedwidth-cin`、`BopomofoCorrection-bopomofo-correction-cin`。
+- `lexicon-manifest.json` 裡的 artifact URL 指向該 release tag，且 manifest version 與 release tag 一致。
+- GitHub Actions 的 release job 完整通過，包括 Rust tests、source fetch、artifact build、checksum validation、SQLite smoke tests。
+- 若有 app 端相容性變更，使用新版 app 在乾淨 profile 裡確認 manifest 下載、DB 驗證、安裝與 fallback 行為。
