@@ -1,6 +1,6 @@
 # KeyKey Boneyard Bootstrap Source
 
-這個來源是 Chiaki KeyKey Lexicon 的基礎 bootstrap 層。
+這個來源是 ChiaKey Lexicon 的基礎 bootstrap 層。
 
 為了讓 CI 與 release build 不依賴本機的 `../KeyKey-Boneyard` checkout，repo 內保留一份已知可用的 cooked database：
 

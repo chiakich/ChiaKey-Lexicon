@@ -34,7 +34,7 @@ pub fn run() -> Result<()> {
 
 fn curl(url: &str) -> Result<Vec<u8>> {
     let output = Command::new("curl")
-        .args(["-fsSL", "-A", "chiaki-keykey-lexicon-fetcher", url])
+        .args(["-fsSL", "-A", "chiakey-lexicon-fetcher", url])
         .output()
         .context("run curl")?;
     if !output.status.success() {

@@ -14,7 +14,7 @@ The release builder stores the complete plist contents in `prepopulated_service_
 under `canned_messages`, and writes a positive release timestamp under
 `canned_messages_timestamp`.
 
-OneKey service data is intentionally omitted. Modern Chiaki KeyKey no longer
+OneKey service data is intentionally omitted. Modern ChiaKey no longer
 loads the Yahoo-era OneKey URL launcher, so releases must not ship
 `onekey_services` or `onekey_services_timestamp`.
 

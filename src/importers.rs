@@ -410,10 +410,8 @@ mod tests {
     }
 
     fn temp_file(name: &str, content: &str) -> PathBuf {
-        let path = std::env::temp_dir().join(format!(
-            "chiaki-keykey-lexicon-{name}-{}.tsv",
-            std::process::id()
-        ));
+        let path =
+            std::env::temp_dir().join(format!("chiakey-lexicon-{name}-{}.tsv", std::process::id()));
         fs::write(&path, content).unwrap();
         path
     }

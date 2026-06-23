@@ -1,14 +1,14 @@
-# Chiaki KeyKey Lexicon
+# ChiaKey Lexicon
 
 [中文](README.md)
 
-Chiaki KeyKey Lexicon is the data-side repository for Chiaki KeyKey.
+ChiaKey Lexicon is the data-side repository for 千秋輸入法 (ChiaKey).
 
 The main app repository should stay focused on the macOS input method runtime, database reader, builder scripts, installation tooling, and a small bundled fallback database. This repository owns the evolving lexicon data, source manifests, license notes, normalized intermediate data, release database artifacts, checksums, and changelog.
 
 ## Intended Split
 
-`Chiaki-KeyKey` owns:
+`ChiaKey` owns:
 
 1. macOS IMK runtime.
 2. Input engine integration.
@@ -16,7 +16,7 @@ The main app repository should stay focused on the macOS input method runtime, d
 4. Builder scripts that can consume this repo's normalized data.
 5. A bundled fallback `KeyKeySource.db`.
 
-`Chiaki-KeyKey-Lexicon` owns:
+`ChiaKey-Lexicon` owns:
 
 1. Source manifests.
 2. Source license and attribution records.
@@ -104,7 +104,7 @@ SHA256SUMS
 The main app should download and verify `lexicon-manifest.json`, then install a compatible `KeyKeySource` database into:
 
 ```text
-~/Library/Application Support/Chiaki KeyKey/Lexicons/
+~/Library/Application Support/ChiaKey/Lexicons/
 ```
 
 Runtime database loading should fall back to the bundled database if the active external database is missing, invalid, or incompatible.

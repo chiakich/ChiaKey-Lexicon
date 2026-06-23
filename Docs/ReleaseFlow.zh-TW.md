@@ -1,6 +1,6 @@
 # 詞庫 Release 流程
 
-這份文件記錄 Chiaki KeyKey Lexicon 目前的 release 流程。原則是：日常開發走 `dev`，只有準備發版時才合併到 `main`，而 `main` 每次更新都會產生一版新的詞庫 release。
+這份文件記錄千秋輸入法詞庫（ChiaKey Lexicon）目前的 release 流程。原則是：日常開發走 `dev`，只有準備發版時才合併到 `main`，而 `main` 每次更新都會產生一版新的詞庫 release。
 
 ## Branch 角色
 

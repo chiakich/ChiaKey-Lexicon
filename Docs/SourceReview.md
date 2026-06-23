@@ -9,9 +9,9 @@ Last reviewed: 2026-06-23
 - Name: KeyKey Boneyard bootstrap data
 - Local release input: `sources/keykey-boneyard-bootstrap/vendor/KeyKeySource.db`
 - Upstream archive: <https://github.com/vChewing/KeyKey-Boneyard>
-- Current fork note: <https://github.com/akira02/Chiaki-KeyKey>
+- Current fork note: <https://github.com/akira02/ChiaKey>
 - License: BSD-3-Clause-style Yahoo! KeyKey upstream license
-- Attribution: Yahoo! Inc., OpenVanilla contributors, KeyKey Boneyard / Chiaki KeyKey maintainers
+- Attribution: Yahoo! Inc., OpenVanilla contributors, KeyKey Boneyard / ChiaKey maintainers
 - Redistribution decision: included for the first public seed release
 
 This repository vendors only the cooked bootstrap database needed by the release builder:
@@ -46,7 +46,7 @@ The manifest records the SHA-256 of that inventory file, not a single raw upstre
 - Local source: `sources/keykey-punctuations-cin/vendor/bpmf-punctuations.cin`
 - Upstream source file: <https://github.com/vChewing/KeyKey-Boneyard/blob/master/YahooKeyKey-Source-1.1.2528/DataTables/bpmf-punctuations.cin>
 - License: BSD-3-Clause-style Yahoo! KeyKey upstream license
-- Attribution: Yahoo! Inc., OpenVanilla contributors, KeyKey Boneyard / Chiaki KeyKey maintainers
+- Attribution: Yahoo! Inc., OpenVanilla contributors, KeyKey Boneyard / ChiaKey maintainers
 - Redistribution decision: included for public releases starting in `2026.06.6`
 
 This source restores the original KeyKey runtime punctuation lookup rows. The release builder imports only rows inside `%chardef` whose keys start with `_punctuation_` or `_ctrl_`, and writes them to both `unigrams` and `Mandarin-bpmf-cin`.
@@ -70,12 +70,12 @@ sources/keykey-punctuations-cin/source-inventory.sha256
 - Local source: `sources/keykey-prepopulated-service-data/vendor/`
 - Upstream source directory: <https://github.com/vChewing/KeyKey-Boneyard/tree/master/YahooKeyKey-Source-1.1.2528/Distributions/Takao/OnlineData>
 - License: BSD-3-Clause-style Yahoo! KeyKey upstream license
-- Attribution: Yahoo! Inc., OpenVanilla contributors, KeyKey Boneyard / Chiaki KeyKey maintainers
+- Attribution: Yahoo! Inc., OpenVanilla contributors, KeyKey Boneyard / ChiaKey maintainers
 - Redistribution decision: included for public releases starting in `2026.06.6`
 
 This source restores the original KeyKey prepopulated canned-message payload. The release builder writes the complete `CannedMessages.plist` contents to `prepopulated_service_data` as `canned_messages`, then writes a positive release timestamp as `canned_messages_timestamp`.
 
-`OneKey.plist` is intentionally omitted from public releases. OneKey was a Yahoo-era URL launcher rather than input lexicon data, and modern Chiaki KeyKey no longer loads it. New release databases must not contain `onekey_services` or `onekey_services_timestamp`.
+`OneKey.plist` is intentionally omitted from public releases. OneKey was a Yahoo-era URL launcher rather than input lexicon data, and modern ChiaKey no longer loads it. New release databases must not contain `onekey_services` or `onekey_services_timestamp`.
 
 The generated source inventory is stored at:
 
@@ -89,7 +89,7 @@ sources/keykey-prepopulated-service-data/source-inventory.sha256
 - Local source: `sources/keykey-module-cin/vendor/`
 - Upstream source directory: <https://github.com/vChewing/KeyKey-Boneyard/tree/master/YahooKeyKey-Source-1.1.2528/DataTables>
 - License: BSD-3-Clause-style Yahoo! KeyKey upstream license / Public Domain source tables
-- Attribution: Yahoo! Inc., OpenVanilla contributors, opendesktop.org.tw CIN contributors, KeyKey Boneyard / Chiaki KeyKey maintainers
+- Attribution: Yahoo! Inc., OpenVanilla contributors, opendesktop.org.tw CIN contributors, KeyKey Boneyard / ChiaKey maintainers
 - Redistribution decision: included for public releases starting in `2026.06.6`
 
 This source restores module SQLite tables used by KeyKey runtime modules outside the Smart Mandarin language model:
@@ -121,14 +121,14 @@ Some bootstrap files inherited from the open KeyKey Boneyard tree have historica
 
 ## Included Starting in 2026.06.2
 
-### chiaki-modern-overlay
+### chiakey-modern-overlay
 
-- Name: Chiaki modern overlay phrases
+- Name: ChiaKey modern overlay phrases
 - Local source:
-  - `sources/chiaki-modern-overlay/phrases.tsv`
-  - `sources/chiaki-modern-overlay/explicit.tsv`
+  - `sources/chiakey-modern-overlay/phrases.tsv`
+  - `sources/chiakey-modern-overlay/explicit.tsv`
 - License: CC0-1.0
-- Attribution: Chiaki KeyKey Lexicon maintainers
+- Attribution: ChiaKey Lexicon maintainers
 - Redistribution decision: included for public releases
 
 This source is intentionally small and project-owned. It is used for obvious seed lexicon misses discovered during hands-on testing, such as basic input-method phrases that should not depend on a future large frequency corpus.
@@ -143,7 +143,7 @@ This source is intentionally small and project-owned. It is used for obvious see
 - Local source: `sources/opencc-variant-policy/variant-demotions.tsv`
 - Upstream reference: <https://github.com/BYVoid/OpenCC>
 - License: Apache-2.0-derived policy
-- Attribution: OpenCC contributors; Chiaki KeyKey Lexicon maintainers
+- Attribution: OpenCC contributors; ChiaKey Lexicon maintainers
 - Redistribution decision: included for public releases starting in `2026.06.7`
 
 This source is a small reviewed policy table derived from OpenCC's simplified/traditional conversion knowledge. It is not imported as a frequency dictionary. The release builder uses it only to lower Simplified or non-Taiwan-preferred variants when those variants otherwise tie with Traditional Chinese candidates.

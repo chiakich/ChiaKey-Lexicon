@@ -551,7 +551,7 @@ fn print_summary(
     counts: &Value,
     import_results: &[ImportResult],
 ) {
-    println!("Prepared Chiaki KeyKey Lexicon {}", cfg.release_version);
+    println!("Prepared ChiaKey Lexicon {}", cfg.release_version);
     println!("  DB: {}", paths.db.display());
     println!("  Metadata: {}", paths.metadata.display());
     println!("  Manifest: {}", cfg.manifest_path.display());
