@@ -242,6 +242,193 @@ jobs:
             exit 1
           fi
 
+      - name: Generate release notes
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${{ steps.version.outputs.version }}"
+          release_dir="dist/${version}"
+          metadata="${release_dir}/KeyKeySource-${version}.json"
+          notes="${release_dir}/RELEASE_NOTES.md"
+
+          previous_tag="$(git tag --sort=-v:refname | grep -v "^${version}$" | head -n 1 || true)"
+          if [[ -n "$previous_tag" ]]; then
+            range="${previous_tag}..${GITHUB_SHA}"
+            git log --format='%h%x09%s' "$range" > "${release_dir}/commit-summary.tsv"
+            git diff --name-only "$range" > "${release_dir}/changed-files.txt" || true
+          else
+            git log -1 --format='%h%x09%s' "$GITHUB_SHA" > "${release_dir}/commit-summary.tsv"
+            git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" > "${release_dir}/changed-files.txt" || true
+          fi
+
+          VERSION="$version" \
+          PREVIOUS_TAG="$previous_tag" \
+          GITHUB_SHA="$GITHUB_SHA" \
+          METADATA_PATH="$metadata" \
+          COMMIT_SUMMARY_PATH="${release_dir}/commit-summary.tsv" \
+          CHANGED_FILES_PATH="${release_dir}/changed-files.txt" \
+          CHECKSUMS_PATH="${release_dir}/SHA256SUMS" \
+          NOTES_PATH="$notes" \
+          python3 <<'PY'
+          import json
+          import os
+          import re
+          from collections import defaultdict
+          from pathlib import Path
+
+          version = os.environ["VERSION"]
+          previous_tag = os.environ.get("PREVIOUS_TAG") or ""
+          sha = os.environ["GITHUB_SHA"]
+          metadata = json.loads(Path(os.environ["METADATA_PATH"]).read_text())
+          commits_path = Path(os.environ["COMMIT_SUMMARY_PATH"])
+          changed_files_path = Path(os.environ["CHANGED_FILES_PATH"])
+          checksums_path = Path(os.environ["CHECKSUMS_PATH"])
+          notes_path = Path(os.environ["NOTES_PATH"])
+
+          commits = []
+          if commits_path.exists():
+              for line in commits_path.read_text().splitlines():
+                  if "\t" not in line:
+                      continue
+                  short_sha, subject = line.split("\t", 1)
+                  commits.append((short_sha, subject))
+
+          grouped = defaultdict(list)
+          for short_sha, subject in commits:
+              match = re.match(r"([a-z]+)(?:\([^)]+\))?!?:\s*(.+)", subject)
+              if match:
+                  group, title = match.groups()
+              else:
+                  group, title = "other", subject
+              grouped[group].append((short_sha, title))
+
+          group_titles = {
+              "feat": "Features",
+              "fix": "Fixes",
+              "chore": "Maintenance",
+              "docs": "Docs",
+              "ci": "CI",
+              "refactor": "Refactors",
+              "test": "Tests",
+              "perf": "Performance",
+              "other": "Other",
+          }
+
+          counts = metadata["database"]["counts"]
+          db = metadata["database"]
+          normalized = metadata.get("normalized", {})
+
+          def fmt_int(value):
+              return f"{int(value):,}"
+
+          def size_mb(size):
+              return f"{int(size) / 1024 / 1024:.1f} MiB"
+
+          def commit_line(item):
+              short_sha, title = item
+              return f"- `{short_sha}` {title}"
+
+          lines = []
+          lines.append(f"Automated ChiaKey lexicon release `{version}`.")
+          lines.append("")
+          lines.append("## Summary")
+          lines.append("")
+          lines.append(f"- Database: `{db['filename']}` ({size_mb(db['size'])})")
+          lines.append(f"- Unigrams: {fmt_int(counts.get('unigrams', 0))}")
+          lines.append(f"- Candidate rows: {fmt_int(counts.get('candidate_rows', 0))}")
+          lines.append(
+              f"- Associated phrases: {fmt_int(counts.get('associated_phrase_rows', 0))} heads / "
+              f"{fmt_int(counts.get('associated_phrase_tails', 0))} tails"
+          )
+          lines.append(f"- Mandarin BPMF rows: {fmt_int(counts.get('mandarin_bpmf_cin_rows', 0))}")
+          lines.append(f"- Bopomofo correction rows: {fmt_int(counts.get('bopomofo_correction_rows', 0))}")
+          if normalized:
+              lines.append(f"- Generated normalized rows: {fmt_int(normalized.get('rows', 0))}")
+          if previous_tag:
+              lines.append(f"- Changes summarized from `{previous_tag}` to `{sha[:7]}`")
+          else:
+              lines.append(f"- Changes summarized at `{sha[:7]}`")
+
+          lines.append("")
+          lines.append("## Changes")
+          lines.append("")
+          if commits:
+              for group in ["feat", "fix", "chore", "docs", "ci", "refactor", "test", "perf", "other"]:
+                  items = grouped.get(group, [])
+                  if not items:
+                      continue
+                  lines.append(f"### {group_titles.get(group, group.title())}")
+                  for item in items[:8]:
+                      lines.append(commit_line(item))
+                  if len(items) > 8:
+                      lines.append(f"- ...and {len(items) - 8} more in the full commit list below.")
+                  lines.append("")
+          else:
+              lines.append("- No commit metadata found for this release range.")
+              lines.append("")
+
+          lines.append("<details>")
+          lines.append("<summary>Full commit list</summary>")
+          lines.append("")
+          if commits:
+              for item in commits:
+                  lines.append(commit_line(item))
+          else:
+              lines.append("_No commits found._")
+          lines.append("")
+          lines.append("</details>")
+          lines.append("")
+
+          changed_files = changed_files_path.read_text().splitlines() if changed_files_path.exists() else []
+          lines.append("<details>")
+          lines.append(f"<summary>Changed files ({len(changed_files)})</summary>")
+          lines.append("")
+          if changed_files:
+              lines.append("```text")
+              lines.extend(changed_files)
+              lines.append("```")
+          else:
+              lines.append("_No changed files found._")
+          lines.append("")
+          lines.append("</details>")
+          lines.append("")
+
+          source_rows = []
+          for source in metadata.get("sources", []):
+              totals = {"seen": 0, "added": 0, "skipped": 0}
+              stats = source.get("stats") or []
+              for row in stats:
+                  for key in totals:
+                      totals[key] += int(row.get(key) or 0)
+              source_rows.append((source["id"], source.get("license", ""), len(stats), totals))
+
+          lines.append("<details>")
+          lines.append("<summary>Source import summary</summary>")
+          lines.append("")
+          lines.append("| Source | License | Inputs | Seen | Added | Skipped |")
+          lines.append("| --- | --- | ---:| ---:| ---:| ---:|")
+          for source_id, license_name, stat_count, totals in source_rows:
+              lines.append(
+                  f"| `{source_id}` | {license_name} | {stat_count} | "
+                  f"{fmt_int(totals['seen'])} | {fmt_int(totals['added'])} | {fmt_int(totals['skipped'])} |"
+              )
+          lines.append("")
+          lines.append("</details>")
+          lines.append("")
+
+          lines.append("<details>")
+          lines.append("<summary>Artifact checksums</summary>")
+          lines.append("")
+          lines.append("```text")
+          lines.extend(checksums_path.read_text().splitlines())
+          lines.append("```")
+          lines.append("")
+          lines.append("</details>")
+          lines.append("")
+
+          notes_path.write_text("\n".join(lines) + "\n")
+          PY
+
       - name: Publish GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -258,4 +445,4 @@ jobs:
             "${release_dir}/SHA256SUMS" \
             --target "$GITHUB_SHA" \
             --title "ChiaKey Lexicon ${version}" \
-            --notes "Automated lexicon release built by the Rust release toolchain."
+            --notes-file "${release_dir}/RELEASE_NOTES.md"

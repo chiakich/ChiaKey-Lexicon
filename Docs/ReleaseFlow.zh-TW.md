@@ -70,7 +70,8 @@ workflow 會做：
 4. 執行 `cargo run --release -- prepare-release`。
 5. 驗證 `SHA256SUMS`。
 6. 用 SQLite smoke tests 確認 release DB 符合 app 端需要的基本合約。
-7. 建立 GitHub Release 並上傳 DB、metadata、manifest、checksum。
+7. 從 commit log、release metadata 與 checksum 自動產生 release notes；長清單用 GitHub Markdown `<details>` 收合。
+8. 建立 GitHub Release 並上傳 DB、metadata、manifest、checksum。
 
 `dist/` 是本機與 CI 的 staging 目錄，不 commit 進 git。公開 artifacts 以 GitHub Release 為準。
 
@@ -113,6 +114,7 @@ dev -> main
 發版完成後至少確認：
 
 - GitHub Release 有四個 artifacts：`KeyKeySource-<version>.db`、`KeyKeySource-<version>.json`、`lexicon-manifest.json`、`SHA256SUMS`。
+- Release notes 有本次變更摘要，且完整 commit list、changed files、source import summary、artifact checksums 可展開查看。
 - `SHA256SUMS` 驗證通過。
 - `lexicon-manifest.json` 裡的 artifact URL 指向該 release tag，且 manifest version 與 release tag 一致。
 - GitHub Actions 的 release job 完整通過，包括 Rust tests、artifact build、checksum validation、SQLite smoke tests。
