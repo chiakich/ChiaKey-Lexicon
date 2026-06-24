@@ -135,6 +135,34 @@ The generated source inventory is stored at:
 sources/chiakey-symbols-overlay/source-inventory.sha256
 ```
 
+### chiaki-web-overlay
+
+- Name: Chiaki reviewed web corpus overlay
+- Local source: `sources/chiaki-web-overlay/explicit.tsv`
+- Source material: Traditional Chinese Wikipedia and Chiaki's own social media posts
+- License: CC0-1.0
+- Attribution: ChiaKey Lexicon maintainers
+- Redistribution decision: included for public releases starting in the next corpus refresh
+
+This source contains reviewed unigram additions derived from public reference
+text and Chiaki-authored social posts. It redistributes only derived lexicon
+rows in the release-builder format:
+
+```text
+qstring<TAB>phrase<TAB>weight<TAB>tags
+```
+
+The release builder imports this source after `chiakey-modern-overlay` and
+before `opencc-variant-policy`, so the existing Traditional Chinese variant
+policy can still demote non-preferred forms that appear in corpus-derived
+additions.
+
+The generated source inventory is stored at:
+
+```text
+sources/chiaki-web-overlay/source-inventory.sha256
+```
+
 ## Excluded from v1
 
 These sources are useful references, but they are not included as raw sources in the first release artifacts:

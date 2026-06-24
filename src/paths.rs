@@ -1,10 +1,11 @@
 use crate::config::{
     Config, BONEYARD_SOURCE_ID, BOPOMOFO_CORRECTION_VENDOR_PATH, BPMF_EXT_SOURCE_ID,
-    BPMF_EXT_VENDOR_PATH, CANNED_MESSAGES_VENDOR_PATH, CJ_EXT_VENDOR_PATH,
-    CJ_PUNCTUATIONS_HALFWIDTH_VENDOR_PATH, CJ_PUNCTUATIONS_MIXEDWIDTH_VENDOR_PATH,
-    LIBCHEWING_SOURCE_ID, MODULE_CIN_SOURCE_ID, OPENCC_VARIANT_SOURCE_ID, OVERLAY_SOURCE_ID,
-    PREPOPULATED_SERVICE_SOURCE_ID, PUNCTUATION_SOURCE_ID, PUNCTUATION_VENDOR_PATH,
-    RIME_ESSAY_SOURCE_ID, SIMPLEX_EXT_VENDOR_PATH, SYMBOL_OVERLAY_PATH, SYMBOL_OVERLAY_SOURCE_ID,
+    BPMF_EXT_VENDOR_PATH, CANNED_MESSAGES_VENDOR_PATH, CHIAKI_WEB_OVERLAY_SOURCE_ID,
+    CJ_EXT_VENDOR_PATH, CJ_PUNCTUATIONS_HALFWIDTH_VENDOR_PATH,
+    CJ_PUNCTUATIONS_MIXEDWIDTH_VENDOR_PATH, LIBCHEWING_SOURCE_ID, MODULE_CIN_SOURCE_ID,
+    OPENCC_VARIANT_SOURCE_ID, OVERLAY_SOURCE_ID, PREPOPULATED_SERVICE_SOURCE_ID,
+    PUNCTUATION_SOURCE_ID, PUNCTUATION_VENDOR_PATH, RIME_ESSAY_SOURCE_ID, SIMPLEX_EXT_VENDOR_PATH,
+    SYMBOL_OVERLAY_PATH, SYMBOL_OVERLAY_SOURCE_ID,
 };
 use std::path::PathBuf;
 
@@ -18,9 +19,11 @@ pub struct ReleasePaths {
     pub libchewing_source_dir: PathBuf,
     pub rime_essay_source_dir: PathBuf,
     pub overlay_source_dir: PathBuf,
+    pub chiaki_web_overlay_source_dir: PathBuf,
     pub opencc_variant_source_dir: PathBuf,
     pub overlay_phrases: PathBuf,
     pub overlay_explicit: PathBuf,
+    pub chiaki_web_overlay_explicit: PathBuf,
     pub boneyard_inventory: PathBuf,
     pub punctuation_inventory: PathBuf,
     pub punctuation_cin: PathBuf,
@@ -40,6 +43,7 @@ pub struct ReleasePaths {
     pub rime_essay_inventory: PathBuf,
     pub rime_essay_raw: PathBuf,
     pub overlay_inventory: PathBuf,
+    pub chiaki_web_overlay_inventory: PathBuf,
     pub opencc_variant_inventory: PathBuf,
     pub opencc_variant_demotions: PathBuf,
     pub db_filename: String,
@@ -64,6 +68,8 @@ impl ReleasePaths {
         let libchewing_source_dir = cfg.root.join("sources").join(LIBCHEWING_SOURCE_ID);
         let rime_essay_source_dir = cfg.root.join("sources").join(RIME_ESSAY_SOURCE_ID);
         let overlay_source_dir = cfg.root.join("sources").join(OVERLAY_SOURCE_ID);
+        let chiaki_web_overlay_source_dir =
+            cfg.root.join("sources").join(CHIAKI_WEB_OVERLAY_SOURCE_ID);
         let opencc_variant_source_dir = cfg.root.join("sources").join(OPENCC_VARIANT_SOURCE_ID);
         let db_filename = format!("KeyKeySource-{}.db", cfg.release_version);
         let metadata_filename = format!("KeyKeySource-{}.json", cfg.release_version);
@@ -71,6 +77,7 @@ impl ReleasePaths {
         Self {
             overlay_phrases: overlay_source_dir.join("phrases.tsv"),
             overlay_explicit: overlay_source_dir.join("explicit.tsv"),
+            chiaki_web_overlay_explicit: chiaki_web_overlay_source_dir.join("explicit.tsv"),
             boneyard_inventory: boneyard_source_dir.join("source-inventory.sha256"),
             punctuation_inventory: punctuation_source_dir.join("source-inventory.sha256"),
             punctuation_cin: cfg.root.join(PUNCTUATION_VENDOR_PATH),
@@ -91,6 +98,8 @@ impl ReleasePaths {
             rime_essay_inventory: rime_essay_source_dir.join("source-inventory.sha256"),
             rime_essay_raw: rime_essay_source_dir.join("raw/essay.txt"),
             overlay_inventory: overlay_source_dir.join("source-inventory.sha256"),
+            chiaki_web_overlay_inventory: chiaki_web_overlay_source_dir
+                .join("source-inventory.sha256"),
             opencc_variant_inventory: opencc_variant_source_dir.join("source-inventory.sha256"),
             opencc_variant_demotions: opencc_variant_source_dir.join("variant-demotions.tsv"),
             db: cfg.dist_dir.join(&db_filename),
@@ -106,6 +115,7 @@ impl ReleasePaths {
             libchewing_source_dir,
             rime_essay_source_dir,
             overlay_source_dir,
+            chiaki_web_overlay_source_dir,
             opencc_variant_source_dir,
             db_filename,
             metadata_filename,

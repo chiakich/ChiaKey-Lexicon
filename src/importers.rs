@@ -1,4 +1,7 @@
-use crate::config::{Config, LIBCHEWING_SOURCE_ID, OVERLAY_SOURCE_ID, RIME_ESSAY_SOURCE_ID};
+use crate::config::{
+    Config, CHIAKI_WEB_OVERLAY_SOURCE_ID, LIBCHEWING_SOURCE_ID, OVERLAY_SOURCE_ID,
+    RIME_ESSAY_SOURCE_ID,
+};
 use crate::phonetics::{phrase_candidate, qstring_for_bpmf_sequence};
 use crate::types::{LibchewingFile, LibchewingWeightMode, SourceRecord, VariantDemotionRecord};
 use anyhow::{bail, Context, Result};
@@ -163,6 +166,21 @@ pub fn parse_explicit_overlay(
     path: &Path,
     cfg: &Config,
 ) -> Result<(Vec<SourceRecord>, usize, usize)> {
+    parse_explicit_records(path, cfg, OVERLAY_SOURCE_ID)
+}
+
+pub fn parse_chiaki_web_overlay(
+    path: &Path,
+    cfg: &Config,
+) -> Result<(Vec<SourceRecord>, usize, usize)> {
+    parse_explicit_records(path, cfg, CHIAKI_WEB_OVERLAY_SOURCE_ID)
+}
+
+fn parse_explicit_records(
+    path: &Path,
+    cfg: &Config,
+    source_id: &'static str,
+) -> Result<(Vec<SourceRecord>, usize, usize)> {
     let file = File::open(path).with_context(|| format!("read {}", path.display()))?;
     let reader = BufReader::new(file);
     let mut seen = 0;
@@ -194,7 +212,7 @@ pub fn parse_explicit_overlay(
             qstring: parts[0].to_string(),
             phrase: parts[1].to_string(),
             weight,
-            source_id: OVERLAY_SOURCE_ID,
+            source_id,
             tags: format!("unigram,{}", parts[3]),
         });
     }

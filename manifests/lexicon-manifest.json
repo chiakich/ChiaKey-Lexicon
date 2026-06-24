@@ -6,8 +6,8 @@
       "id": "smart-mandarin-db",
       "kind": "keykey-source-db",
       "language_model_version": "chiakey-modern-2026.06.7",
-      "sha256": "a53225e784852f140de5658adf9a5552ac70fa057160eb5addf008d1b3261792",
-      "size": 51281920,
+      "sha256": "7f1fa70d8bbd5520a11c8a97e372dc34cee3ebee07b687694f37c497ed45c141",
+      "size": 51757056,
       "url": "https://github.com/akira02/ChiaKey-Lexicon/releases/download/2026.06.7/KeyKeySource-2026.06.7.db"
     },
     {
@@ -16,8 +16,8 @@
       "id": "smart-mandarin-metadata",
       "kind": "metadata",
       "language_model_version": "chiakey-modern-2026.06.7",
-      "sha256": "0f60d68bf86f1df504e586f37c4da7c546ea788b72d524deac76f0eff2366ac4",
-      "size": 20661,
+      "sha256": "c8e98136cfacfb719b6db8ce45c28530a11489ff6dd8e01ebfb93863bf0db61f",
+      "size": 21362,
       "url": "https://github.com/akira02/ChiaKey-Lexicon/releases/download/2026.06.7/KeyKeySource-2026.06.7.json"
     },
     {
@@ -26,13 +26,13 @@
       "id": "smart-mandarin-checksums",
       "kind": "checksum",
       "language_model_version": "chiakey-modern-2026.06.7",
-      "sha256": "87d022812c0b1f6582965b72e18226d184db7e487afc943c84f1ba28cebb8d78",
+      "sha256": "8f79100f26ce826f0f1cff3387fe3d05a5359ab43259ef41f5b13c3bb5782618",
       "size": 186,
       "url": "https://github.com/akira02/ChiaKey-Lexicon/releases/download/2026.06.7/SHA256SUMS"
     }
   ],
   "database_schema_version": 1,
-  "generated_at": "2026-06-23T08:03:41Z",
+  "generated_at": "2026-06-24T18:08:09Z",
   "minimum_app_version": "0.1.0",
   "schema": 1,
   "sources": [
@@ -134,6 +134,17 @@
       "priority": 300,
       "sha256": "f3e4e68b72ea6881955e25f73aebc23048f1e16282833482a6cea81db5be7471",
       "url": "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiakey-modern-overlay"
+    },
+    {
+      "attribution": "ChiaKey Lexicon maintainers",
+      "enabled": true,
+      "format": "tsv",
+      "id": "chiaki-web-overlay",
+      "license": "CC0-1.0",
+      "name": "Chiaki reviewed web corpus overlay",
+      "priority": 305,
+      "sha256": "571b0f76f22a1bd55ee3cd394318acdd801b0c4331f939b02d4c28b88299e90c",
+      "url": "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiaki-web-overlay"
     },
     {
       "attribution": "OpenCC contributors; ChiaKey Lexicon maintainers",
