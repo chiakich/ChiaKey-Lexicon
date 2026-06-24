@@ -1,3 +1,4 @@
+use crate::associated_phrases;
 use crate::bpmf_ext;
 use crate::config::{self, Config};
 use crate::db;
@@ -42,6 +43,13 @@ pub fn run() -> Result<()> {
         &mut conn,
         &cfg,
         &libchewing_files,
+        &mut source_keys,
+        &mut import_results,
+    )?;
+    import_libchewing_character_phrase_evidence(
+        &mut conn,
+        &cfg,
+        &paths,
         &mut source_keys,
         &mut import_results,
     )?;
@@ -103,11 +111,13 @@ pub fn run() -> Result<()> {
     )?;
     import_prepopulated_service_data(&mut conn, &cfg, &paths, &mut import_results)?;
     import_module_cin_tables(&mut conn, &cfg, &paths, &mut import_results)?;
+    import_associated_phrases(&mut conn, &mut import_results)?;
 
     db::refresh_metadata_counts(&conn)?;
     db::update_release_metadata_rows(&conn, &cfg)?;
     prepopulated::validate_runtime_required_data(&conn)?;
     module_cin::validate_runtime_required_data(&conn)?;
+    associated_phrases::validate_runtime_required_data(&conn)?;
     db::write_normalized(&conn, &cfg.normalized_path, &source_keys)?;
 
     let metadata = db::db_metadata(&conn)?;
@@ -156,6 +166,8 @@ fn verify_inputs(
         paths.punctuation_cin.clone(),
         paths.symbol_overlay_symbols.clone(),
         paths.canned_messages_plist.clone(),
+        paths.mozc_emoticon_categorized.clone(),
+        paths.mozc_emoticon_tsv.clone(),
         paths.bpmf_ext_cin.clone(),
         paths.overlay_phrases.clone(),
         paths.overlay_explicit.clone(),
@@ -176,6 +188,7 @@ fn create_output_dirs(cfg: &Config, paths: &ReleasePaths) -> Result<()> {
     fs::create_dir_all(&paths.punctuation_source_dir)?;
     fs::create_dir_all(&paths.symbol_overlay_source_dir)?;
     fs::create_dir_all(&paths.prepopulated_service_source_dir)?;
+    fs::create_dir_all(&paths.mozc_emoticon_source_dir)?;
     fs::create_dir_all(&paths.module_cin_source_dir)?;
     fs::create_dir_all(&paths.bpmf_ext_source_dir)?;
     fs::create_dir_all(&paths.libchewing_source_dir)?;
@@ -217,6 +230,15 @@ fn write_source_inventories(
         &paths.prepopulated_service_inventory,
         &paths.prepopulated_service_source_dir,
         std::slice::from_ref(&paths.canned_messages_plist),
+        true,
+    )?;
+    write_inventory(
+        &paths.mozc_emoticon_inventory,
+        &paths.mozc_emoticon_source_dir,
+        &[
+            paths.mozc_emoticon_categorized.clone(),
+            paths.mozc_emoticon_tsv.clone(),
+        ],
         true,
     )?;
     write_inventory(
@@ -326,14 +348,46 @@ fn import_prepopulated_service_data(
     paths: &ReleasePaths,
     import_results: &mut Vec<ImportResult>,
 ) -> Result<()> {
-    let data = prepopulated::load(&paths.canned_messages_plist, &cfg.generated_at)?;
+    let data = prepopulated::load(
+        &paths.canned_messages_plist,
+        &paths.symbol_overlay_symbols,
+        &paths.mozc_emoticon_categorized,
+        &paths.mozc_emoticon_tsv,
+        &cfg.generated_at,
+    )?;
     prepopulated::validate_payload(&data)?;
 
-    let source_rows = vec![(
-        repo_relative(&cfg.root, &paths.canned_messages_plist)?,
-        prepopulated::source_kind().to_string(),
-        sha256_file(&paths.canned_messages_plist)?,
-    )];
+    let source_rows = vec![
+        (
+            repo_relative(&cfg.root, &paths.canned_messages_plist)?,
+            prepopulated::source_kind().to_string(),
+            sha256_file(&paths.canned_messages_plist)?,
+        ),
+        (
+            format!(
+                "{}#canned-messages",
+                repo_relative(&cfg.root, &paths.symbol_overlay_symbols)?
+            ),
+            "chiakey-symbols-overlay-canned-messages".to_string(),
+            sha256_file(&paths.symbol_overlay_symbols)?,
+        ),
+        (
+            format!(
+                "{}#canned-messages",
+                repo_relative(&cfg.root, &paths.mozc_emoticon_categorized)?
+            ),
+            "mozc-emoticon-categorized-canned-messages".to_string(),
+            sha256_file(&paths.mozc_emoticon_categorized)?,
+        ),
+        (
+            format!(
+                "{}#canned-messages",
+                repo_relative(&cfg.root, &paths.mozc_emoticon_tsv)?
+            ),
+            "mozc-emoticon-canned-messages".to_string(),
+            sha256_file(&paths.mozc_emoticon_tsv)?,
+        ),
+    ];
     db::apply_prepopulated_service_data(conn, &data, &source_rows)?;
 
     import_results.push(ImportResult {
@@ -342,7 +396,7 @@ fn import_prepopulated_service_data(
             repo_relative(&cfg.root, &paths.prepopulated_service_source_dir)?
         ),
         seen: 1,
-        added: 2,
+        added: 2 + data.supplemental_symbol_count + data.emoji_message_count,
         skipped: 0,
         records: Vec::new(),
     });
@@ -444,6 +498,25 @@ fn import_module_cin_tables(
     Ok(())
 }
 
+fn import_associated_phrases(
+    conn: &mut Connection,
+    import_results: &mut Vec<ImportResult>,
+) -> Result<()> {
+    let build = associated_phrases::build_from_unigrams(conn)?;
+    let result = db::apply_associated_phrase_records(
+        conn,
+        &build.records,
+        associated_phrases::SOURCE_PATH,
+        associated_phrases::SOURCE_KIND,
+        &build.sha256,
+        build.seen,
+        build.tail_count,
+        build.skipped,
+    )?;
+    import_results.push(result);
+    Ok(())
+}
+
 fn import_bpmf_ext(
     conn: &mut Connection,
     cfg: &Config,
@@ -477,11 +550,13 @@ fn import_rime(
 ) -> Result<()> {
     let char_readings = db::load_primary_character_readings(conn)?;
     let existing_phrases = db::load_existing_phrases(conn)?;
+    let existing_qstring_weights = db::load_best_qstring_weights(conn)?;
     let (records, seen, skipped) = importers::parse_rime_essay(
         &paths.rime_essay_raw,
         cfg,
         &char_readings,
         &existing_phrases,
+        &existing_qstring_weights,
     )?;
     let result = db::apply_records(
         conn,
@@ -489,6 +564,39 @@ fn import_rime(
         &repo_relative(&cfg.root, &paths.rime_essay_raw)?,
         "rime-supplement",
         &sha256_file(&paths.rime_essay_raw)?,
+        seen,
+        skipped,
+        false,
+    )?;
+    remember_records(source_keys, &result);
+    import_results.push(result);
+    Ok(())
+}
+
+fn import_libchewing_character_phrase_evidence(
+    conn: &mut Connection,
+    cfg: &Config,
+    paths: &ReleasePaths,
+    source_keys: &mut HashMap<(String, String), SourceRecord>,
+    import_results: &mut Vec<ImportResult>,
+) -> Result<()> {
+    let tsi_path = paths.libchewing_source_dir.join("raw/dict/chewing/tsi.csv");
+    let evidence = db::load_character_phrase_evidence(
+        conn,
+        importers::LIBCHEWING_CHARACTER_PHRASE_EVIDENCE_MIN_PHRASE_WEIGHT,
+    )?;
+    let seen = evidence.len();
+    let records = importers::phrase_evidence_character_records(&evidence);
+    let skipped = seen.saturating_sub(records.len());
+    let result = db::apply_records(
+        conn,
+        records,
+        &format!(
+            "{}#character-phrase-evidence",
+            repo_relative(&cfg.root, &tsi_path)?
+        ),
+        "libchewing-character-phrase-evidence",
+        &sha256_file(&tsi_path)?,
         seen,
         skipped,
         false,

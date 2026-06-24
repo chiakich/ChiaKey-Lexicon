@@ -1,4 +1,6 @@
-use crate::config::{DOWNLOADS, LIBCHEWING_SOURCE_ID, RIME_ESSAY_SOURCE_ID};
+use crate::config::{
+    DOWNLOADS, LIBCHEWING_SOURCE_ID, MOZC_EMOTICON_SOURCE_ID, RIME_ESSAY_SOURCE_ID,
+};
 use crate::files::{sha256_bytes, write_tree_inventory};
 use anyhow::{bail, Context, Result};
 use std::fs;
@@ -28,6 +30,7 @@ pub fn run() -> Result<()> {
 
     write_tree_inventory(&root, LIBCHEWING_SOURCE_ID)?;
     write_tree_inventory(&root, RIME_ESSAY_SOURCE_ID)?;
+    write_tree_inventory(&root, MOZC_EMOTICON_SOURCE_ID)?;
     println!("modern source fetch complete");
     Ok(())
 }

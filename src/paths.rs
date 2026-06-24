@@ -2,7 +2,8 @@ use crate::config::{
     Config, BONEYARD_SOURCE_ID, BOPOMOFO_CORRECTION_VENDOR_PATH, BPMF_EXT_SOURCE_ID,
     BPMF_EXT_VENDOR_PATH, CANNED_MESSAGES_VENDOR_PATH, CJ_EXT_VENDOR_PATH,
     CJ_PUNCTUATIONS_HALFWIDTH_VENDOR_PATH, CJ_PUNCTUATIONS_MIXEDWIDTH_VENDOR_PATH,
-    LIBCHEWING_SOURCE_ID, MODULE_CIN_SOURCE_ID, OPENCC_VARIANT_SOURCE_ID, OVERLAY_SOURCE_ID,
+    LIBCHEWING_SOURCE_ID, MODULE_CIN_SOURCE_ID, MOZC_EMOTICON_CATEGORIZED_PATH,
+    MOZC_EMOTICON_SOURCE_ID, MOZC_EMOTICON_TSV_PATH, OPENCC_VARIANT_SOURCE_ID, OVERLAY_SOURCE_ID,
     PREPOPULATED_SERVICE_SOURCE_ID, PUNCTUATION_SOURCE_ID, PUNCTUATION_VENDOR_PATH,
     RIME_ESSAY_SOURCE_ID, SIMPLEX_EXT_VENDOR_PATH, SYMBOL_OVERLAY_PATH, SYMBOL_OVERLAY_SOURCE_ID,
 };
@@ -13,6 +14,7 @@ pub struct ReleasePaths {
     pub punctuation_source_dir: PathBuf,
     pub symbol_overlay_source_dir: PathBuf,
     pub prepopulated_service_source_dir: PathBuf,
+    pub mozc_emoticon_source_dir: PathBuf,
     pub module_cin_source_dir: PathBuf,
     pub bpmf_ext_source_dir: PathBuf,
     pub libchewing_source_dir: PathBuf,
@@ -28,6 +30,9 @@ pub struct ReleasePaths {
     pub symbol_overlay_symbols: PathBuf,
     pub prepopulated_service_inventory: PathBuf,
     pub canned_messages_plist: PathBuf,
+    pub mozc_emoticon_inventory: PathBuf,
+    pub mozc_emoticon_categorized: PathBuf,
+    pub mozc_emoticon_tsv: PathBuf,
     pub module_cin_inventory: PathBuf,
     pub cj_ext_cin: PathBuf,
     pub simplex_ext_cin: PathBuf,
@@ -59,6 +64,7 @@ impl ReleasePaths {
             .root
             .join("sources")
             .join(PREPOPULATED_SERVICE_SOURCE_ID);
+        let mozc_emoticon_source_dir = cfg.root.join("sources").join(MOZC_EMOTICON_SOURCE_ID);
         let module_cin_source_dir = cfg.root.join("sources").join(MODULE_CIN_SOURCE_ID);
         let bpmf_ext_source_dir = cfg.root.join("sources").join(BPMF_EXT_SOURCE_ID);
         let libchewing_source_dir = cfg.root.join("sources").join(LIBCHEWING_SOURCE_ID);
@@ -79,6 +85,9 @@ impl ReleasePaths {
             prepopulated_service_inventory: prepopulated_service_source_dir
                 .join("source-inventory.sha256"),
             canned_messages_plist: cfg.root.join(CANNED_MESSAGES_VENDOR_PATH),
+            mozc_emoticon_inventory: mozc_emoticon_source_dir.join("source-inventory.sha256"),
+            mozc_emoticon_categorized: cfg.root.join(MOZC_EMOTICON_CATEGORIZED_PATH),
+            mozc_emoticon_tsv: cfg.root.join(MOZC_EMOTICON_TSV_PATH),
             module_cin_inventory: module_cin_source_dir.join("source-inventory.sha256"),
             cj_ext_cin: cfg.root.join(CJ_EXT_VENDOR_PATH),
             simplex_ext_cin: cfg.root.join(SIMPLEX_EXT_VENDOR_PATH),
@@ -101,6 +110,7 @@ impl ReleasePaths {
             punctuation_source_dir,
             symbol_overlay_source_dir,
             prepopulated_service_source_dir,
+            mozc_emoticon_source_dir,
             module_cin_source_dir,
             bpmf_ext_source_dir,
             libchewing_source_dir,

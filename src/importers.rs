@@ -10,8 +10,15 @@ use std::path::{Path, PathBuf};
 
 const LIBCHEWING_PHRASE_SEGMENT_BONUS: f64 = 0.5;
 const LIBCHEWING_PHRASE_SEGMENT_BONUS_THRESHOLD: f64 = -0.75;
+pub const LIBCHEWING_CHARACTER_PHRASE_EVIDENCE_MIN_PHRASE_WEIGHT: f64 = -1.0;
+const LIBCHEWING_CHARACTER_PHRASE_EVIDENCE_MIN_SUPPORT: usize = 3;
+const LIBCHEWING_CHARACTER_PHRASE_EVIDENCE_CURRENT_THRESHOLD: f64 = -2.4;
+const LIBCHEWING_CHARACTER_PHRASE_EVIDENCE_PENALTY: f64 = 1.0;
+const LIBCHEWING_CHARACTER_PHRASE_EVIDENCE_MAX_WEIGHT: f64 = -1.35;
 const RIME_OVERLAP_RERANK_MARGIN: f64 = 0.01;
 const RIME_OVERLAP_RERANK_MAX_WEIGHT: f64 = -0.5;
+const RIME_SPLIT_RERANK_MARGIN: f64 = 0.01;
+const RIME_SPLIT_RERANK_MAX_WEIGHT: f64 = -1.35;
 
 pub fn libchewing_max_score(paths: &[PathBuf]) -> Result<i64> {
     let mut max_score = 1;
@@ -62,10 +69,11 @@ pub fn parse_rime_essay(
     cfg: &Config,
     char_readings: &HashMap<String, String>,
     existing_phrases: &HashSet<String>,
+    existing_qstring_weights: &HashMap<String, f64>,
 ) -> Result<(Vec<SourceRecord>, usize, usize)> {
     let file = File::open(path).with_context(|| format!("read {}", path.display()))?;
     let reader = BufReader::new(file);
-    let mut raw_rows: Vec<(String, i64, String)> = Vec::new();
+    let mut raw_rows: Vec<(String, i64, String, usize)> = Vec::new();
     let mut seen = 0;
     let mut skipped = 0;
     let mut max_score = 1;
@@ -94,6 +102,7 @@ pub fn parse_rime_essay(
 
         let mut qstring = String::new();
         let mut ok = true;
+        let syllable_count = phrase.chars().count();
         for character in phrase.chars() {
             let key = character.to_string();
             match char_readings.get(&key) {
@@ -110,17 +119,31 @@ pub fn parse_rime_essay(
         }
 
         max_score = max_score.max(score);
-        raw_rows.push((phrase.to_string(), score, qstring));
+        raw_rows.push((phrase.to_string(), score, qstring, syllable_count));
     }
 
     let records = raw_rows
         .into_iter()
-        .map(|(phrase, score, qstring)| SourceRecord {
-            qstring,
-            phrase,
-            weight: rime_weight(score, max_score),
-            source_id: RIME_ESSAY_SOURCE_ID,
-            tags: format!("unigram,{RIME_ESSAY_SOURCE_ID},supplemental"),
+        .map(|(phrase, score, qstring, syllable_count)| {
+            let base_weight = rime_weight(score, max_score);
+            let weight = rime_split_rerank_weight(
+                base_weight,
+                &qstring,
+                syllable_count,
+                existing_qstring_weights,
+            );
+            let tags = if weight > base_weight {
+                format!("unigram,{RIME_ESSAY_SOURCE_ID},supplemental,split-rerank")
+            } else {
+                format!("unigram,{RIME_ESSAY_SOURCE_ID},supplemental")
+            };
+            SourceRecord {
+                qstring,
+                phrase,
+                weight,
+                source_id: RIME_ESSAY_SOURCE_ID,
+                tags,
+            }
         })
         .collect::<Vec<_>>();
 
@@ -298,6 +321,39 @@ pub fn parse_explicit_overlay(
     Ok((dedupe_records(records), seen, skipped))
 }
 
+pub fn phrase_evidence_character_records(
+    evidence: &[(String, String, f64, f64, usize)],
+) -> Vec<SourceRecord> {
+    let records = evidence
+        .iter()
+        .filter_map(
+            |(qstring, phrase, current_weight, best_phrase_weight, support_count)| {
+                if *support_count < LIBCHEWING_CHARACTER_PHRASE_EVIDENCE_MIN_SUPPORT
+                    || *current_weight > LIBCHEWING_CHARACTER_PHRASE_EVIDENCE_CURRENT_THRESHOLD
+                {
+                    return None;
+                }
+
+                let proposed_weight = (*best_phrase_weight
+                    - LIBCHEWING_CHARACTER_PHRASE_EVIDENCE_PENALTY)
+                    .min(LIBCHEWING_CHARACTER_PHRASE_EVIDENCE_MAX_WEIGHT);
+                if proposed_weight <= *current_weight {
+                    return None;
+                }
+
+                Some(SourceRecord {
+                    qstring: qstring.clone(),
+                    phrase: phrase.clone(),
+                    weight: round6(proposed_weight),
+                    source_id: LIBCHEWING_SOURCE_ID,
+                    tags: format!("unigram,{LIBCHEWING_SOURCE_ID},character-phrase-evidence"),
+                })
+            },
+        )
+        .collect::<Vec<_>>();
+    dedupe_records(records)
+}
+
 pub fn parse_variant_demotions(path: &Path) -> Result<(Vec<VariantDemotionRecord>, usize, usize)> {
     let file = File::open(path).with_context(|| format!("read {}", path.display()))?;
     let reader = BufReader::new(file);
@@ -460,6 +516,35 @@ fn rime_weight(score: i64, max_score: i64) -> f64 {
     round6(-1.35 - (1.85 * (1.0 - ratio)))
 }
 
+fn rime_split_rerank_weight(
+    base_weight: f64,
+    qstring: &str,
+    syllable_count: usize,
+    existing_qstring_weights: &HashMap<String, f64>,
+) -> f64 {
+    let mut best_split = f64::NEG_INFINITY;
+    for split_syllable in 1..syllable_count {
+        let split_at = split_syllable * 2;
+        if split_at >= qstring.len() {
+            continue;
+        }
+        let (prefix, suffix) = qstring.split_at(split_at);
+        let Some(prefix_weight) = existing_qstring_weights.get(prefix) else {
+            continue;
+        };
+        let Some(suffix_weight) = existing_qstring_weights.get(suffix) else {
+            continue;
+        };
+        best_split = best_split.max(prefix_weight + suffix_weight);
+    }
+
+    if best_split.is_finite() && best_split + RIME_SPLIT_RERANK_MARGIN > base_weight {
+        round6((best_split + RIME_SPLIT_RERANK_MARGIN).min(RIME_SPLIT_RERANK_MAX_WEIGHT))
+    } else {
+        base_weight
+    }
+}
+
 fn round6(value: f64) -> f64 {
     (value * 1_000_000.0).round() / 1_000_000.0
 }
@@ -467,11 +552,13 @@ fn round6(value: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::{
-        libchewing_character_weight, libchewing_weight, parse_explicit_overlay,
-        parse_rime_overlap_reranks, parse_variant_demotions, LIBCHEWING_PHRASE_SEGMENT_BONUS,
-        LIBCHEWING_PHRASE_SEGMENT_BONUS_THRESHOLD, RIME_OVERLAP_RERANK_MARGIN,
+        libchewing_character_weight, libchewing_weight, parse_explicit_overlay, parse_rime_essay,
+        parse_rime_overlap_reranks, parse_variant_demotions, phrase_evidence_character_records,
+        LIBCHEWING_PHRASE_SEGMENT_BONUS, LIBCHEWING_PHRASE_SEGMENT_BONUS_THRESHOLD,
+        RIME_OVERLAP_RERANK_MARGIN,
     };
     use crate::config::Config;
+    use std::collections::{HashMap, HashSet};
     use std::fs;
     use std::path::PathBuf;
 
@@ -561,6 +648,74 @@ mod tests {
 
         assert_eq!(phrase, single);
         assert!(phrase > LIBCHEWING_PHRASE_SEGMENT_BONUS_THRESHOLD);
+    }
+
+    #[test]
+    fn promotes_weak_character_reading_with_strong_phrase_evidence() {
+        let evidence = vec![
+            (
+                "\\_".to_string(),
+                "數".to_string(),
+                -3.094452,
+                -0.409824,
+                14,
+            ),
+            ("\\_".to_string(), "数".to_string(), -3.094452, -3.094452, 0),
+            ("m0".to_string(), "書".to_string(), -0.929843, -0.5, 6),
+        ];
+
+        let records = phrase_evidence_character_records(&evidence);
+
+        assert_eq!(records.len(), 1);
+        assert_eq!(records[0].qstring, "\\_");
+        assert_eq!(records[0].phrase, "數");
+        assert_eq!(records[0].weight, -1.409824);
+        assert_eq!(
+            records[0].tags,
+            "unigram,libchewing-data,character-phrase-evidence"
+        );
+    }
+
+    #[test]
+    fn reranks_rime_supplemental_phrase_above_existing_split_path() {
+        let path = temp_file("rime-split-rerank", "趁現在\t280\n因爲\t474154\n");
+        let cfg = test_config();
+        let char_readings = HashMap::from([
+            ("趁".to_string(), ":j".to_string()),
+            ("現".to_string(), "Ei".to_string()),
+            ("在".to_string(), "_d".to_string()),
+            ("因".to_string(), "Q;".to_string()),
+            ("爲".to_string(), "2f".to_string()),
+        ]);
+        let existing_phrases = HashSet::new();
+        let existing_qstring_weights = HashMap::from([
+            (":j".to_string(), -1.698951),
+            ("Ei_d".to_string(), -0.265419),
+        ]);
+
+        let (records, seen, skipped) = parse_rime_essay(
+            &path,
+            &cfg,
+            &char_readings,
+            &existing_phrases,
+            &existing_qstring_weights,
+        )
+        .unwrap();
+        let take_now = records
+            .iter()
+            .find(|record| record.phrase == "趁現在")
+            .expect("趁現在 should be imported");
+
+        assert_eq!(seen, 2);
+        assert_eq!(skipped, 0);
+        assert!(take_now.weight > -1.698951 + -0.265419);
+        assert_eq!(take_now.weight, -1.95437);
+        assert_eq!(
+            take_now.tags,
+            "unigram,rime-essay,supplemental,split-rerank"
+        );
+
+        let _ = fs::remove_file(path);
     }
 
     #[test]

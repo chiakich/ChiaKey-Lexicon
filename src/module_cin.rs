@@ -92,6 +92,18 @@ pub fn validate_runtime_required_data(conn: &Connection) -> Result<()> {
         "ㄅ",
         "不",
     )?;
+    require_pair(
+        conn,
+        "BopomofoCorrection-bopomofo-correction-cin",
+        "ㄏ",
+        "呵",
+    )?;
+    require_pair(
+        conn,
+        "BopomofoCorrection-bopomofo-correction-cin",
+        "ㄏㄏ",
+        "呵呵",
+    )?;
 
     Ok(())
 }

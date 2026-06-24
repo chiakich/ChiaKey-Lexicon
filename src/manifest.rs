@@ -1,11 +1,11 @@
 use crate::config::{
     Config, BONEYARD_SOURCE_ID, BONEYARD_SOURCE_NAME, BPMF_EXT_SOURCE_ID, BPMF_EXT_SOURCE_NAME,
     DATABASE_SCHEMA_VERSION, LIBCHEWING_SOURCE_ID, LIBCHEWING_SOURCE_NAME, MODULE_CIN_SOURCE_ID,
-    MODULE_CIN_SOURCE_NAME, OPENCC_VARIANT_SOURCE_ID, OPENCC_VARIANT_SOURCE_NAME,
-    OVERLAY_SOURCE_ID, OVERLAY_SOURCE_NAME, PREPOPULATED_SERVICE_SOURCE_ID,
-    PREPOPULATED_SERVICE_SOURCE_NAME, PUNCTUATION_SOURCE_ID, PUNCTUATION_SOURCE_NAME,
-    RIME_ESSAY_SOURCE_ID, RIME_ESSAY_SOURCE_NAME, SYMBOL_OVERLAY_SOURCE_ID,
-    SYMBOL_OVERLAY_SOURCE_NAME,
+    MODULE_CIN_SOURCE_NAME, MOZC_EMOTICON_SOURCE_ID, MOZC_EMOTICON_SOURCE_NAME,
+    OPENCC_VARIANT_SOURCE_ID, OPENCC_VARIANT_SOURCE_NAME, OVERLAY_SOURCE_ID, OVERLAY_SOURCE_NAME,
+    PREPOPULATED_SERVICE_SOURCE_ID, PREPOPULATED_SERVICE_SOURCE_NAME, PUNCTUATION_SOURCE_ID,
+    PUNCTUATION_SOURCE_NAME, RIME_ESSAY_SOURCE_ID, RIME_ESSAY_SOURCE_NAME,
+    SYMBOL_OVERLAY_SOURCE_ID, SYMBOL_OVERLAY_SOURCE_NAME,
 };
 use crate::db;
 use crate::files::{file_info, sha256_file};
@@ -63,6 +63,14 @@ pub fn release_metadata(
                 source_rows,
                 "sources/keykey-prepopulated-service-data/vendor/",
             ),
+        )?,
+        release_source(
+            MOZC_EMOTICON_SOURCE_ID,
+            MOZC_EMOTICON_SOURCE_NAME,
+            "BSD-3-Clause",
+            "Google and Mozc contributors",
+            &paths.mozc_emoticon_inventory,
+            db::stats_for_source_rows(source_rows, "sources/mozc-emoticon-data/raw/"),
         )?,
         release_source(
             MODULE_CIN_SOURCE_ID,
@@ -185,6 +193,16 @@ pub fn manifest(
             "Yahoo! Inc.; OpenVanilla contributors; KeyKey Boneyard / ChiaKey maintainers",
             &paths.prepopulated_service_inventory,
             130,
+        )?,
+        manifest_source(
+            MOZC_EMOTICON_SOURCE_ID,
+            MOZC_EMOTICON_SOURCE_NAME,
+            "https://github.com/google/mozc/tree/28da5a39f9a7fd70251c85d269f4a8b47aa31cf8/src/data/emoticon",
+            "tsv",
+            "BSD-3-Clause",
+            "Google and Mozc contributors",
+            &paths.mozc_emoticon_inventory,
+            135,
         )?,
         manifest_source(
             MODULE_CIN_SOURCE_ID,

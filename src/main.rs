@@ -1,3 +1,4 @@
+mod associated_phrases;
 mod bpmf_ext;
 mod config;
 mod db;

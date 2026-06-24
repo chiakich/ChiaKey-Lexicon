@@ -75,13 +75,16 @@ cargo run --release -- prepare-release
 | `keykey-boneyard-bootstrap` | ChiaKey 的 runtime 和 database reader 原本就建立在 KeyKey / Yahoo KeyKey 的資料形狀上；用 cooked bootstrap DB 可以保留既有 schema、metadata 與基本注音資料。 | 作為 release DB 的初始基底。builder 先複製這份 `KeyKeySource.db`，後續 sources 再疊加或替換資料。 |
 | `keykey-punctuations-cin` | 標點不是一般詞彙，但 Smart Mandarin runtime 會查 `_punctuation_*`、`_ctrl_*` 等 key；缺少時 app 端會拒絕或得到空符號表。 | 從原始 `bpmf-punctuations.cin` 匯入 BPMF 標點與符號列表，寫入 `unigrams` 和 `Mandarin-bpmf-cin`。 |
 | `chiakey-symbols-overlay` | Yahoo 原始符號列表偏舊，缺少現代常用的貨幣、數學、圈號數字、勾叉、音樂與其他特殊符號；這些補充屬於 ChiaKey 自有維護資料。 | 只追加 `_punctuation_list` 候選，並跳過 Yahoo 原表已有符號，不改任何直接按鍵標點映射。 |
-| `keykey-prepopulated-service-data` | canned messages 仍是 ChiaKey 會讀取的預載資料，需要跟 release DB 一起提供，並帶正值 timestamp 才不會被 user DB 空資料蓋掉。 | 寫入 `prepopulated_service_data/canned_messages` 和 `canned_messages_timestamp`。已移除不用的 OneKey service data。 |
+| `keykey-prepopulated-service-data` | canned messages 仍是 ChiaKey 會讀取的預載資料，需要跟 release DB 一起提供，並帶正值 timestamp 才不會被 user DB 空資料蓋掉。 | 寫入 `prepopulated_service_data/canned_messages` 和 `canned_messages_timestamp`。builder 會把 supplemental symbol overlay 依類型追加成多個符號表分類，並以 Mozc 顏文字資料取代原本帶說明文字的內建 `顏文字` 列表。已移除不用的 OneKey service data。 |
+| `mozc-emoticon-data` | Mozc 是 Google Japanese Input 的開源版，提供乾淨、可再散布的日文 IME 顏文字資料。 | 供 canned messages 的 `顏文字` 分類使用。builder 只輸出顏文字本體，不把日文讀音或描述放進符號表列表。 |
 | `keykey-module-cin` | KeyKey runtime 不只讀 Smart Mandarin 詞庫，也可能讀其他 module tables；這些表不是主要注音詞庫，但缺少會造成相容性破洞。 | 匯入 `Generic-cj-cin`、`Generic-simplex-cin`、倉頡標點表與 `BopomofoCorrection-bopomofo-correction-cin`。 |
 | `libchewing-data` | libchewing-data 是活躍維護的繁中注音資料來源，包含明確注音讀音，比只靠舊 KeyKey bootstrap 推導更可靠。 | 作為主要現代詞庫層。`tsi.csv`、`alt.csv` 提供詞與替代讀音；`word.csv` 補單字讀音；單字頻率也用來修正常用字排序。 |
 | `bpmf-ext-cin` | libchewing 和 bootstrap 仍可能缺少單字候選；這份 public-domain CIN 表可以補足單字 coverage。 | 只補 CJK BMP 單字的缺失 `(reading, character)` pair，不覆蓋 libchewing 或 bootstrap 既有權重。 |
 | `rime-essay` | Rime essay 有較廣的現代詞彙與語言模型分數，但沒有注音讀音；適合當低優先補充層，而不是主詞庫。 | 僅在詞尚未存在、分數達門檻、長度合理，且每個字都能從目前 DB 推得 primary reading 時匯入。 |
 | `chiakey-modern-overlay` | 真實打字測試會發現少量立即需要修的缺漏或排序問題；這些修正應由專案自己維護，不能等大型來源更新。 | 補專案自有詞、指定明確 qstring，或針對已知 case 調整候選排序，例如 neutral-tone `ㄍㄜ˙` / `ek7`。 |
 | `opencc-variant-policy` | 預設繁中輸入法不應讓簡體或非台灣慣用字因 tie-break 排在繁體字前面。OpenCC 可作為 variant knowledge 的參考，但不當作頻率詞典匯入。 | 用小型 policy table 降低指定 variant 的最大權重，例如讓 `个` 不會排在 `個` 前面。 |
+
+另外，release builder 會從整合完成的 `unigrams` 派生 `associated_phrases` runtime table。這張表不是獨立詞源，而是提供「聯想詞提示」使用的 head-character -> phrase-tail 候選，例如輸出 `我` 後可提示 `們`、`的` 等詞尾。
 
 ## 整合方式
 
@@ -95,8 +98,9 @@ release builder 的整合流程是 deterministic 的：
 6. 匯入 `chiakey-modern-overlay/phrases.tsv`，讓專案自有修正可以替換已知問題詞。
 7. 套用 `opencc-variant-policy`，降低不符合預設繁中期待的 variant 權重。
 8. 匯入 `chiakey-modern-overlay/explicit.tsv`，處理需要指定 qstring 或排序的精準修正。
-9. 補入 runtime compatibility data：BPMF 標點、ChiaKey supplemental symbol list、canned messages、module CIN tables。
-10. 執行 runtime-required validations，寫出 normalized TSV、release metadata、manifest 與 checksums。
+9. 補入 runtime compatibility data：BPMF 標點、ChiaKey supplemental symbol list、canned messages、Mozc 顏文字、module CIN tables。
+10. 從最終 `unigrams` 派生 `associated_phrases`，供聯想詞提示使用。
+11. 執行 runtime-required validations，寫出 normalized TSV、release metadata、manifest 與 checksums。
 
 整合後，每筆可追蹤的詞庫 row 會帶有 source path、source kind、checksum 與 tags；app 端消費的是最後生成的 `KeyKeySource.db` 和 `lexicon-manifest.json`，維護端則可從 `normalized/smart-mandarin.tsv` 和 metadata 回查來源。
 

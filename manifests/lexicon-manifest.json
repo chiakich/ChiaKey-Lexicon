@@ -6,8 +6,8 @@
       "id": "smart-mandarin-db",
       "kind": "keykey-source-db",
       "language_model_version": "chiakey-modern-2026.06.9",
-      "sha256": "4a2dcd4d5c06721b120c9e5eb179a4bf236b29f200463c67c244a2a5e2c33965",
-      "size": 51576832,
+      "sha256": "4bcfea6652b85620827fae16c1aa20626eb731d8c7c990f330bdd38bbe227f7b",
+      "size": 53075968,
       "url": "https://github.com/akira02/ChiaKey-Lexicon/releases/download/2026.06.9/KeyKeySource-2026.06.9.db"
     },
     {
@@ -16,8 +16,8 @@
       "id": "smart-mandarin-metadata",
       "kind": "metadata",
       "language_model_version": "chiakey-modern-2026.06.9",
-      "sha256": "7f74cb5a46c540fcd872806e05152f2a4454a63b02f12ec5df4c9b648e1936e7",
-      "size": 20961,
+      "sha256": "0ab6dc197b62193bfa85906b5dc8d859fc8128ff6985e81bfc4b39cbdabb87fb",
+      "size": 22898,
       "url": "https://github.com/akira02/ChiaKey-Lexicon/releases/download/2026.06.9/KeyKeySource-2026.06.9.json"
     },
     {
@@ -26,13 +26,13 @@
       "id": "smart-mandarin-checksums",
       "kind": "checksum",
       "language_model_version": "chiakey-modern-2026.06.9",
-      "sha256": "39379474756e8d87d8232269576103adf8a27e6b017e5cc7b75fc4275d22b58e",
+      "sha256": "abf3a48793dbb352976f56faecd12edc76298a51ecee44128f0948da36d4594f",
       "size": 186,
       "url": "https://github.com/akira02/ChiaKey-Lexicon/releases/download/2026.06.9/SHA256SUMS"
     }
   ],
   "database_schema_version": 1,
-  "generated_at": "2026-06-23T09:58:13Z",
+  "generated_at": "2026-06-24T06:27:01Z",
   "minimum_app_version": "0.1.0",
   "schema": 1,
   "sources": [
@@ -79,6 +79,17 @@
       "priority": 130,
       "sha256": "a53fa4866b02a87d1558c089c644314a2e234482913e11a00126e7ea12fcbca2",
       "url": "https://github.com/vChewing/KeyKey-Boneyard/tree/master/YahooKeyKey-Source-1.1.2528/Distributions/Takao/OnlineData"
+    },
+    {
+      "attribution": "Google and Mozc contributors",
+      "enabled": true,
+      "format": "tsv",
+      "id": "mozc-emoticon-data",
+      "license": "BSD-3-Clause",
+      "name": "Mozc emoticon data",
+      "priority": 135,
+      "sha256": "65af507600a59f3833e5830f91dff4df26a596db2366395ead4e64b05c76ec62",
+      "url": "https://github.com/google/mozc/tree/28da5a39f9a7fd70251c85d269f4a8b47aa31cf8/src/data/emoticon"
     },
     {
       "attribution": "Yahoo! Inc.; OpenVanilla contributors; opendesktop.org.tw CIN contributors; KeyKey Boneyard / ChiaKey maintainers",

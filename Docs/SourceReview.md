@@ -75,6 +75,14 @@ sources/keykey-punctuations-cin/source-inventory.sha256
 
 This source restores the original KeyKey prepopulated canned-message payload. The release builder writes the complete `CannedMessages.plist` contents to `prepopulated_service_data` as `canned_messages`, then writes a positive release timestamp as `canned_messages_timestamp`.
 
+During release cooking, the builder augments the canned-message payload with a
+set of button categories generated from `chiakey-symbols-overlay/symbols.tsv`,
+so the visible symbol table receives the same supplemental symbols as
+`_punctuation_list` without placing every symbol in one oversized category. It
+also replaces the original annotated `顏文字` category with a Mozc-backed
+`Messages` list, so the symbol table displays only the emoticon string instead
+of strings such as `顏文字 + 中文說明`.
+
 `OneKey.plist` is intentionally omitted from public releases. OneKey was a Yahoo-era URL launcher rather than input lexicon data, and modern ChiaKey no longer loads it. New release databases must not contain `onekey_services` or `onekey_services_timestamp`.
 
 The generated source inventory is stored at:
@@ -129,10 +137,47 @@ loaded after `keykey-punctuations-cin`, and skips any symbol already present in
 the Yahoo KeyKey punctuation list so the original ordering and direct
 punctuation key mappings are preserved.
 
+The same source is also used to derive several supplemental canned-message
+button categories inside `prepopulated_service_data/canned_messages`, because
+the app symbol table reads canned messages rather than querying
+`_punctuation_list` directly. The generated categories are `補充標點`,
+`貨幣與標記`, `數字序號`, `補充箭頭`, `補充數學`, `勾叉與星號`,
+`花色與音樂`, and `單位符號`.
+
 The generated source inventory is stored at:
 
 ```text
 sources/chiakey-symbols-overlay/source-inventory.sha256
+```
+
+### mozc-emoticon-data
+
+- Name: Mozc emoticon data
+- Local source:
+  - `sources/mozc-emoticon-data/raw/categorized.tsv`
+  - `sources/mozc-emoticon-data/raw/emoticon.tsv`
+- Upstream source directory: <https://github.com/google/mozc/tree/master/src/data/emoticon>
+- Upstream commit: `28da5a39f9a7fd70251c85d269f4a8b47aa31cf8`
+- License: BSD-3-Clause
+- Attribution: Google and Mozc contributors
+- Redistribution decision: included for public releases starting in `2026.06.9`
+
+This source replaces the original KeyKey `顏文字` canned-message category.
+The release builder reads `categorized.tsv` first, then appends additional
+unique emoticon values from `emoticon.tsv`. Only the first column, the emoticon
+itself, is emitted into `prepopulated_service_data/canned_messages`; Japanese
+reading keys, categories, and descriptions are kept only as source context.
+
+The generated category intentionally remains a plain `Messages` list, without
+`IsSymbolButtonList` and without `Buttons`, because the original 顏文字 UX is a
+list. This keeps the symbol-table UI from showing the legacy Chinese
+annotations bundled with the Yahoo-era canned-message data while preserving the
+list interaction.
+
+The generated source inventory is stored at:
+
+```text
+sources/mozc-emoticon-data/source-inventory.sha256
 ```
 
 ## Excluded from v1
@@ -200,6 +245,9 @@ The release builder imports these pinned files:
 Starting in `2026.06.5`, single-character rows from `tsi.csv` are also imported as a character-frequency correction layer. This lets common characters such as `我` keep their libchewing frequency instead of tying with rare same-reading characters from the bootstrap database.
 The character-frequency mapping keeps a small single-character segmentation penalty so common characters do not accidentally outrank explicit phrase rows with the same reading.
 Lower-ranked multi-character libchewing rows also receive a bounded segment bonus so known phrases such as `地基` and `權重` can outrank same-reading character-by-character splits without pushing already-strong phrases beyond the original top of the phrase scale.
+Weak single-character readings can additionally be promoted when several high-frequency libchewing phrases start with that exact character and reading. This keeps readings such as `數` / `ㄕㄨˋ` visible in candidate lists based on evidence from phrases like `數位`, `數學`, `數量`, and `數字`, while still keeping the single character below the strongest phrase evidence.
+
+The final release database also derives `associated_phrases` from the assembled `unigrams` table for the runtime associated-phrase module. Each row maps a committed head character to comma-separated phrase tails, so a committed `我` can suggest tails such as `們` and `的`. This table is generated after all lexical imports and policy layers have been applied, and validation requires representative rows before a release can finish.
 
 The raw files are fetched by:
 
@@ -260,6 +308,8 @@ Then a low-priority supplemental phrase pass imports entries that satisfy all of
 2. The phrase length is between 2 and 7 Unicode codepoints.
 3. The Rime score is at least `40`.
 4. Every character has a primary single-character reading in the current database.
+
+During this supplemental pass, entries that would otherwise be ranked below an existing split path are promoted just enough to beat that split, with a cap at the top of the Rime supplemental range. This gives complete phrases such as `趁現在` a small segmentation advantage over unlikely character-plus-phrase paths such as `稱` + `現在`, without using per-phrase explicit overrides.
 
 This avoids replacing libchewing's explicit Zhuyin data with inferred readings, while still adding modern terms such as social, news, and technology vocabulary when the reading can be inferred safely enough for a supplemental layer.
 

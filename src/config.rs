@@ -19,6 +19,10 @@ pub const PREPOPULATED_SERVICE_SOURCE_ID: &str = "keykey-prepopulated-service-da
 pub const PREPOPULATED_SERVICE_SOURCE_NAME: &str = "KeyKey prepopulated service data";
 pub const CANNED_MESSAGES_VENDOR_PATH: &str =
     "sources/keykey-prepopulated-service-data/vendor/CannedMessages.plist";
+pub const MOZC_EMOTICON_SOURCE_ID: &str = "mozc-emoticon-data";
+pub const MOZC_EMOTICON_SOURCE_NAME: &str = "Mozc emoticon data";
+pub const MOZC_EMOTICON_CATEGORIZED_PATH: &str = "sources/mozc-emoticon-data/raw/categorized.tsv";
+pub const MOZC_EMOTICON_TSV_PATH: &str = "sources/mozc-emoticon-data/raw/emoticon.tsv";
 pub const MODULE_CIN_SOURCE_ID: &str = "keykey-module-cin";
 pub const MODULE_CIN_SOURCE_NAME: &str = "KeyKey module CIN tables";
 pub const CJ_EXT_VENDOR_PATH: &str = "sources/keykey-module-cin/vendor/cj-ext.cin";
@@ -72,6 +76,21 @@ pub const DOWNLOADS: &[SourceDownload] = &[
         url: "https://raw.githubusercontent.com/rime/rime-essay/48c7538f0b760fcc8c9d6bf08711f82cfbd2e9ed/LICENSE",
         path: "LICENSES/rime-essay-LGPL-3.0.txt",
         sha256: "da7eabb7bafdf7d3ae5e9f223aa5bdc1eece45ac569dc21b3b037520b4464768",
+    },
+    SourceDownload {
+        url: "https://raw.githubusercontent.com/google/mozc/28da5a39f9a7fd70251c85d269f4a8b47aa31cf8/src/data/emoticon/categorized.tsv",
+        path: MOZC_EMOTICON_CATEGORIZED_PATH,
+        sha256: "4497c16a706de418b05e73eaddbce13e5d3390e7c2de71200b28c0c97ae5c4fc",
+    },
+    SourceDownload {
+        url: "https://raw.githubusercontent.com/google/mozc/28da5a39f9a7fd70251c85d269f4a8b47aa31cf8/src/data/emoticon/emoticon.tsv",
+        path: MOZC_EMOTICON_TSV_PATH,
+        sha256: "366558b380bef07dda26822c9100d1efabee539f7961b2c6363d4614c4a762c4",
+    },
+    SourceDownload {
+        url: "https://raw.githubusercontent.com/google/mozc/28da5a39f9a7fd70251c85d269f4a8b47aa31cf8/LICENSE",
+        path: "LICENSES/mozc-BSD-3-Clause.txt",
+        sha256: "44cdd923b91ea9199293abecc2762c70c87dbf1e581c027a94c416368d1a648c",
     },
 ];
 
