@@ -138,18 +138,21 @@ sources/chiakey-symbols-overlay/source-inventory.sha256
 ### chiaki-web-overlay
 
 - Name: Chiaki reviewed web corpus overlay
-- Local source: `sources/chiaki-web-overlay/explicit.tsv`
+- Local sources:
+  - `sources/chiaki-web-overlay/explicit.tsv`
+  - `sources/chiaki-web-overlay/bigrams.tsv`
 - Source material: Traditional Chinese Wikipedia and Chiaki's own social media posts
 - License: CC0-1.0
 - Attribution: ChiaKey Lexicon maintainers
 - Redistribution decision: included for public releases starting in the next corpus refresh
 
-This source contains reviewed unigram additions derived from public reference
-text and Chiaki-authored social posts. It redistributes only derived lexicon
-rows in the release-builder format:
+This source contains reviewed unigram and bigram additions derived from public
+reference text and Chiaki-authored social posts. It redistributes only derived
+lexicon rows in the release-builder formats:
 
 ```text
 qstring<TAB>phrase<TAB>weight<TAB>tags
+qstring<TAB>previous<TAB>current<TAB>probability
 ```
 
 The release builder imports this source after `chiakey-modern-overlay` and

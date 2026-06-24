@@ -3,7 +3,9 @@ use crate::config::{
     RIME_ESSAY_SOURCE_ID,
 };
 use crate::phonetics::{phrase_candidate, qstring_for_bpmf_sequence};
-use crate::types::{LibchewingFile, LibchewingWeightMode, SourceRecord, VariantDemotionRecord};
+use crate::types::{
+    BigramRecord, LibchewingFile, LibchewingWeightMode, SourceRecord, VariantDemotionRecord,
+};
 use anyhow::{bail, Context, Result};
 use csv::StringRecord;
 use std::collections::{HashMap, HashSet};
@@ -176,6 +178,56 @@ pub fn parse_chiaki_web_overlay(
     parse_explicit_records(path, cfg, CHIAKI_WEB_OVERLAY_SOURCE_ID)
 }
 
+pub fn parse_bigram_overlay(
+    path: &Path,
+    cfg: &Config,
+) -> Result<(Vec<BigramRecord>, usize, usize)> {
+    let file = File::open(path).with_context(|| format!("read {}", path.display()))?;
+    let reader = BufReader::new(file);
+    let mut seen = 0;
+    let mut skipped = 0;
+    let mut records = Vec::new();
+
+    for (line_number, line) in reader.lines().enumerate() {
+        let line = line?;
+        if line.trim().is_empty() || line.starts_with('#') {
+            continue;
+        }
+        seen += 1;
+        let parts = line.splitn(4, '\t').collect::<Vec<_>>();
+        if parts.len() < 4
+            || parts[0].is_empty()
+            || !phrase_candidate(parts[1], 1, cfg.max_phrase_codepoints)
+            || !phrase_candidate(parts[2], 1, cfg.max_phrase_codepoints)
+        {
+            skipped += 1;
+            continue;
+        }
+        let probability: f64 = parts[3].parse().with_context(|| {
+            format!(
+                "invalid bigram probability {}:{}",
+                path.display(),
+                line_number + 1
+            )
+        })?;
+        if !probability.is_finite() {
+            bail!(
+                "invalid non-finite bigram probability {}:{}",
+                path.display(),
+                line_number + 1
+            );
+        }
+        records.push(BigramRecord {
+            qstring: parts[0].to_string(),
+            previous: parts[1].to_string(),
+            current: parts[2].to_string(),
+            probability,
+        });
+    }
+
+    Ok((dedupe_bigram_records(records), seen, skipped))
+}
+
 fn parse_explicit_records(
     path: &Path,
     cfg: &Config,
@@ -305,6 +357,24 @@ pub fn dedupe_records(records: Vec<SourceRecord>) -> Vec<SourceRecord> {
     map.into_values().collect()
 }
 
+pub fn dedupe_bigram_records(records: Vec<BigramRecord>) -> Vec<BigramRecord> {
+    let mut map: HashMap<(String, String, String), BigramRecord> = HashMap::new();
+    for record in records {
+        let key = (
+            record.qstring.clone(),
+            record.previous.clone(),
+            record.current.clone(),
+        );
+        match map.get(&key) {
+            Some(existing) if existing.probability >= record.probability => {}
+            _ => {
+                map.insert(key, record);
+            }
+        }
+    }
+    map.into_values().collect()
+}
+
 pub fn format_weight(value: f64) -> String {
     if value.fract() == 0.0 {
         format!("{value:.1}")
@@ -382,8 +452,8 @@ fn round6(value: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::{
-        libchewing_character_weight, libchewing_weight, parse_explicit_overlay,
-        parse_variant_demotions,
+        libchewing_character_weight, libchewing_weight, parse_bigram_overlay,
+        parse_explicit_overlay, parse_variant_demotions,
     };
     use crate::config::Config;
     use std::fs;
@@ -406,6 +476,27 @@ mod tests {
         assert_eq!(records[0].phrase, "個");
         assert_eq!(records[0].weight, -2.9);
         assert_eq!(records[0].tags, "unigram,manual,neutral-tone");
+
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn parses_bigram_overlay_rows() {
+        let path = temp_file(
+            "bigram-overlay",
+            "# qstring\tprevious\tcurrent\tprobability\nrq t4\t個\t人\t-0.1\n",
+        );
+        let cfg = test_config();
+
+        let (records, seen, skipped) = parse_bigram_overlay(&path, &cfg).unwrap();
+
+        assert_eq!(seen, 1);
+        assert_eq!(skipped, 0);
+        assert_eq!(records.len(), 1);
+        assert_eq!(records[0].qstring, "rq t4");
+        assert_eq!(records[0].previous, "個");
+        assert_eq!(records[0].current, "人");
+        assert_eq!(records[0].probability, -0.1);
 
         let _ = fs::remove_file(path);
     }

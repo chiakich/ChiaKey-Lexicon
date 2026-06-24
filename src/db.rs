@@ -2,7 +2,9 @@ use crate::config::{Config, BONEYARD_SOURCE_ID};
 use crate::files::count_lines;
 use crate::importers::{dedupe_records, format_weight};
 use crate::prepopulated::ServiceData;
-use crate::types::{ImportResult, KeyValueRecord, SourceRecord, VariantDemotionRecord};
+use crate::types::{
+    BigramRecord, ImportResult, KeyValueRecord, SourceRecord, VariantDemotionRecord,
+};
 use anyhow::Result;
 use rusqlite::types::ValueRef;
 use rusqlite::{params, Connection};
@@ -195,6 +197,69 @@ pub fn apply_key_value_records(
             ),
             [],
         )?;
+    }
+
+    tx.execute(
+        "DELETE FROM chiaki_db_sources WHERE source = ?1",
+        params![source_path],
+    )?;
+    tx.execute(
+        "INSERT INTO chiaki_db_sources VALUES(?1, ?2, ?3, ?4, ?5, ?6)",
+        params![
+            source_path,
+            kind,
+            source_sha256,
+            seen as i64,
+            records.len() as i64,
+            skipped as i64
+        ],
+    )?;
+
+    tx.commit()?;
+    Ok(ImportResult {
+        source_path: source_path.to_string(),
+        seen,
+        added: records.len(),
+        skipped,
+        records: Vec::new(),
+    })
+}
+
+pub fn apply_bigram_records(
+    conn: &mut Connection,
+    records: &[BigramRecord],
+    source_path: &str,
+    kind: &str,
+    source_sha256: &str,
+    seen: usize,
+    skipped: usize,
+) -> Result<ImportResult> {
+    let tx = conn.transaction()?;
+
+    tx.execute(
+        "CREATE TABLE IF NOT EXISTS bigrams (qstring, previous, current, probability)",
+        [],
+    )?;
+    tx.execute(
+        "CREATE INDEX IF NOT EXISTS bigrams_index ON bigrams (qstring)",
+        [],
+    )?;
+
+    {
+        let mut delete = tx.prepare(
+            "DELETE FROM bigrams
+             WHERE qstring = ?1 AND previous = ?2 AND current = ?3",
+        )?;
+        let mut insert = tx.prepare("INSERT INTO bigrams VALUES(?1, ?2, ?3, ?4)")?;
+        for record in records {
+            delete.execute(params![record.qstring, record.previous, record.current])?;
+            insert.execute(params![
+                record.qstring,
+                record.previous,
+                record.current,
+                record.probability
+            ])?;
+        }
     }
 
     tx.execute(

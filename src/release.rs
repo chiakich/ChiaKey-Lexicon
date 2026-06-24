@@ -87,6 +87,7 @@ pub fn run() -> Result<()> {
         &mut source_keys,
         &mut import_results,
     )?;
+    import_chiaki_web_bigrams(&mut conn, &cfg, &paths, &mut import_results)?;
     import_punctuations(
         &mut conn,
         &cfg,
@@ -160,6 +161,7 @@ fn verify_inputs(
         paths.overlay_phrases.clone(),
         paths.overlay_explicit.clone(),
         paths.chiaki_web_overlay_explicit.clone(),
+        paths.chiaki_web_overlay_bigrams.clone(),
         paths.opencc_variant_demotions.clone(),
         paths.rime_essay_raw.clone(),
     ];
@@ -251,7 +253,10 @@ fn write_source_inventories(
     write_inventory(
         &paths.chiaki_web_overlay_inventory,
         &paths.chiaki_web_overlay_source_dir,
-        std::slice::from_ref(&paths.chiaki_web_overlay_explicit),
+        &[
+            paths.chiaki_web_overlay_explicit.clone(),
+            paths.chiaki_web_overlay_bigrams.clone(),
+        ],
         true,
     )?;
     write_inventory(
@@ -598,6 +603,27 @@ fn import_chiaki_web_overlay(
         false,
     )?;
     remember_records(source_keys, &result);
+    import_results.push(result);
+    Ok(())
+}
+
+fn import_chiaki_web_bigrams(
+    conn: &mut Connection,
+    cfg: &Config,
+    paths: &ReleasePaths,
+    import_results: &mut Vec<ImportResult>,
+) -> Result<()> {
+    let (records, seen, skipped) =
+        importers::parse_bigram_overlay(&paths.chiaki_web_overlay_bigrams, cfg)?;
+    let result = db::apply_bigram_records(
+        conn,
+        &records,
+        &repo_relative(&cfg.root, &paths.chiaki_web_overlay_bigrams)?,
+        "chiaki-web-bigram-overlay",
+        &sha256_file(&paths.chiaki_web_overlay_bigrams)?,
+        seen,
+        skipped,
+    )?;
     import_results.push(result);
     Ok(())
 }

@@ -35,6 +35,14 @@ pub struct SourceRecord {
     pub tags: String,
 }
 
+#[derive(Clone)]
+pub struct BigramRecord {
+    pub qstring: String,
+    pub previous: String,
+    pub current: String,
+    pub probability: f64,
+}
+
 pub struct KeyValueRecord {
     pub key: String,
     pub value: String,
