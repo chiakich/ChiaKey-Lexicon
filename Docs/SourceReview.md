@@ -249,7 +249,8 @@ Weak single-character readings can additionally be promoted when several high-fr
 
 The final release database also derives `associated_phrases` from the assembled `unigrams` table for the runtime associated-phrase module. Each row maps a committed head character to comma-separated phrase tails, so a committed `我` can suggest tails such as `們` and `的`. This table is generated after all lexical imports and policy layers have been applied, and validation requires representative rows before a release can finish.
 
-The raw files are fetched by:
+The raw files are vendored under `sources/libchewing-data/raw/` so release
+builds do not need network access. Maintainers refresh pinned snapshots with:
 
 ```text
 cargo run --release -- fetch-modern-sources

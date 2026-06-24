@@ -4,7 +4,7 @@
 
 ChiaKey Lexicon is the data-side repository for 千秋輸入法 (ChiaKey).
 
-The main app repository should stay focused on the macOS input method runtime, database reader, builder scripts, installation tooling, and a small bundled fallback database. This repository owns the evolving lexicon data, source manifests, license notes, normalized intermediate data, release database artifacts, checksums, and changelog.
+The main app repository should stay focused on the macOS input method runtime, database reader, builder scripts, installation tooling, and a small bundled fallback database. This repository owns the evolving lexicon data, source manifests, license notes, release database artifacts, checksums, and changelog.
 
 ## Intended Split
 
@@ -13,14 +13,14 @@ The main app repository should stay focused on the macOS input method runtime, d
 1. macOS IMK runtime.
 2. Input engine integration.
 3. Database schema and reader.
-4. Builder scripts that can consume this repo's normalized data.
+4. Builder or installation scripts that can consume this repo's release artifacts.
 5. A bundled fallback `KeyKeySource.db`.
 
 `ChiaKey-Lexicon` owns:
 
 1. Source manifests.
 2. Source license and attribution records.
-3. Normalized lexicon data.
+3. Vendored raw lexicon sources.
 4. Release-ready `KeyKeySource` database artifacts.
 5. Checksums or signatures.
 6. Lexicon release changelog.
@@ -36,13 +36,7 @@ Start with:
 - [Docs/ReleaseFlow.zh-TW.md](Docs/ReleaseFlow.zh-TW.md)
 - [Docs/SourceReview.md](Docs/SourceReview.md)
 
-Fetch pinned external source files with:
-
-```sh
-cargo run --release -- fetch-modern-sources
-```
-
-Then build the local release package with:
+Build the local release package with:
 
 ```sh
 cargo run --release -- prepare-release
@@ -54,8 +48,8 @@ The repository is organized around a reproducible data pipeline:
 
 1. `sources/<source-id>/` holds each reviewed input source, its local README, and a `source-inventory.sha256` provenance file.
 2. `LICENSES/` records the license text or license notes needed for every source that can ship in a public release.
-3. `src/` contains the Rust release toolchain. It verifies inputs, imports data layers into the KeyKey database shape, writes normalized TSV output, updates release metadata, and generates manifests.
-4. `normalized/smart-mandarin.tsv` is the generated normalized interchange view of the Smart Mandarin language-model rows.
+3. `src/` contains the Rust release toolchain. It verifies inputs, imports data layers into the KeyKey database shape, writes generated audit artifacts, updates release metadata, and generates manifests.
+4. `normalized/smart-mandarin.tsv` is the generated normalized audit view of the Smart Mandarin language-model rows and is not committed.
 5. `manifests/lexicon-manifest.json` is the generated update contract consumed by the app.
 6. `dist/<version>/` is local staging for release artifacts and is not committed.
 
@@ -89,6 +83,15 @@ sources/
 ```
 
 Built release artifacts are not tracked in git. Use a local staging directory such as `dist/`, then upload the artifacts to GitHub Releases.
+
+Maintainers can update pinned external sources with:
+
+```sh
+cargo run --release -- fetch-modern-sources
+```
+
+That command refreshes vendored raw source snapshots and source inventories.
+Normal CI release builds do not need network access to fetch source data.
 
 ## Release Shape
 

@@ -1,8 +1,7 @@
 .DS_Store
 
-# Local downloads and generated outputs.
-sources/**/raw/*
-!sources/**/raw/.gitkeep
+# Generated outputs.
+normalized/smart-mandarin.tsv
 Build/
 tmp/
 target/

@@ -8,12 +8,14 @@ Pinned upstream file:
 
 - `essay.txt` from `rime/rime-essay` commit `48c7538f0b760fcc8c9d6bf08711f82cfbd2e9ed`
 
-Local raw files are downloaded to `sources/rime-essay/raw/` by:
+Local raw files are vendored under `sources/rime-essay/raw/` so normal release
+builds do not need network access. Maintainers refresh pinned snapshots with:
 
 ```sh
 cargo run --release -- fetch-modern-sources
 ```
 
-The raw file is intentionally not tracked in git. Its checksum is recorded in `source-inventory.sha256`.
+The raw file is tracked in git. Its checksum is recorded in
+`source-inventory.sha256`.
 
 License: LGPL-3.0.

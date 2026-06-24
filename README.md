@@ -4,7 +4,7 @@
 
 千秋輸入法詞庫（ChiaKey Lexicon）是千秋輸入法（ChiaKey）的詞庫資料 repository。
 
-主 app repository 應該專注在 macOS 輸入法 runtime、資料庫讀取、builder script、安裝工具，以及一份小型 bundled fallback database。這個 repository 則負責持續演進的詞庫資料、來源 manifest、授權紀錄、normalized intermediate data、release database artifacts、checksums 與 changelog。
+主 app repository 應該專注在 macOS 輸入法 runtime、資料庫讀取、builder script、安裝工具，以及一份小型 bundled fallback database。這個 repository 則負責持續演進的詞庫資料、來源 manifest、授權紀錄、release database artifacts、checksums 與 changelog。
 
 ## 分工
 
@@ -13,14 +13,14 @@
 1. macOS IMK runtime。
 2. 輸入引擎整合。
 3. 資料庫 schema 與 reader。
-4. 可消費此 repo normalized data 的 builder script。
+4. 可消費此 repo release artifacts 的 builder 或安裝 script。
 5. bundled fallback `KeyKeySource.db`。
 
 `ChiaKey-Lexicon` 負責：
 
 1. source manifests。
 2. source license 與 attribution records。
-3. normalized lexicon data。
+3. vendored raw lexicon sources。
 4. release-ready `KeyKeySource` database artifacts。
 5. checksums 或 signatures。
 6. lexicon release changelog。
@@ -36,12 +36,6 @@
 - [Docs/ReleaseFlow.zh-TW.md](Docs/ReleaseFlow.zh-TW.md)
 - [Docs/SourceReview.md](Docs/SourceReview.md)
 
-下載 pinned external source files：
-
-```sh
-cargo run --release -- fetch-modern-sources
-```
-
 建立本機 release package：
 
 ```sh
@@ -54,8 +48,8 @@ cargo run --release -- prepare-release
 
 1. `sources/<source-id>/` 放每個已審查 input source、本地 README，以及 `source-inventory.sha256` provenance file。
 2. `LICENSES/` 記錄每個可公開 release source 所需的 license text 或 license notes。
-3. `src/` 是 Rust release toolchain，負責驗證 inputs、將資料層匯入 KeyKey database shape、寫出 normalized TSV、更新 release metadata、產生 manifests。
-4. `normalized/smart-mandarin.tsv` 是 Smart Mandarin language-model rows 的 generated normalized interchange view。
+3. `src/` 是 Rust release toolchain，負責驗證 inputs、將資料層匯入 KeyKey database shape、寫出 generated audit artifacts、更新 release metadata、產生 manifests。
+4. `normalized/smart-mandarin.tsv` 是 Smart Mandarin language-model rows 的 generated normalized audit view，不 commit。
 5. `manifests/lexicon-manifest.json` 是 app 端消費的 generated update contract。
 6. `dist/<version>/` 是本機 release artifacts staging 目錄，不 commit。
 
@@ -102,7 +96,7 @@ release builder 的整合流程是 deterministic 的：
 10. 從最終 `unigrams` 派生 `associated_phrases`，供聯想詞提示使用。
 11. 執行 runtime-required validations，寫出 normalized TSV、release metadata、manifest 與 checksums。
 
-整合後，每筆可追蹤的詞庫 row 會帶有 source path、source kind、checksum 與 tags；app 端消費的是最後生成的 `KeyKeySource.db` 和 `lexicon-manifest.json`，維護端則可從 `normalized/smart-mandarin.tsv` 和 metadata 回查來源。
+整合後，每筆可追蹤的詞庫 row 會帶有 source path、source kind、checksum 與 tags；app 端消費的是最後生成的 `KeyKeySource.db` 和 `lexicon-manifest.json`，維護端可在本機 build 後從 generated `normalized/smart-mandarin.tsv` 和 metadata 回查來源。
 
 各來源的授權、redistribution decision 與風險紀錄放在 [Docs/SourceReview.md](Docs/SourceReview.md)。日常 release 操作放在 [Docs/ReleaseFlow.zh-TW.md](Docs/ReleaseFlow.zh-TW.md)。
 
@@ -127,6 +121,14 @@ sources/
 ```
 
 建置完成的 release artifacts 不會 commit 進 git。請用 `dist/` 之類的本機 staging 目錄，再由 GitHub Releases 發布 artifacts。
+
+若要更新 pinned 外部來源，可由維護者手動執行：
+
+```sh
+cargo run --release -- fetch-modern-sources
+```
+
+這個指令會更新 vendored raw source snapshots 與 source inventories；一般 CI release build 不需要網路下載來源資料。
 
 ## Release 內容
 

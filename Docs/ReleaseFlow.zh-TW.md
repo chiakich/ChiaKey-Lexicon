@@ -16,13 +16,7 @@
 
 ## 本機建置
 
-先下載現代詞庫來源：
-
-```sh
-cargo run --release -- fetch-modern-sources
-```
-
-再建 release package：
+建 release package：
 
 ```sh
 cargo run --release -- prepare-release
@@ -73,13 +67,28 @@ workflow 會做：
 1. 安裝 Rust 與 SQLite 依賴。
 2. 計算 release 版本。
 3. 跑 `cargo test`。
-4. 執行 `cargo run --release -- fetch-modern-sources`。
-5. 執行 `cargo run --release -- prepare-release`。
-6. 驗證 `SHA256SUMS`。
-7. 用 SQLite smoke tests 確認 release DB 符合 app 端需要的基本合約。
-8. 建立 GitHub Release 並上傳 DB、metadata、manifest、checksum。
+4. 執行 `cargo run --release -- prepare-release`。
+5. 驗證 `SHA256SUMS`。
+6. 用 SQLite smoke tests 確認 release DB 符合 app 端需要的基本合約。
+7. 建立 GitHub Release 並上傳 DB、metadata、manifest、checksum。
 
 `dist/` 是本機與 CI 的 staging 目錄，不 commit 進 git。公開 artifacts 以 GitHub Release 為準。
+
+## 更新外部來源
+
+外部來源以 pinned raw snapshot 形式 commit 在 `sources/*/raw/`。一般本機
+build 和 CI release 不需要網路下載來源資料。
+
+若要升級 libchewing、Rime essay 或 Mozc 顏文字等 pinned source，維護者先
+更新 `src/config.rs` 裡的 URL / checksum，再執行：
+
+```sh
+cargo run --release -- fetch-modern-sources
+```
+
+這會重新下載 raw files、驗證 SHA-256，並更新對應的
+`source-inventory.sha256`。更新後應把 raw source snapshot、inventory、
+license 變更與 builder 變更一起 commit。
 
 若只是調整 release workflow 本身、而且會另外手動發版，可以在 commit message 放 `[skip release]`。這只應用在少數維護流程的情境；一般 `main` merge 應該讓 CI 自動 release。
 
@@ -106,5 +115,5 @@ dev -> main
 - GitHub Release 有四個 artifacts：`KeyKeySource-<version>.db`、`KeyKeySource-<version>.json`、`lexicon-manifest.json`、`SHA256SUMS`。
 - `SHA256SUMS` 驗證通過。
 - `lexicon-manifest.json` 裡的 artifact URL 指向該 release tag，且 manifest version 與 release tag 一致。
-- GitHub Actions 的 release job 完整通過，包括 Rust tests、source fetch、artifact build、checksum validation、SQLite smoke tests。
+- GitHub Actions 的 release job 完整通過，包括 Rust tests、artifact build、checksum validation、SQLite smoke tests。
 - 若有 app 端相容性變更，使用新版 app 在乾淨 profile 裡確認 manifest 下載、DB 驗證、安裝與 fallback 行為。

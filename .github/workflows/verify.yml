@@ -28,3 +28,6 @@ jobs:
 
       - name: Run tests
         run: cargo test
+
+      - name: Build release artifacts
+        run: cargo run --release -- prepare-release

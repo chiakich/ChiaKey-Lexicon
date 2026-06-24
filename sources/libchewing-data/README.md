@@ -10,12 +10,15 @@ Pinned upstream files:
 - `dict/chewing/word.csv` from `chewing/libchewing-data` tag `v2026.3.22`
 - `dict/chewing/alt.csv` from `chewing/libchewing-data` tag `v2026.3.22`
 
-Local raw files are downloaded to `sources/libchewing-data/raw/` by:
+Local raw files are vendored under `sources/libchewing-data/raw/` so normal
+release builds do not need network access. Maintainers refresh pinned snapshots
+with:
 
 ```sh
 cargo run --release -- fetch-modern-sources
 ```
 
-The raw files are intentionally not tracked in git. Their checksums are recorded in `source-inventory.sha256`.
+The raw files are tracked in git. Their checksums are recorded in
+`source-inventory.sha256`.
 
 License: LGPL-2.1-or-later, based on the source file `dc:license` headers and libchewing project license.
