@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: Optional explicit release version, for example 2026.06.4
+        description: Optional explicit release version in YYYY.MM.N form
         required: false
         type: string
 
@@ -49,32 +49,7 @@ jobs:
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             requested="${{ inputs.version }}"
           fi
-          if [[ -n "$requested" ]]; then
-            version="$requested"
-          else
-            prefix="$(TZ=Asia/Taipei date +'%Y.%m')"
-            last="$(
-              git tag --list "${prefix}.*" |
-                awk -F. -v prefix="$prefix" '
-                  BEGIN { max = 0 }
-                  ($1 "." $2) == prefix && $3 ~ /^[0-9]+$/ {
-                    if (($3 + 0) > max) {
-                      max = $3 + 0
-                    }
-                  }
-                  END {
-                    if (max > 0) {
-                      print max
-                    }
-                  }
-                '
-            )"
-            if [[ -z "$last" ]]; then
-              version="${prefix}.1"
-            else
-              version="${prefix}.$((last + 1))"
-            fi
-          fi
+          version="$(bash scripts/compute-release-version.sh "$requested")"
 
           if git rev-parse -q --verify "refs/tags/${version}" >/dev/null; then
             echo "Release tag ${version} already exists." >&2

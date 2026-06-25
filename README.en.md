@@ -29,18 +29,20 @@ The main app repository should stay focused on the macOS input method runtime, d
 
 This repository has an active seed release pipeline. Pushes to `main` build and publish versioned lexicon releases through GitHub Actions.
 
-The current pipeline builds a complete `KeyKeySource.db` from reviewed source data, project-owned corrections, generated metadata, source inventories, and checksum manifests. Release artifacts are produced under `dist/<version>/` locally and uploaded to GitHub Releases by CI.
+The current pipeline builds a complete `KeyKeySource.db` from reviewed source data, project-owned corrections, generated metadata, source inventories, and checksum manifests. Local verification builds default to `dist/dev/`; public release versions are computed by CI, injected into the builder, and uploaded to GitHub Releases.
 
 Start with:
 
 - [Docs/ReleaseFlow.zh-TW.md](Docs/ReleaseFlow.zh-TW.md)
 - [Docs/SourceReview.md](Docs/SourceReview.md)
 
-Build the local release package with:
+Build a local verification package with:
 
 ```sh
 cargo run --release -- prepare-release
 ```
+
+Public releases do not require manually updating a version in the repository. GitHub Actions computes the next `YYYY.MM.N` from existing tags.
 
 ## Architecture
 
@@ -50,8 +52,8 @@ The repository is organized around a reproducible data pipeline:
 2. `LICENSES/` records the license text or license notes needed for every source that can ship in a public release.
 3. `src/` contains the Rust release toolchain. It verifies inputs, imports data layers into the KeyKey database shape, writes generated audit artifacts, updates release metadata, and generates manifests.
 4. `normalized/smart-mandarin.tsv` is the generated normalized audit view of the Smart Mandarin language-model rows and is not committed.
-5. `manifests/lexicon-manifest.json` is the generated update contract consumed by the app.
-6. `dist/<version>/` is local staging for release artifacts and is not committed.
+5. `manifests/lexicon-manifest.json` is the generated update contract consumed by the app and is not committed; release builds copy it into `dist/`.
+6. `dist/dev/` or `dist/<version>/` is local staging for release artifacts and is not committed.
 
 The data layers fall into four broad groups:
 

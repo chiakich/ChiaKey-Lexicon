@@ -27,7 +27,7 @@
 
 ## 目前狀態
 
-目前 pipeline 會從已審查來源資料、專案維護修正、生成 metadata、source inventories 與 checksum manifests 建出完整的 `KeyKeySource.db`。本機 release artifacts 會輸出到 `dist/<version>/`，CI 則會上傳到 GitHub Releases。
+目前 pipeline 會從已審查來源資料、專案維護修正、生成 metadata、source inventories 與 checksum manifests 建出完整的 `KeyKeySource.db`。本機檢查 build 預設會輸出到 `dist/dev/`，公開 release 的版本號則由 CI 計算後注入，並上傳到 GitHub Releases。
 
 合併到 `main` 後，會透過 GitHub Actions 建置並發布版本化詞庫 release。
 
@@ -36,11 +36,13 @@
 - [Docs/ReleaseFlow.zh-TW.md](Docs/ReleaseFlow.zh-TW.md)
 - [Docs/SourceReview.md](Docs/SourceReview.md)
 
-若要建立本機 release package 請執行：
+若要建立本機檢查用 package 請執行：
 
 ```sh
 cargo run --release -- prepare-release
 ```
+
+公開 release 不需要在 repo 內手動更新版號；GitHub Actions 會依既有 tag 計算下一個 `YYYY.MM.N`。
 
 ## 架構
 
@@ -50,8 +52,8 @@ cargo run --release -- prepare-release
 2. `LICENSES/` 記錄每個可公開 release source 所需的 license text 或 license notes。
 3. `src/` 是 Rust release toolchain，負責驗證 inputs、將資料層匯入 KeyKey database shape、寫出 generated audit artifacts、更新 release metadata、產生 manifests。
 4. `normalized/smart-mandarin.tsv` 是 Smart Mandarin language-model rows 的 generated normalized audit view，不 commit。
-5. `manifests/lexicon-manifest.json` 是輸入法端消費的 generated update contract。
-6. `dist/<version>/` 是本機 release artifacts staging 目錄，不 commit。
+5. `manifests/lexicon-manifest.json` 是輸入法端消費的 generated update contract，不 commit；發版時會複製到 `dist/`。
+6. `dist/dev/` 或 `dist/<version>/` 是本機 release artifacts staging 目錄，不 commit。
 
 資料層大致分成四類：
 

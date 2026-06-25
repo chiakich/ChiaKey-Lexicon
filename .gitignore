@@ -3,6 +3,7 @@
 # Generated outputs.
 generated/
 normalized/smart-mandarin.tsv
+manifests/lexicon-manifest.json
 Build/
 tmp/
 target/

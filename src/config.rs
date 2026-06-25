@@ -53,6 +53,7 @@ pub const OPENFORMOSA_COMMON_VOICE_SOURCE_NAME: &str =
 pub const OPENCC_VARIANT_SOURCE_ID: &str = "opencc-variant-policy";
 pub const OPENCC_VARIANT_SOURCE_NAME: &str = "OpenCC-derived Traditional Chinese variant policy";
 pub const DATABASE_SCHEMA_VERSION: i64 = 1;
+pub const DEFAULT_RELEASE_VERSION: &str = "dev";
 
 pub const DOWNLOADS: &[SourceDownload] = &[
     SourceDownload {
@@ -119,7 +120,7 @@ pub struct Config {
 
 pub fn load() -> Result<Config> {
     let root = env::current_dir().context("read current directory")?;
-    let release_version = env_or("LEXICON_VERSION", "2026.06.9");
+    let release_version = env_or("LEXICON_VERSION", DEFAULT_RELEASE_VERSION);
     let language_model_version = format!("chiakey-modern-{release_version}");
     let minimum_app_version = env_or("MINIMUM_APP_VERSION", "0.1.0");
     let generated_at = env::var("GENERATED_AT")
