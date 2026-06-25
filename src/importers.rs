@@ -24,7 +24,7 @@ const RIME_OVERLAP_RERANK_MARGIN: f64 = 0.01;
 const RIME_OVERLAP_RERANK_MAX_WEIGHT: f64 = -0.5;
 const RIME_OVERLAP_RERANK_STRONG_GROUP_THRESHOLD: f64 = -0.75;
 const RIME_SPLIT_RERANK_MARGIN: f64 = 0.01;
-const RIME_SPLIT_RERANK_MAX_WEIGHT: f64 = -1.35;
+const RIME_SPLIT_RERANK_MAX_WEIGHT: f64 = RIME_OVERLAP_RERANK_STRONG_GROUP_THRESHOLD;
 
 pub fn libchewing_max_score(paths: &[PathBuf]) -> Result<i64> {
     let mut max_score = 1;
@@ -863,6 +863,46 @@ mod tests {
         assert_eq!(take_now.weight, -1.95437);
         assert_eq!(
             take_now.tags,
+            "unigram,rime-essay,supplemental,split-rerank"
+        );
+
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn lets_rime_split_rerank_escape_the_old_supplemental_floor() {
+        let path = temp_file("rime-split-rerank-cap", "統計系統\t46\n因爲\t474154\n");
+        let cfg = test_config();
+        let char_readings = HashMap::from([
+            ("統".to_string(), "?]".to_string()),
+            ("計".to_string(), "A_".to_string()),
+            ("系".to_string(), "C_".to_string()),
+            ("因".to_string(), "Q;".to_string()),
+            ("爲".to_string(), "2f".to_string()),
+        ]);
+        let existing_phrases = HashSet::new();
+        let existing_qstring_weights = HashMap::from([
+            ("?]A_".to_string(), -0.341542),
+            ("C_?]".to_string(), -0.465907),
+        ]);
+
+        let (records, _seen, _skipped) = parse_rime_essay(
+            &path,
+            &cfg,
+            &char_readings,
+            &existing_phrases,
+            &existing_qstring_weights,
+        )
+        .unwrap();
+        let statistics_system = records
+            .iter()
+            .find(|record| record.phrase == "統計系統")
+            .expect("統計系統 should be imported");
+
+        assert_eq!(statistics_system.weight, -0.797449);
+        assert!(statistics_system.weight > -1.35);
+        assert_eq!(
+            statistics_system.tags,
             "unigram,rime-essay,supplemental,split-rerank"
         );
 
