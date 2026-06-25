@@ -78,6 +78,7 @@ cargo run --release -- prepare-release
 | `chiakey-modern-overlay` | 真實打字測試會發現少量立即需要修的缺漏或排序問題；這些修正應由專案自己維護，不能等大型來源更新。 | 補專案自有詞、指定明確 qstring，或針對已知 case 調整候選排序，例如 neutral-tone `ㄍㄜ˙` / `ek7`。 |
 | `chiaki-web-overlay` | 經人工審過的網路用語 overlay，僅作為 ChiaKey 詞庫的窄補充；其他專案或非 ChiaKey 用途預設應排除，除非自行完成來源審查。 | 匯入 explicit unigram 與 runtime bigram rows；只保存最終詞庫 rows，不保存原始語料。 |
 | `chiaki-synthetic-overlay` | 由 GPT-5.5 合成「台灣網路用語」語料，並經專案清洗與統計後形成的詞庫 overlay。 | 從 `unigrams.tsv` 匯入 unigram rows，並從 `bigrams.tsv` 匯入 synthetic runtime bigram probabilities；此來源採 CC BY-NC 4.0，非商用與開源專案可使用，商用請聯絡 Chiaki.C。 |
+| `openformosa-common-voice-25-zh-tw` | OpenFormosa / Mozilla Common Voice 的 zh-TW validated sentences 是 CC0 授權的台灣語音句庫，可補一些日常、行政、交通與服務場景的相鄰詞提示。 | 匯入經 `build-bigram-stats` 過濾後的 runtime bigram rows；只保存最後選出的 bigram rows，不保存原始語音句庫。 |
 | `opencc-variant-policy` | 預設繁中輸入法不應讓簡體或非台灣慣用字因 tie-break 排在繁體字前面。OpenCC 可作為 variant knowledge 的參考，但不當作頻率詞典匯入。 | 用小型 policy table 降低指定 variant 的最大權重，例如讓 `个` 不會排在 `個` 前面。 |
 
 另外，release builder 會從整合完成的 `unigrams` 派生 `associated_phrases` runtime table。這張表不是獨立詞源，而是提供「聯想詞提示」使用的 head-character -> phrase-tail 候選，例如輸出 `我` 後可提示 `們`、`的` 等詞尾。
@@ -95,7 +96,7 @@ release builder 的整合流程是 deterministic 的：
 7. 匯入 `chiakey-modern-overlay/explicit.tsv`，處理需要指定 qstring 或排序的精準修正。
 8. 匯入 `chiaki-web-overlay/explicit.tsv` 與 `chiaki-synthetic-overlay/unigrams.tsv`。
 9. 套用 `opencc-variant-policy`，降低不符合預設繁中期待的 variant 權重。
-10. 匯入 `chiaki-synthetic-overlay/bigrams.tsv`，再匯入 `chiaki-web-overlay/bigrams.tsv`，讓 reviewed web bigrams 可以覆蓋重疊的 synthetic rows。
+10. 匯入 `chiaki-synthetic-overlay/bigrams.tsv`、`openformosa-common-voice-25-zh-tw/bigrams.tsv`，再匯入 `chiaki-web-overlay/bigrams.tsv`，讓 reviewed web bigrams 可以覆蓋重疊的統計來源 rows。
 11. 補入 runtime compatibility data：BPMF 標點、ChiaKey supplemental symbol list、canned messages、Mozc 顏文字、module CIN tables。
 12. 從最終 `unigrams` 派生 `associated_phrases`，供聯想詞提示使用。
 13. 執行 runtime-required validations，寫出 normalized TSV、release metadata、manifest 與 checksums。

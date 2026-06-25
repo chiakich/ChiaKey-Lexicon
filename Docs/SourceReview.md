@@ -252,6 +252,26 @@ The generated source inventory is stored at:
 sources/chiaki-synthetic-overlay/source-inventory.sha256
 ```
 
+### openformosa-common-voice-25-zh-tw
+
+- Name: OpenFormosa Common Voice 25 zh-TW bigram overlay
+- Local source: `sources/openformosa-common-voice-25-zh-tw/bigrams.tsv`
+- Source material: OpenFormosa Common Voice 25 zh-TW validated sentences
+- Upstream dataset: <https://huggingface.co/datasets/OpenFormosa/common_voice_25_zh-TW>
+- License: CC0-1.0
+- Attribution: OpenFormosa / Mozilla Common Voice contributors
+- Redistribution decision: included for public releases as selected runtime
+  bigram rows
+
+This source contributes only filtered runtime bigram rows. The raw Common Voice
+sentences are not redistributed in this repository.
+
+The generated source inventory is stored at:
+
+```text
+sources/openformosa-common-voice-25-zh-tw/source-inventory.sha256
+```
+
 ## Excluded from v1
 
 These sources are useful references, but they are not included as raw sources in the first release artifacts:

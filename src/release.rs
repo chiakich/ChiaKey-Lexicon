@@ -110,6 +110,7 @@ pub fn run() -> Result<()> {
         &mut import_results,
     )?;
     import_chiaki_synthetic_bigrams(&mut conn, &cfg, &paths, &mut import_results)?;
+    import_openformosa_common_voice_bigrams(&mut conn, &cfg, &paths, &mut import_results)?;
     import_chiaki_web_bigrams(&mut conn, &cfg, &paths, &mut import_results)?;
     import_punctuations(
         &mut conn,
@@ -191,6 +192,7 @@ fn verify_inputs(
         paths.chiaki_web_overlay_bigrams.clone(),
         paths.chiaki_synthetic_unigrams.clone(),
         paths.chiaki_synthetic_bigrams.clone(),
+        paths.openformosa_common_voice_bigrams.clone(),
         paths.opencc_variant_demotions.clone(),
         paths.rime_essay_raw.clone(),
     ];
@@ -216,6 +218,7 @@ fn create_output_dirs(cfg: &Config, paths: &ReleasePaths) -> Result<()> {
     fs::create_dir_all(&paths.overlay_source_dir)?;
     fs::create_dir_all(&paths.chiaki_web_overlay_source_dir)?;
     fs::create_dir_all(&paths.chiaki_synthetic_source_dir)?;
+    fs::create_dir_all(&paths.openformosa_common_voice_source_dir)?;
     fs::create_dir_all(&paths.opencc_variant_source_dir)?;
     Ok(())
 }
@@ -306,6 +309,12 @@ fn write_source_inventories(
             paths.chiaki_synthetic_unigrams.clone(),
             paths.chiaki_synthetic_bigrams.clone(),
         ],
+        true,
+    )?;
+    write_inventory(
+        &paths.openformosa_common_voice_inventory,
+        &paths.openformosa_common_voice_source_dir,
+        std::slice::from_ref(&paths.openformosa_common_voice_bigrams),
         true,
     )?;
     write_inventory(
@@ -829,6 +838,27 @@ fn import_chiaki_synthetic_bigrams(
         &repo_relative(&cfg.root, &paths.chiaki_synthetic_bigrams)?,
         "chiaki-synthetic-bigrams",
         &sha256_file(&paths.chiaki_synthetic_bigrams)?,
+        seen,
+        skipped,
+    )?;
+    import_results.push(result);
+    Ok(())
+}
+
+fn import_openformosa_common_voice_bigrams(
+    conn: &mut Connection,
+    cfg: &Config,
+    paths: &ReleasePaths,
+    import_results: &mut Vec<ImportResult>,
+) -> Result<()> {
+    let (records, seen, skipped) =
+        importers::parse_bigram_overlay(&paths.openformosa_common_voice_bigrams, cfg)?;
+    let result = db::apply_bigram_records(
+        conn,
+        &records,
+        &repo_relative(&cfg.root, &paths.openformosa_common_voice_bigrams)?,
+        "openformosa-common-voice-bigrams",
+        &sha256_file(&paths.openformosa_common_voice_bigrams)?,
         seen,
         skipped,
     )?;

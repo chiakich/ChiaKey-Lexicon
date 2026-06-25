@@ -12,6 +12,10 @@ sources/fineweb2-*/
 sources/openformosa-common-voice-*/
 sources/taiwan-gov-news-*/
 sources/zh-tw-wikipedia-*/
+!sources/openformosa-common-voice-25-zh-tw/
+!sources/openformosa-common-voice-25-zh-tw/README.md
+!sources/openformosa-common-voice-25-zh-tw/bigrams.tsv
+!sources/openformosa-common-voice-25-zh-tw/source-inventory.sha256
 
 # Local release staging. Final artifacts should be uploaded to GitHub Releases.
 dist/

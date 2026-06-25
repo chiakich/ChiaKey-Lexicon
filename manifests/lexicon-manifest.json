@@ -6,8 +6,8 @@
       "id": "smart-mandarin-db",
       "kind": "keykey-source-db",
       "language_model_version": "chiakey-modern-2026.06.9",
-      "sha256": "113312ae6d0f3482a4e8f186c6bf76d72f4212df7adf625c4783c6da145b3ec2",
-      "size": 58335232,
+      "sha256": "748e1fd0681e0aae248854fa76a4a390c155465a838cecb5e704d2b3f147d0ff",
+      "size": 58433536,
       "url": "https://github.com/akira02/ChiaKey-Lexicon/releases/download/2026.06.9/KeyKeySource-2026.06.9.db"
     },
     {
@@ -16,8 +16,8 @@
       "id": "smart-mandarin-metadata",
       "kind": "metadata",
       "language_model_version": "chiakey-modern-2026.06.9",
-      "sha256": "2b1728f14d05ccbc231d9dfc4800671b1c970ba84321363bd6177f801d86cc7d",
-      "size": 24968,
+      "sha256": "85975481220158402168708d534a0119eb0818ae7b236b5dfc2a5939611b7455",
+      "size": 25750,
       "url": "https://github.com/akira02/ChiaKey-Lexicon/releases/download/2026.06.9/KeyKeySource-2026.06.9.json"
     },
     {
@@ -26,13 +26,13 @@
       "id": "smart-mandarin-checksums",
       "kind": "checksum",
       "language_model_version": "chiakey-modern-2026.06.9",
-      "sha256": "09aea2777fadcace2e5ccedcb97d8e0ae2e543f77c586f3e555cbae9df494c0a",
+      "sha256": "f3e047edc061f7ae8a11a44b188e282cdd7e87f8b86b9f49cd23afa18bee9dad",
       "size": 186,
       "url": "https://github.com/akira02/ChiaKey-Lexicon/releases/download/2026.06.9/SHA256SUMS"
     }
   ],
   "database_schema_version": 1,
-  "generated_at": "2026-06-25T06:43:30Z",
+  "generated_at": "2026-06-25T06:46:27Z",
   "minimum_app_version": "0.1.0",
   "schema": 1,
   "sources": [
@@ -167,6 +167,17 @@
       "priority": 306,
       "sha256": "243b04e47e332aa97cfb224fdd19e99fec872a6d17fec2b0cec7aba390537f49",
       "url": "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiaki-synthetic-overlay"
+    },
+    {
+      "attribution": "OpenFormosa / Mozilla Common Voice contributors",
+      "enabled": true,
+      "format": "tsv",
+      "id": "openformosa-common-voice-25-zh-tw",
+      "license": "CC0-1.0",
+      "name": "OpenFormosa Common Voice 25 zh-TW bigram overlay",
+      "priority": 307,
+      "sha256": "49f8d03e248b3a97a965d226d34ced37eaf4a87483b0995777af3b2c1cfbd6e0",
+      "url": "https://huggingface.co/datasets/OpenFormosa/common_voice_25_zh-TW"
     },
     {
       "attribution": "OpenCC contributors; ChiaKey Lexicon maintainers",
