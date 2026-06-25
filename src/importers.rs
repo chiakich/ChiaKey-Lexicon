@@ -22,9 +22,11 @@ const LIBCHEWING_CHARACTER_PHRASE_EVIDENCE_PENALTY: f64 = 1.0;
 const LIBCHEWING_CHARACTER_PHRASE_EVIDENCE_MAX_WEIGHT: f64 = -1.35;
 const RIME_OVERLAP_RERANK_MARGIN: f64 = 0.01;
 const RIME_OVERLAP_RERANK_MAX_WEIGHT: f64 = -0.5;
+const RIME_OVERLAP_RERANK_MAX_BOOST: f64 = 0.5;
 const RIME_OVERLAP_RERANK_STRONG_GROUP_THRESHOLD: f64 = -0.75;
 const RIME_SPLIT_RERANK_MARGIN: f64 = 0.01;
 const RIME_SPLIT_RERANK_MAX_WEIGHT: f64 = RIME_OVERLAP_RERANK_STRONG_GROUP_THRESHOLD;
+const RIME_EXISTING_RERANK_MAX_SPLIT_BOOST: f64 = 0.05;
 
 pub fn libchewing_max_score(paths: &[PathBuf]) -> Result<i64> {
     let mut max_score = 1;
@@ -230,7 +232,8 @@ pub fn parse_rime_overlap_reranks(
             } else {
                 current_weight
             };
-            let proposed_weight = current_weight.max(minimum_weight);
+            let proposed_weight = current_weight
+                .max(minimum_weight.min(current_weight + RIME_OVERLAP_RERANK_MAX_BOOST));
             let applied_weight = if proposed_weight > current_weight
                 && proposed_weight <= RIME_OVERLAP_RERANK_MAX_WEIGHT
             {
@@ -246,6 +249,77 @@ pub fn parse_rime_overlap_reranks(
                 current_weight
             };
             floor = floor.max(applied_weight);
+        }
+    }
+
+    Ok((dedupe_records(records), seen, skipped))
+}
+
+pub fn parse_rime_existing_phrase_reranks(
+    path: &Path,
+    cfg: &Config,
+    existing_records: &[(String, String, f64)],
+    existing_qstring_weights: &HashMap<String, f64>,
+) -> Result<(Vec<SourceRecord>, usize, usize)> {
+    let file = File::open(path).with_context(|| format!("read {}", path.display()))?;
+    let reader = BufReader::new(file);
+    let mut rime_scores: HashMap<String, i64> = HashMap::new();
+    let mut seen = 0;
+    let mut skipped = 0;
+    let mut max_score = 1;
+
+    for line in reader.lines() {
+        let line = line?;
+        if line.trim().is_empty() || line.starts_with('#') {
+            continue;
+        }
+        seen += 1;
+        let Some((phrase, score_text)) = line.split_once('\t') else {
+            skipped += 1;
+            continue;
+        };
+        let Some(score) = parse_i64(score_text) else {
+            skipped += 1;
+            continue;
+        };
+        if score < cfg.rime_essay_min_score
+            || !phrase_candidate(phrase, 2, cfg.max_phrase_codepoints)
+        {
+            skipped += 1;
+            continue;
+        }
+        max_score = max_score.max(score);
+        rime_scores
+            .entry(phrase.to_string())
+            .and_modify(|existing| *existing = (*existing).max(score))
+            .or_insert(score);
+    }
+
+    let mut records = Vec::new();
+    for (qstring, phrase, current_weight) in existing_records {
+        let phrase_len = phrase.chars().count();
+        if phrase_len < 2
+            || phrase_len > cfg.max_phrase_codepoints
+            || qstring.chars().count() != phrase_len * 2
+        {
+            continue;
+        }
+        let Some(score) = rime_scores.get(phrase) else {
+            continue;
+        };
+        let base_weight = rime_weight(*score, max_score);
+        let split_weight =
+            rime_split_rerank_weight(base_weight, qstring, phrase_len, existing_qstring_weights);
+        let proposed_weight =
+            split_weight.min(round6(base_weight + RIME_EXISTING_RERANK_MAX_SPLIT_BOOST));
+        if proposed_weight > *current_weight {
+            records.push(SourceRecord {
+                qstring: qstring.clone(),
+                phrase: phrase.clone(),
+                weight: proposed_weight,
+                source_id: RIME_ESSAY_SOURCE_ID,
+                tags: format!("unigram,{RIME_ESSAY_SOURCE_ID},existing-rerank"),
+            });
         }
     }
 
@@ -670,8 +744,8 @@ fn round6(value: f64) -> f64 {
 mod tests {
     use super::{
         libchewing_character_weight, libchewing_weight, parse_bigram_overlay,
-        parse_explicit_overlay, parse_rime_essay, parse_rime_overlap_reranks,
-        parse_variant_demotions, phrase_evidence_character_records,
+        parse_explicit_overlay, parse_rime_essay, parse_rime_existing_phrase_reranks,
+        parse_rime_overlap_reranks, parse_variant_demotions, phrase_evidence_character_records,
         LIBCHEWING_PHRASE_SEGMENT_BONUS, LIBCHEWING_PHRASE_SEGMENT_BONUS_THRESHOLD,
         RIME_OVERLAP_RERANK_MARGIN,
     };
@@ -943,6 +1017,60 @@ mod tests {
         assert_eq!(records[0].phrase, "會選");
         assert_eq!(records[0].weight, -0.885961 + RIME_OVERLAP_RERANK_MARGIN);
         assert_eq!(records[0].tags, "unigram,rime-essay,overlap-rerank");
+
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn limits_overlap_rerank_boost_for_far_weaker_candidates() {
+        let path = temp_file("rime-overlap-boost-limit", "回文\t171\n迴文\t525\n");
+        let cfg = test_config();
+        let existing = vec![
+            ("}FGK".to_string(), "回文".to_string(), -1.062714),
+            ("}FGK".to_string(), "迴文".to_string(), -2.302193),
+        ];
+
+        let (records, seen, skipped) = parse_rime_overlap_reranks(&path, &cfg, &existing).unwrap();
+
+        assert_eq!(seen, 2);
+        assert_eq!(skipped, 0);
+        assert_eq!(records.len(), 1);
+        assert_eq!(records[0].qstring, "}FGK");
+        assert_eq!(records[0].phrase, "迴文");
+        assert_eq!(records[0].weight, -1.802193);
+        assert!(records[0].weight < -1.062714);
+        assert_eq!(records[0].tags, "unigram,rime-essay,overlap-rerank");
+
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn reranks_existing_weak_phrases_with_rime_scores() {
+        let path = temp_file(
+            "rime-existing-rerank",
+            "網友\t16320\n回文\t171\n就是\t664963\n",
+        );
+        let cfg = test_config();
+        let existing = vec![
+            ("0\\NX".to_string(), "網友".to_string(), -2.3),
+            ("}FGK".to_string(), "回文".to_string(), -1.062714),
+        ];
+        let existing_qstring_weights = HashMap::from([
+            ("0\\".to_string(), -1.289465),
+            ("NX".to_string(), -0.570839),
+        ]);
+
+        let (records, seen, skipped) =
+            parse_rime_existing_phrase_reranks(&path, &cfg, &existing, &existing_qstring_weights)
+                .unwrap();
+
+        assert_eq!(seen, 3);
+        assert_eq!(skipped, 0);
+        assert_eq!(records.len(), 1);
+        assert_eq!(records[0].qstring, "0\\NX");
+        assert_eq!(records[0].phrase, "網友");
+        assert_eq!(records[0].weight, -1.850304);
+        assert_eq!(records[0].tags, "unigram,rime-essay,existing-rerank");
 
         let _ = fs::remove_file(path);
     }
