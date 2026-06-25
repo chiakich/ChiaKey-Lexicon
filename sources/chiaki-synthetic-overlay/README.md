@@ -1,10 +1,7 @@
 # Chiaki.C Synthetic Taiwan Internet Usage Overlay
 
 This source contains reviewed unigram additions with explicit qstrings and
-synthetic bigram language-model rows. They are derived from a GPT-5.5-generated
-corpus requested by Chiaki.C for simulated "Taiwan internet usage" (台灣網路用語),
-then reduced through project cleaning and statistical selection for ChiaKey
-lexicon maintenance.
+synthetic bigram language-model rows maintained by Chiaki.C.
 
 The raw synthetic corpus is not redistributed here; only reviewed lexicon rows
 are kept for release builds:
@@ -14,21 +11,9 @@ qstring<TAB>phrase<TAB>weight<TAB>tags
 qstring<TAB>previous<TAB>current<TAB>probability
 ```
 
-The release builder imports `unigrams.tsv` after `chiaki-web-overlay` and before
-`opencc-variant-policy`. It imports `bigrams.tsv` into the runtime `bigrams`
-table after unigram policies have been applied and before reviewed web bigrams.
-For sentence-boundary rows, either `previous` or `current` may be empty; the
-corresponding qstring side uses `!` for sentence start and `$` for sentence end.
-Non-boundary `previous` and `current` terms are prefiltered to terms present in
-the release unigram table. Sentence-start rows are omitted when the `current`
-term is already the first unigram candidate for its qstring; sentence-end rows
-are omitted under the analogous condition. Self-loop rows where `previous` and
-`current` are the same term are also omitted.
-Single-character pairs are kept conservatively: pairs involving common function
-characters are preserved, while pairs that merely split an existing unigram
-phrase are omitted. Remaining single-character non-function pairs are retained
-only when review identifies a strong lexical, technical, fixed-phrase, or
-practical input sequence.
+The release builder imports `unigrams.tsv` before variant demotion policy and
+imports `bigrams.tsv` before reviewed web bigrams. Sentence-boundary bigram rows
+may leave either `previous` or `current` empty.
 
 ## Files
 

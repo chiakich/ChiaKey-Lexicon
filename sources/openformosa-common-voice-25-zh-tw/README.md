@@ -10,10 +10,7 @@ qstring<TAB>previous<TAB>current<TAB>probability
 ```
 
 The candidate rows were generated with the repository's `build-bigram-stats`
-workflow against the current normalized ChiaKey lexicon, using count and
-document-frequency thresholds. Redundant pairs, particle-heavy pairs,
-single-character pairs, and pairs whose joined form is already a unigram are
-excluded by the generator.
+workflow against the current normalized ChiaKey lexicon.
 
 ## Files
 

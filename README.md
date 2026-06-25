@@ -77,8 +77,8 @@ cargo run --release -- prepare-release
 | `rime-essay` | Rime essay 有較廣的現代詞彙與語言模型分數，但沒有注音讀音；適合當低優先補充層，而不是主詞庫。 | 僅在詞尚未存在、分數達門檻、長度合理，且每個字都能從目前 DB 推得 primary reading 時匯入。 |
 | `chiakey-modern-overlay` | 真實打字測試會發現少量立即需要修的缺漏或排序問題；這些修正應由專案自己維護，不能等大型來源更新。 | 補專案自有詞、指定明確 qstring，或針對已知 case 調整候選排序，例如 neutral-tone `ㄍㄜ˙` / `ek7`。 |
 | `chiaki-web-overlay` | 經人工審過的網路用語 overlay，僅作為 ChiaKey 詞庫的窄補充；其他專案或非 ChiaKey 用途預設應排除，除非自行完成來源審查。 | 匯入 explicit unigram 與 runtime bigram rows；只保存最終詞庫 rows，不保存原始語料。 |
-| `chiaki-synthetic-overlay` | 由 GPT-5.5 合成「台灣網路用語」語料，並經專案清洗與統計後形成的詞庫 overlay。 | 從 `unigrams.tsv` 匯入 unigram rows，並從 `bigrams.tsv` 匯入 synthetic runtime bigram probabilities；此來源採 CC BY-NC 4.0，非商用與開源專案可使用，商用請聯絡 Chiaki.C。 |
-| `openformosa-common-voice-25-zh-tw` | OpenFormosa / Mozilla Common Voice 的 zh-TW validated sentences 是 CC0 授權的台灣語音句庫，可補一些日常、行政、交通與服務場景的相鄰詞提示。 | 匯入經 `build-bigram-stats` 過濾後的 runtime bigram rows；只保存最後選出的 bigram rows，不保存原始語音句庫。 |
+| `chiaki-synthetic-overlay` | Chiaki.C 維護的 synthetic 台灣網路用語 overlay。 | 匯入 unigram rows 與 runtime bigram probabilities；此來源採 CC BY-NC 4.0，商用請聯絡 Chiaki.C。 |
+| `openformosa-common-voice-25-zh-tw` | OpenFormosa / Mozilla Common Voice 的 CC0 zh-TW validated sentences。 | 匯入選出的 runtime bigram rows；不保存原始語音句庫。 |
 | `opencc-variant-policy` | 預設繁中輸入法不應讓簡體或非台灣慣用字因 tie-break 排在繁體字前面。OpenCC 可作為 variant knowledge 的參考，但不當作頻率詞典匯入。 | 用小型 policy table 降低指定 variant 的最大權重，例如讓 `个` 不會排在 `個` 前面。 |
 
 另外，release builder 會從整合完成的 `unigrams` 派生 `associated_phrases` runtime table。這張表不是獨立詞源，而是提供「聯想詞提示」使用的 head-character -> phrase-tail 候選，例如輸出 `我` 後可提示 `們`、`的` 等詞尾。

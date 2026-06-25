@@ -65,7 +65,7 @@ Unknown-license data must not be included in public release artifacts.
 - Source id: `chiaki-synthetic-overlay`
 - License file: [chiaki-synthetic-overlay-NC.txt](chiaki-synthetic-overlay-NC.txt)
 - Review notes: [Docs/SourceReview.md](../Docs/SourceReview.md)
-- Release decision: included starting in the next synthetic Taiwan internet usage overlay refresh
+- Release decision: included for public source review, open-source project use, and non-commercial release builds
 - Note: licensed under CC BY-NC 4.0; non-commercial and open-source projects may use this source, but commercial use requires permission from Chiaki.C
 
 ### OpenFormosa Common Voice 25 zh-TW bigram overlay

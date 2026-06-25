@@ -193,12 +193,9 @@ sources/mozc-emoticon-data/source-inventory.sha256
   or non-ChiaKey uses should exclude this source by default unless they perform
   their own source review
 
-I use this source as a narrow ChiaKey overlay for reviewed unigram and bigram
-values derived from web usage material. Because web-derived terms can carry
-context, provenance, or licensing risk outside this specific lexicon use case, I
-do not recommend treating it as a general-purpose reusable source. The
-repository redistributes only the final lexicon rows in the release-builder
-formats:
+This source is a narrow ChiaKey overlay for reviewed unigram and bigram values
+derived from web usage material. The repository redistributes only the final
+lexicon rows in the release-builder formats:
 
 ```text
 qstring<TAB>phrase<TAB>weight<TAB>tags
@@ -206,8 +203,7 @@ qstring<TAB>previous<TAB>current<TAB>probability
 ```
 
 The release builder imports unigram rows after `chiakey-modern-overlay` and
-before `opencc-variant-policy`. Bigram rows are imported into the runtime
-`bigrams` table after unigram policies have been applied.
+bigram rows after synthetic and Common Voice bigrams.
 
 The generated source inventory is stored at:
 
@@ -224,27 +220,19 @@ sources/chiaki-web-overlay/source-inventory.sha256
 - Source material: GPT-5.5-generated synthetic "Taiwan internet usage" (台灣網路用語) corpus
 - License: CC BY-NC 4.0; commercial use requires permission from Chiaki.C
 - Attribution: Chiaki.C
-- Redistribution decision: included for public source review, open-source project use, and non-commercial release builds starting in the next synthetic Taiwan internet usage overlay refresh
+- Redistribution decision: included for public source review, open-source project use, and non-commercial release builds
 
-I generated this source with GPT-5.5 for simulated "Taiwan internet usage"
-(台灣網路用語), then reduced it through project cleaning and statistical
-selection for ChiaKey lexicon maintenance. The raw synthetic corpus is not
-redistributed in this repository; only the final lexicon rows are kept:
+This source contains Chiaki.C-maintained synthetic Taiwan internet usage rows.
+The raw synthetic corpus is not redistributed in this repository; only the final
+lexicon rows are kept:
 
 ```text
 qstring<TAB>phrase<TAB>weight<TAB>tags
 qstring<TAB>previous<TAB>current<TAB>probability
 ```
 
-The bigram file is prefiltered against the release unigram table and keeps
-sentence-boundary rows using `!` / `$` qstring markers. Redundant synthetic
-rows and weak single-character pairings are removed conservatively before
-release.
-
-This source was generated as OpenAI output for which OpenAI assigns any OpenAI
-right, title, and interest in Output to the user, to the extent permitted by
-applicable law. I am not using this material for a competing model, and I record
-it as my synthetic overlay data rather than as an external public-domain corpus.
+The bigram file is prefiltered against the release unigram table and may include
+sentence-boundary rows using `!` / `$` qstring markers.
 
 The generated source inventory is stored at:
 
@@ -263,7 +251,7 @@ sources/chiaki-synthetic-overlay/source-inventory.sha256
 - Redistribution decision: included for public releases as selected runtime
   bigram rows
 
-This source contributes only filtered runtime bigram rows. The raw Common Voice
+This source contributes only selected runtime bigram rows. The raw Common Voice
 sentences are not redistributed in this repository.
 
 The generated source inventory is stored at:
