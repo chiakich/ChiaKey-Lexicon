@@ -82,6 +82,7 @@ cargo run --release -- prepare-release
 | `chiaki-synthetic-overlay` | Chiaki.C 維護的 synthetic 台灣網路用語 overlay。 | 匯入 unigram rows 與 runtime bigram probabilities；此來源採 CC BY-NC 4.0，商用請聯絡 Chiaki.C。 |
 | `openformosa-common-voice-25-zh-tw` | OpenFormosa / Mozilla Common Voice 的 CC0 zh-TW validated sentences。 | 匯入選出的 runtime bigram rows；不保存原始語音句庫。 |
 | `opencc-variant-policy` | 預設繁中輸入法不應讓簡體或非台灣慣用字因 tie-break 排在繁體字前面。OpenCC 可作為 variant knowledge 的參考，但不當作頻率詞典匯入。 | 用小型 policy table 降低指定 variant 的最大權重，例如讓 `个` 不會排在 `個` 前面。 |
+| `chiakey-fragment-denylist` | libchewing 收錄的非詞彙碎片（助動詞/情態詞+動詞，如 `會比`、`會在`）權重過高時，會偷走鄰詞的音節形成錯誤斷詞（如 `會比較準` 被切成 `會比\|校準`）。頻率與結構都無法把碎片和真詞分開。 | 用 phrase-level 上限把清單內碎片壓到 `w(lead)+w(stolen)−0.3` 的安全界（只降不升）。清單以結構過濾 → 教育部修訂本詞目比對 → 人工 spot-check 產出；教育部詞典僅為離線建表工具，不轉載其內容。 |
 
 另外，release builder 會從整合完成的 `unigrams` 派生 `associated_phrases` runtime table。這張表不是獨立詞源，而是提供「聯想詞提示」使用的 head-character -> phrase-tail 候選，例如輸出 `我` 後可提示 `們`、`的` 等詞尾。
 
@@ -97,7 +98,7 @@ release builder 的整合流程是 deterministic 的：
 6. 匯入 `chiakey-modern-overlay/phrases.tsv`，讓專案自有修正可以替換已知問題詞。
 7. 匯入 `chiakey-modern-overlay/explicit.tsv`，處理需要指定 qstring 或排序的精準修正。
 8. 匯入 `chiaki-web-overlay/explicit.tsv` 與 `chiaki-synthetic-overlay/unigrams.tsv`。
-9. 套用 `opencc-variant-policy`，降低不符合預設繁中期待的 variant 權重。
+9. 套用 `opencc-variant-policy`，降低不符合預設繁中期待的 variant 權重，再套用 `chiakey-fragment-denylist`，把偷字的非詞彙碎片壓到安全界。
 10. 匯入 `chiaki-synthetic-overlay/bigrams.tsv`、`openformosa-common-voice-25-zh-tw/bigrams.tsv`，再匯入 `chiaki-web-overlay/bigrams.tsv`，讓 reviewed web bigrams 可以覆蓋重疊的統計來源 rows。
 11. 補入 runtime compatibility data：BPMF 標點、ChiaKey supplemental symbol list、canned messages、Mozc 顏文字、module CIN tables。
 12. 從最終 `unigrams` 派生 `associated_phrases`，供聯想詞提示使用。

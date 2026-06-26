@@ -123,6 +123,13 @@ pub fn run() -> Result<()> {
         &mut source_keys,
         &mut import_results,
     )?;
+    import_fragment_demotions(
+        &mut conn,
+        &cfg,
+        &paths,
+        &mut source_keys,
+        &mut import_results,
+    )?;
     import_chiaki_synthetic_bigrams(&mut conn, &cfg, &paths, &mut import_results)?;
     import_openformosa_common_voice_bigrams(&mut conn, &cfg, &paths, &mut import_results)?;
     import_chiaki_web_bigrams(&mut conn, &cfg, &paths, &mut import_results)?;
@@ -210,6 +217,7 @@ fn verify_inputs(
         paths.chiakey_auto_hotwords_state.clone(),
         paths.openformosa_common_voice_bigrams.clone(),
         paths.opencc_variant_demotions.clone(),
+        paths.fragment_demotions.clone(),
         paths.rime_essay_raw.clone(),
     ];
     required.extend(module_cin_files(paths));
@@ -237,6 +245,7 @@ fn create_output_dirs(cfg: &Config, paths: &ReleasePaths) -> Result<()> {
     fs::create_dir_all(&paths.chiakey_auto_hotwords_source_dir)?;
     fs::create_dir_all(&paths.openformosa_common_voice_source_dir)?;
     fs::create_dir_all(&paths.opencc_variant_source_dir)?;
+    fs::create_dir_all(&paths.fragment_denylist_source_dir)?;
     Ok(())
 }
 
@@ -347,6 +356,12 @@ fn write_source_inventories(
         &paths.opencc_variant_inventory,
         &paths.opencc_variant_source_dir,
         std::slice::from_ref(&paths.opencc_variant_demotions),
+        true,
+    )?;
+    write_inventory(
+        &paths.fragment_denylist_inventory,
+        &paths.fragment_denylist_source_dir,
+        std::slice::from_ref(&paths.fragment_demotions),
         true,
     )
 }
@@ -785,6 +800,29 @@ fn import_opencc_variant_policy(
         seen,
         skipped,
         config::OPENCC_VARIANT_SOURCE_ID,
+    )?;
+    remember_records(source_keys, &result);
+    import_results.push(result);
+    Ok(())
+}
+
+fn import_fragment_demotions(
+    conn: &mut Connection,
+    cfg: &Config,
+    paths: &ReleasePaths,
+    source_keys: &mut HashMap<(String, String), SourceRecord>,
+    import_results: &mut Vec<ImportResult>,
+) -> Result<()> {
+    let (records, seen, skipped) = importers::parse_fragment_demotions(&paths.fragment_demotions)?;
+    let result = db::apply_variant_demotions(
+        conn,
+        &records,
+        &repo_relative(&cfg.root, &paths.fragment_demotions)?,
+        "fragment-demotion",
+        &sha256_file(&paths.fragment_demotions)?,
+        seen,
+        skipped,
+        config::FRAGMENT_DENYLIST_SOURCE_ID,
     )?;
     remember_records(source_keys, &result);
     import_results.push(result);

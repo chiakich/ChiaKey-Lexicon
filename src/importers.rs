@@ -569,6 +569,49 @@ pub fn parse_variant_demotions(path: &Path) -> Result<(Vec<VariantDemotionRecord
     Ok((records, seen, skipped))
 }
 
+// Same shape as parse_variant_demotions but for multi-character fragment caps
+// (variant demotions are single-character only). Reuses VariantDemotionRecord
+// and db::apply_variant_demotions for the phrase-level weight cap.
+pub fn parse_fragment_demotions(
+    path: &Path,
+) -> Result<(Vec<VariantDemotionRecord>, usize, usize)> {
+    let file = File::open(path).with_context(|| format!("read {}", path.display()))?;
+    let reader = BufReader::new(file);
+    let mut seen = 0;
+    let mut skipped = 0;
+    let mut records = Vec::new();
+
+    for (line_number, line) in reader.lines().enumerate() {
+        let line = line?;
+        if line.trim().is_empty() || line.starts_with('#') {
+            continue;
+        }
+        seen += 1;
+        let parts = line.splitn(3, '\t').collect::<Vec<_>>();
+        if parts.len() < 3 || !phrase_candidate(parts[0], 2, 8) {
+            skipped += 1;
+            continue;
+        }
+        let max_weight: f64 = parts[1].parse().with_context(|| {
+            format!("invalid fragment demotion weight {}:{}", path.display(), line_number + 1)
+        })?;
+        if !max_weight.is_finite() {
+            bail!(
+                "invalid non-finite fragment demotion weight {}:{}",
+                path.display(),
+                line_number + 1
+            );
+        }
+        records.push(VariantDemotionRecord {
+            phrase: parts[0].to_string(),
+            max_weight,
+            tags: format!("unigram,{}", parts[2]),
+        });
+    }
+
+    Ok((records, seen, skipped))
+}
+
 pub fn infer_overlay_qstrings(
     records: Vec<SourceRecord>,
     char_readings: &HashMap<String, String>,
@@ -744,7 +787,8 @@ fn round6(value: f64) -> f64 {
 mod tests {
     use super::{
         libchewing_character_weight, libchewing_weight, parse_bigram_overlay,
-        parse_explicit_overlay, parse_rime_essay, parse_rime_existing_phrase_reranks,
+        parse_explicit_overlay, parse_fragment_demotions, parse_rime_essay,
+        parse_rime_existing_phrase_reranks,
         parse_rime_overlap_reranks, parse_variant_demotions, phrase_evidence_character_records,
         LIBCHEWING_PHRASE_SEGMENT_BONUS, LIBCHEWING_PHRASE_SEGMENT_BONUS_THRESHOLD,
         RIME_OVERLAP_RERANK_MARGIN,
@@ -840,6 +884,29 @@ mod tests {
         assert_eq!(
             records[0].tags,
             "unigram,opencc-variant-policy,simplified-form"
+        );
+
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn parses_multi_char_fragment_demotion_rows() {
+        // Unlike variant demotions (single-char only), fragment caps are 2+ chars.
+        let path = temp_file(
+            "fragment-demotions",
+            "# phrase\tmax_weight\ttags\n會比\t-1.80706\tchiakey-fragment-denylist,fragment-demote\n單\t-2.0\tchiakey-fragment-denylist,fragment-demote\n",
+        );
+
+        let (records, seen, skipped) = parse_fragment_demotions(&path).unwrap();
+
+        assert_eq!(seen, 2);
+        assert_eq!(skipped, 1, "single-character rows are rejected");
+        assert_eq!(records.len(), 1);
+        assert_eq!(records[0].phrase, "會比");
+        assert_eq!(records[0].max_weight, -1.80706);
+        assert_eq!(
+            records[0].tags,
+            "unigram,chiakey-fragment-denylist,fragment-demote"
         );
 
         let _ = fs::remove_file(path);

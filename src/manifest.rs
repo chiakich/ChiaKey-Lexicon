@@ -2,7 +2,8 @@ use crate::config::{
     Config, BONEYARD_SOURCE_ID, BONEYARD_SOURCE_NAME, BPMF_EXT_SOURCE_ID, BPMF_EXT_SOURCE_NAME,
     CHIAKEY_AUTO_HOTWORDS_SOURCE_ID, CHIAKEY_AUTO_HOTWORDS_SOURCE_NAME, CHIAKI_SYNTHETIC_SOURCE_ID,
     CHIAKI_SYNTHETIC_SOURCE_NAME, CHIAKI_WEB_OVERLAY_SOURCE_ID, CHIAKI_WEB_OVERLAY_SOURCE_NAME,
-    DATABASE_SCHEMA_VERSION, LIBCHEWING_SOURCE_ID, LIBCHEWING_SOURCE_NAME, MODULE_CIN_SOURCE_ID,
+    DATABASE_SCHEMA_VERSION, FRAGMENT_DENYLIST_SOURCE_ID, FRAGMENT_DENYLIST_SOURCE_NAME,
+    LIBCHEWING_SOURCE_ID, LIBCHEWING_SOURCE_NAME, MODULE_CIN_SOURCE_ID,
     MODULE_CIN_SOURCE_NAME, MOZC_EMOTICON_SOURCE_ID, MOZC_EMOTICON_SOURCE_NAME,
     OPENCC_VARIANT_SOURCE_ID, OPENCC_VARIANT_SOURCE_NAME, OPENFORMOSA_COMMON_VOICE_SOURCE_ID,
     OPENFORMOSA_COMMON_VOICE_SOURCE_NAME, OVERLAY_SOURCE_ID, OVERLAY_SOURCE_NAME,
@@ -154,6 +155,14 @@ pub fn release_metadata(
             "OpenCC contributors; ChiaKey Lexicon maintainers",
             &paths.opencc_variant_inventory,
             db::stats_for_source_rows(source_rows, "sources/opencc-variant-policy/"),
+        )?,
+        release_source(
+            FRAGMENT_DENYLIST_SOURCE_ID,
+            FRAGMENT_DENYLIST_SOURCE_NAME,
+            "Self-authored (MOE revised dict used as offline review tool only)",
+            "ChiaKey Lexicon maintainers",
+            &paths.fragment_denylist_inventory,
+            db::stats_for_source_rows(source_rows, "sources/chiakey-fragment-denylist/"),
         )?,
     ];
 
@@ -338,6 +347,16 @@ pub fn manifest(
             "OpenCC contributors; ChiaKey Lexicon maintainers",
             &paths.opencc_variant_inventory,
             310,
+        )?,
+        manifest_source(
+            FRAGMENT_DENYLIST_SOURCE_ID,
+            FRAGMENT_DENYLIST_SOURCE_NAME,
+            "https://language.moe.gov.tw/001/Upload/Files/site_content/M0001/respub/index.html",
+            "tsv",
+            "Self-authored (MOE revised dict used as offline review tool only)",
+            "ChiaKey Lexicon maintainers",
+            &paths.fragment_denylist_inventory,
+            311,
         )?,
     ];
 
