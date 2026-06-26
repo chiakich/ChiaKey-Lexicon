@@ -118,6 +118,11 @@ pub struct Config {
     pub release_base_url: String,
     pub max_phrase_codepoints: usize,
     pub rime_essay_min_score: i64,
+    // How much each source's strongest collocation should beat its unigram floor
+    // when re-anchored to the unigram scale (see importers::calibrate_bigram_boost).
+    // 0 = raw passthrough.
+    pub synthetic_bigram_boost: f64,
+    pub commonvoice_bigram_boost: f64,
     pub dist_dir: PathBuf,
     pub normalized_path: PathBuf,
     pub manifest_path: PathBuf,
@@ -140,6 +145,12 @@ pub fn load() -> Result<Config> {
     let rime_essay_min_score = env_or("RIME_ESSAY_MIN_SCORE", "40")
         .parse()
         .context("parse RIME_ESSAY_MIN_SCORE")?;
+    let synthetic_bigram_boost = env_or("SYNTHETIC_BIGRAM_BOOST", "1.5")
+        .parse()
+        .context("parse SYNTHETIC_BIGRAM_BOOST")?;
+    let commonvoice_bigram_boost = env_or("COMMONVOICE_BIGRAM_BOOST", "1.5")
+        .parse()
+        .context("parse COMMONVOICE_BIGRAM_BOOST")?;
     let boneyard_checkout_root = env::var("KEYKEY_BONEYARD_ROOT")
         .map(PathBuf::from)
         .unwrap_or_else(|_| root.join("..").join("KeyKey-Boneyard"));
@@ -176,6 +187,8 @@ pub fn load() -> Result<Config> {
         release_base_url,
         max_phrase_codepoints,
         rime_essay_min_score,
+        synthetic_bigram_boost,
+        commonvoice_bigram_boost,
         dist_dir,
         normalized_path,
         manifest_path,

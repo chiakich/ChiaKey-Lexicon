@@ -12,6 +12,21 @@ qstring<TAB>previous<TAB>current<TAB>probability
 The candidate rows were generated with the repository's `build-bigram-stats`
 workflow against the current normalized ChiaKey lexicon.
 
+## Bigram calibration
+
+These bigram rows are imported as conditional log-probabilities, but the final
+ChiaKey unigram table uses its own lifted weight scale. During release import,
+the builder re-anchors this source's bigrams to the current unigram floor:
+
+```text
+stored = min(unigram(current) + boost + (raw - raw_max_of_source), -0.05)
+```
+
+This keeps the source's internal ordering while letting strong disambiguation
+edges beat the unigram path. Weaker pairs stay below the unigram floor and remain
+inert. The default `boost` is `1.5` and can be overridden with
+`COMMONVOICE_BIGRAM_BOOST`; setting it to `0` leaves the raw values unchanged.
+
 ## Files
 
 - `bigrams.tsv`: selected Common Voice-derived runtime bigram rows.

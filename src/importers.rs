@@ -399,6 +399,9 @@ pub fn parse_chiaki_synthetic_overlay(
     parse_explicit_records(path, cfg, CHIAKI_SYNTHETIC_SOURCE_ID)
 }
 
+// Log-prob ceiling for calibrated bigrams; keeps a boosted edge from exceeding ~prob 1.
+const BIGRAM_PROB_CEILING: f64 = -0.05;
+
 pub fn parse_bigram_overlay(
     path: &Path,
     cfg: &Config,
@@ -448,6 +451,34 @@ pub fn parse_bigram_overlay(
     }
 
     Ok((dedupe_bigram_records(records), seen, skipped))
+}
+
+// Re-anchor a source's bigram log-probs to the unigram the walker compares against:
+//   stored = min( unigram(current) + boost + (raw - raw_max_of_source), ceiling )
+// boost is how much the source's strongest collocation beats its unigram; the
+// (raw - raw_max) term preserves the source's own confidence ranking, so weaker
+// pairs fall below the unigram and stay inert. boost == 0 is raw passthrough.
+pub fn calibrate_bigram_boost(
+    mut records: Vec<BigramRecord>,
+    boost: f64,
+    unigram_by_current: &HashMap<String, f64>,
+) -> Vec<BigramRecord> {
+    if boost == 0.0 || records.is_empty() {
+        return records;
+    }
+    let raw_max = records
+        .iter()
+        .map(|record| record.probability)
+        .fold(f64::NEG_INFINITY, f64::max);
+    for record in &mut records {
+        // No unigram for current (e.g. boundary bigrams): leave raw, it is the only
+        // candidate at that node anyway.
+        if let Some(unigram) = unigram_by_current.get(&record.current) {
+            record.probability =
+                (unigram + boost + (record.probability - raw_max)).min(BIGRAM_PROB_CEILING);
+        }
+    }
+    records
 }
 
 fn parse_explicit_records(
@@ -786,7 +817,7 @@ fn round6(value: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::{
-        libchewing_character_weight, libchewing_weight, parse_bigram_overlay,
+        calibrate_bigram_boost, libchewing_character_weight, libchewing_weight, parse_bigram_overlay,
         parse_explicit_overlay, parse_fragment_demotions, parse_rime_essay,
         parse_rime_existing_phrase_reranks,
         parse_rime_overlap_reranks, parse_variant_demotions, phrase_evidence_character_records,
@@ -839,6 +870,37 @@ mod tests {
         assert_eq!(records[0].probability, -0.1);
 
         let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn calibrate_bigram_boost_anchors_to_unigram_and_preserves_ranking() {
+        use crate::types::BigramRecord;
+        let bigram = |current: &str, probability: f64| BigramRecord {
+            qstring: "x x".to_string(),
+            previous: "前".to_string(),
+            current: current.to_string(),
+            probability,
+        };
+        // raw_max = -1.0 (the 強 row). unigram(強)=-1.5, unigram(弱)=-1.2.
+        let records = vec![bigram("強", -1.0), bigram("弱", -3.0), bigram("無", -1.0)];
+        let mut unigrams = HashMap::new();
+        unigrams.insert("強".to_string(), -1.5);
+        unigrams.insert("弱".to_string(), -1.2);
+        // 無 deliberately has no unigram.
+
+        let out = calibrate_bigram_boost(records.clone(), 1.0, &unigrams);
+        let by = |c: &str| out.iter().find(|r| r.current == c).unwrap().probability;
+        // 強: unigram(-1.5) + boost(1.0) + (raw-raw_max = 0) = -0.5
+        assert!((by("強") - (-0.5)).abs() < 1e-9);
+        // 弱: unigram(-1.2) + 1.0 + (-3.0 - -1.0 = -2.0) = -2.2 (stays below its unigram -> inert)
+        assert!((by("弱") - (-2.2)).abs() < 1e-9);
+        assert!(by("弱") < -1.2, "weaker collocation must fall below its unigram");
+        // 無: no unigram -> left as raw
+        assert!((by("無") - (-1.0)).abs() < 1e-9);
+
+        // boost == 0 is raw passthrough.
+        let passthrough = calibrate_bigram_boost(records, 0.0, &unigrams);
+        assert_eq!(passthrough.iter().find(|r| r.current == "強").unwrap().probability, -1.0);
     }
 
     #[test]
@@ -1185,6 +1247,8 @@ mod tests {
             release_base_url: "https://example.invalid".to_string(),
             max_phrase_codepoints: 7,
             rime_essay_min_score: 40,
+            synthetic_bigram_boost: 0.0,
+            commonvoice_bigram_boost: 0.0,
             dist_dir: PathBuf::new(),
             normalized_path: PathBuf::new(),
             manifest_path: PathBuf::new(),

@@ -955,6 +955,9 @@ fn import_chiaki_synthetic_bigrams(
 ) -> Result<()> {
     let (records, seen, skipped) =
         importers::parse_bigram_overlay(&paths.chiaki_synthetic_bigrams, cfg)?;
+    let unigrams = db::load_best_unigram_weights_by_current(conn)?;
+    let records =
+        importers::calibrate_bigram_boost(records, cfg.synthetic_bigram_boost, &unigrams);
     let result = db::apply_bigram_records(
         conn,
         &records,
@@ -976,6 +979,9 @@ fn import_openformosa_common_voice_bigrams(
 ) -> Result<()> {
     let (records, seen, skipped) =
         importers::parse_bigram_overlay(&paths.openformosa_common_voice_bigrams, cfg)?;
+    let unigrams = db::load_best_unigram_weights_by_current(conn)?;
+    let records =
+        importers::calibrate_bigram_boost(records, cfg.commonvoice_bigram_boost, &unigrams);
     let result = db::apply_bigram_records(
         conn,
         &records,

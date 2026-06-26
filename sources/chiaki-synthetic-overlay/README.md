@@ -15,6 +15,21 @@ The release builder imports `unigrams.tsv` before variant demotion policy and
 imports `bigrams.tsv` before reviewed web bigrams. Sentence-boundary bigram rows
 may leave either `previous` or `current` empty.
 
+## Bigram calibration
+
+The raw synthetic bigram scores are conditional log-probabilities, but the final
+ChiaKey unigram table uses its own lifted weight scale. During release import,
+the builder re-anchors this source's bigrams to the current unigram floor:
+
+```text
+stored = min(unigram(current) + boost + (raw - raw_max_of_source), -0.05)
+```
+
+This keeps the source's internal ordering while letting strong disambiguation
+edges beat the unigram path. Weaker pairs stay below the unigram floor and remain
+inert. The default `boost` is `1.5` and can be overridden with
+`SYNTHETIC_BIGRAM_BOOST`; setting it to `0` leaves the raw values unchanged.
+
 ## Files
 
 - `unigrams.tsv`: reviewed unigram additions with explicit qstrings.

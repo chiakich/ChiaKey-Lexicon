@@ -674,6 +674,22 @@ pub fn load_best_qstring_weights(conn: &Connection) -> Result<HashMap<String, f6
         .map_err(Into::into)
 }
 
+// Best unigram probability keyed by the word itself (current), for calibrating
+// bigram log-probs relative to the unigram floor the walker compares against.
+pub fn load_best_unigram_weights_by_current(conn: &Connection) -> Result<HashMap<String, f64>> {
+    let mut stmt = conn.prepare(
+        "SELECT current, MAX(probability)
+         FROM unigrams
+         WHERE current <> ''
+         GROUP BY current",
+    )?;
+    let rows = stmt.query_map([], |row| {
+        Ok((row.get::<_, String>(0)?, row.get::<_, f64>(1)?))
+    })?;
+    rows.collect::<std::result::Result<HashMap<_, _>, _>>()
+        .map_err(Into::into)
+}
+
 pub fn load_character_phrase_evidence(
     conn: &Connection,
     min_phrase_weight: f64,
