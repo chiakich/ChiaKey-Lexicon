@@ -4,7 +4,8 @@ use crate::config::{
 };
 use crate::phonetics::{phrase_candidate, qstring_for_bpmf_sequence};
 use crate::types::{
-    BigramRecord, LibchewingFile, LibchewingWeightMode, SourceRecord, VariantDemotionRecord,
+    BigramRecord, ConversionRule, LibchewingFile, LibchewingWeightMode, SourceRecord,
+    VariantDemotionRecord,
 };
 use anyhow::{bail, Context, Result};
 use csv::StringRecord;
@@ -29,6 +30,12 @@ const RIME_SPLIT_RERANK_MAX_WEIGHT: f64 = RIME_OVERLAP_RERANK_STRONG_GROUP_THRES
 const RIME_EXISTING_RERANK_MAX_SPLIT_BOOST: f64 = 0.05;
 const SINGLE_CHAR_HOMOPHONE_RERANK_MARGIN: f64 = 0.01;
 const SINGLE_CHAR_HOMOPHONE_RERANK_MAX_WEIGHT_GAP: f64 = 0.25;
+
+#[derive(Clone, Copy)]
+struct RimeScore {
+    score: i64,
+    converted: bool,
+}
 
 pub fn libchewing_max_score(paths: &[PathBuf]) -> Result<i64> {
     let mut max_score = 1;
@@ -80,10 +87,11 @@ pub fn parse_rime_essay(
     char_readings: &HashMap<String, String>,
     existing_phrases: &HashSet<String>,
     existing_qstring_weights: &HashMap<String, f64>,
+    conversion_rules: &[ConversionRule],
 ) -> Result<(Vec<SourceRecord>, usize, usize)> {
     let file = File::open(path).with_context(|| format!("read {}", path.display()))?;
     let reader = BufReader::new(file);
-    let mut raw_rows: Vec<(String, i64, String, usize)> = Vec::new();
+    let mut raw_rows: Vec<(String, i64, String, usize, Vec<String>)> = Vec::new();
     let mut seen = 0;
     let mut skipped = 0;
     let mut max_score = 1;
@@ -102,9 +110,10 @@ pub fn parse_rime_essay(
             skipped += 1;
             continue;
         };
+        let (phrase, conversion_tags) = apply_conversion_rules(phrase, conversion_rules);
         if score < cfg.rime_essay_min_score
-            || !phrase_candidate(phrase, 2, cfg.max_phrase_codepoints)
-            || existing_phrases.contains(phrase)
+            || !phrase_candidate(&phrase, 2, cfg.max_phrase_codepoints)
+            || existing_phrases.contains(&phrase)
         {
             skipped += 1;
             continue;
@@ -129,32 +138,42 @@ pub fn parse_rime_essay(
         }
 
         max_score = max_score.max(score);
-        raw_rows.push((phrase.to_string(), score, qstring, syllable_count));
+        raw_rows.push((phrase, score, qstring, syllable_count, conversion_tags));
     }
 
     let records = raw_rows
         .into_iter()
-        .map(|(phrase, score, qstring, syllable_count)| {
-            let base_weight = rime_weight(score, max_score);
-            let weight = rime_split_rerank_weight(
-                base_weight,
-                &qstring,
-                syllable_count,
-                existing_qstring_weights,
-            );
-            let tags = if weight > base_weight {
-                format!("unigram,{RIME_ESSAY_SOURCE_ID},supplemental,split-rerank")
-            } else {
-                format!("unigram,{RIME_ESSAY_SOURCE_ID},supplemental")
-            };
-            SourceRecord {
-                qstring,
-                phrase,
-                weight,
-                source_id: RIME_ESSAY_SOURCE_ID,
-                tags,
-            }
-        })
+        .map(
+            |(phrase, score, qstring, syllable_count, conversion_tags)| {
+                let base_weight = rime_weight(score, max_score);
+                let weight = rime_split_rerank_weight(
+                    base_weight,
+                    &qstring,
+                    syllable_count,
+                    existing_qstring_weights,
+                );
+                let split_tag = if weight > base_weight {
+                    ",split-rerank"
+                } else {
+                    ""
+                };
+                let conversion_tag = if conversion_tags.is_empty() {
+                    String::new()
+                } else {
+                    format!(",conversion-fix,{}", conversion_tags.join(","))
+                };
+                let tags = format!(
+                    "unigram,{RIME_ESSAY_SOURCE_ID},supplemental{split_tag}{conversion_tag}"
+                );
+                SourceRecord {
+                    qstring,
+                    phrase,
+                    weight,
+                    source_id: RIME_ESSAY_SOURCE_ID,
+                    tags,
+                }
+            },
+        )
         .collect::<Vec<_>>();
 
     Ok((dedupe_records(records), seen, skipped))
@@ -268,10 +287,11 @@ pub fn parse_rime_overlap_reranks(
     path: &Path,
     cfg: &Config,
     existing_records: &[(String, String, f64)],
+    conversion_rules: &[ConversionRule],
 ) -> Result<(Vec<SourceRecord>, usize, usize)> {
     let file = File::open(path).with_context(|| format!("read {}", path.display()))?;
     let reader = BufReader::new(file);
-    let mut rime_scores: HashMap<String, i64> = HashMap::new();
+    let mut rime_scores: HashMap<String, RimeScore> = HashMap::new();
     let mut seen = 0;
     let mut skipped = 0;
 
@@ -289,19 +309,32 @@ pub fn parse_rime_overlap_reranks(
             skipped += 1;
             continue;
         };
+        let (phrase, conversion_tags) = apply_conversion_rules(phrase, conversion_rules);
         if score < cfg.rime_essay_min_score
-            || !phrase_candidate(phrase, 2, cfg.max_phrase_codepoints)
+            || !phrase_candidate(&phrase, 2, cfg.max_phrase_codepoints)
         {
             skipped += 1;
             continue;
         }
         rime_scores
-            .entry(phrase.to_string())
-            .and_modify(|existing| *existing = (*existing).max(score))
-            .or_insert(score);
+            .entry(phrase)
+            .and_modify(|existing| {
+                if score > existing.score {
+                    *existing = RimeScore {
+                        score,
+                        converted: !conversion_tags.is_empty(),
+                    };
+                } else if score == existing.score {
+                    existing.converted |= !conversion_tags.is_empty();
+                }
+            })
+            .or_insert(RimeScore {
+                score,
+                converted: !conversion_tags.is_empty(),
+            });
     }
 
-    let mut qstring_groups: HashMap<String, Vec<(String, f64, i64)>> = HashMap::new();
+    let mut qstring_groups: HashMap<String, Vec<(String, f64, RimeScore)>> = HashMap::new();
     for (qstring, phrase, current_weight) in existing_records {
         let phrase_len = phrase.chars().count();
         if phrase_len < 2
@@ -329,10 +362,15 @@ pub fn parse_rime_overlap_reranks(
         }) {
             continue;
         }
-        group.sort_by(|left, right| left.2.cmp(&right.2).then_with(|| left.0.cmp(&right.0)));
+        group.sort_by(|left, right| {
+            left.2
+                .score
+                .cmp(&right.2.score)
+                .then_with(|| left.0.cmp(&right.0))
+        });
 
         let mut floor = f64::NEG_INFINITY;
-        for (phrase, current_weight, _score) in group {
+        for (phrase, current_weight, score) in group {
             let minimum_weight = if floor.is_finite() {
                 floor + RIME_OVERLAP_RERANK_MARGIN
             } else {
@@ -348,7 +386,7 @@ pub fn parse_rime_overlap_reranks(
                     phrase,
                     weight: round6(proposed_weight),
                     source_id: RIME_ESSAY_SOURCE_ID,
-                    tags: format!("unigram,{RIME_ESSAY_SOURCE_ID},overlap-rerank"),
+                    tags: rime_rerank_tags("overlap-rerank", score.converted),
                 });
                 proposed_weight
             } else {
@@ -366,10 +404,11 @@ pub fn parse_rime_existing_phrase_reranks(
     cfg: &Config,
     existing_records: &[(String, String, f64)],
     existing_qstring_weights: &HashMap<String, f64>,
+    conversion_rules: &[ConversionRule],
 ) -> Result<(Vec<SourceRecord>, usize, usize)> {
     let file = File::open(path).with_context(|| format!("read {}", path.display()))?;
     let reader = BufReader::new(file);
-    let mut rime_scores: HashMap<String, i64> = HashMap::new();
+    let mut rime_scores: HashMap<String, RimeScore> = HashMap::new();
     let mut seen = 0;
     let mut skipped = 0;
     let mut max_score = 1;
@@ -388,17 +427,30 @@ pub fn parse_rime_existing_phrase_reranks(
             skipped += 1;
             continue;
         };
+        let (phrase, conversion_tags) = apply_conversion_rules(phrase, conversion_rules);
         if score < cfg.rime_essay_min_score
-            || !phrase_candidate(phrase, 2, cfg.max_phrase_codepoints)
+            || !phrase_candidate(&phrase, 2, cfg.max_phrase_codepoints)
         {
             skipped += 1;
             continue;
         }
         max_score = max_score.max(score);
         rime_scores
-            .entry(phrase.to_string())
-            .and_modify(|existing| *existing = (*existing).max(score))
-            .or_insert(score);
+            .entry(phrase)
+            .and_modify(|existing| {
+                if score > existing.score {
+                    *existing = RimeScore {
+                        score,
+                        converted: !conversion_tags.is_empty(),
+                    };
+                } else if score == existing.score {
+                    existing.converted |= !conversion_tags.is_empty();
+                }
+            })
+            .or_insert(RimeScore {
+                score,
+                converted: !conversion_tags.is_empty(),
+            });
     }
 
     let mut records = Vec::new();
@@ -413,7 +465,7 @@ pub fn parse_rime_existing_phrase_reranks(
         let Some(score) = rime_scores.get(phrase) else {
             continue;
         };
-        let base_weight = rime_weight(*score, max_score);
+        let base_weight = rime_weight(score.score, max_score);
         let split_weight =
             rime_split_rerank_weight(base_weight, qstring, phrase_len, existing_qstring_weights);
         let proposed_weight =
@@ -424,12 +476,51 @@ pub fn parse_rime_existing_phrase_reranks(
                 phrase: phrase.clone(),
                 weight: proposed_weight,
                 source_id: RIME_ESSAY_SOURCE_ID,
-                tags: format!("unigram,{RIME_ESSAY_SOURCE_ID},existing-rerank"),
+                tags: rime_rerank_tags("existing-rerank", score.converted),
             });
         }
     }
 
     Ok((dedupe_records(records), seen, skipped))
+}
+
+pub fn parse_conversion_rules(path: &Path) -> Result<(Vec<ConversionRule>, usize, usize)> {
+    let file = File::open(path).with_context(|| format!("read {}", path.display()))?;
+    let reader = BufReader::new(file);
+    let mut seen = 0;
+    let mut skipped = 0;
+    let mut records = Vec::new();
+
+    for (line_number, line) in reader.lines().enumerate() {
+        let line = line?;
+        if line.trim().is_empty() || line.starts_with('#') {
+            continue;
+        }
+        seen += 1;
+        let parts = line.splitn(3, '\t').collect::<Vec<_>>();
+        if parts.len() < 3
+            || !phrase_candidate(parts[0], 1, usize::MAX)
+            || !phrase_candidate(parts[1], 1, usize::MAX)
+            || parts[0].chars().count() != parts[1].chars().count()
+        {
+            skipped += 1;
+            continue;
+        }
+        if parts[2].trim().is_empty() {
+            bail!(
+                "missing conversion rule tags {}:{}",
+                path.display(),
+                line_number + 1
+            );
+        }
+        records.push(ConversionRule {
+            from: parts[0].to_string(),
+            to: parts[1].to_string(),
+            tags: parts[2].to_string(),
+        });
+    }
+
+    Ok((records, seen, skipped))
 }
 
 pub fn parse_overlay(path: &Path, cfg: &Config) -> Result<(Vec<SourceRecord>, usize, usize)> {
@@ -887,6 +978,29 @@ pub fn format_weight(value: f64) -> String {
     }
 }
 
+fn apply_conversion_rules(
+    phrase: &str,
+    conversion_rules: &[ConversionRule],
+) -> (String, Vec<String>) {
+    let mut converted = phrase.to_string();
+    let mut tags = Vec::new();
+    for rule in conversion_rules {
+        if converted.contains(&rule.from) {
+            converted = converted.replace(&rule.from, &rule.to);
+            tags.push(rule.tags.clone());
+        }
+    }
+    (converted, tags)
+}
+
+fn rime_rerank_tags(kind: &str, converted: bool) -> String {
+    if converted {
+        format!("unigram,{RIME_ESSAY_SOURCE_ID},{kind},conversion-fix")
+    } else {
+        format!("unigram,{RIME_ESSAY_SOURCE_ID},{kind}")
+    }
+}
+
 fn parse_libchewing_row(
     row: &StringRecord,
     entry: &LibchewingFile,
@@ -992,14 +1106,15 @@ fn round6(value: f64) -> f64 {
 mod tests {
     use super::{
         calibrate_bigram_boost, joined_phrase_records_from_bigrams, libchewing_character_weight,
-        libchewing_weight, parse_bigram_overlay, parse_explicit_overlay, parse_fragment_demotions,
-        parse_rime_essay, parse_rime_existing_phrase_reranks, parse_rime_overlap_reranks,
-        parse_single_char_homophone_reranks, parse_variant_demotions,
+        libchewing_weight, parse_bigram_overlay, parse_conversion_rules, parse_explicit_overlay,
+        parse_fragment_demotions, parse_rime_essay, parse_rime_existing_phrase_reranks,
+        parse_rime_overlap_reranks, parse_single_char_homophone_reranks, parse_variant_demotions,
         phrase_evidence_character_records, round6, LIBCHEWING_PHRASE_SEGMENT_BONUS,
         LIBCHEWING_PHRASE_SEGMENT_BONUS_THRESHOLD, RIME_OVERLAP_RERANK_MARGIN,
         SINGLE_CHAR_HOMOPHONE_RERANK_MARGIN,
     };
     use crate::config::{Config, CHIAKI_WEB_OVERLAY_SOURCE_ID};
+    use crate::types::ConversionRule;
     use std::collections::{HashMap, HashSet};
     use std::fs;
     use std::path::PathBuf;
@@ -1343,6 +1458,7 @@ mod tests {
             &char_readings,
             &existing_phrases,
             &existing_qstring_weights,
+            &[],
         )
         .unwrap();
         let take_now = records
@@ -1385,6 +1501,7 @@ mod tests {
             &char_readings,
             &existing_phrases,
             &existing_qstring_weights,
+            &[],
         )
         .unwrap();
         let statistics_system = records
@@ -1403,6 +1520,88 @@ mod tests {
     }
 
     #[test]
+    fn applies_conversion_rules_to_rime_supplemental_phrases() {
+        let path = temp_file("rime-conversion-supplemental", "喫壞\t539\n因爲\t474154\n");
+        let cfg = test_config();
+        let char_readings = HashMap::from([
+            ("吃".to_string(), "@0".to_string()),
+            ("壞".to_string(), "4e".to_string()),
+            ("因".to_string(), "Q;".to_string()),
+            ("爲".to_string(), "2f".to_string()),
+        ]);
+        let existing_phrases = HashSet::new();
+        let existing_qstring_weights = HashMap::new();
+        let conversion_rules = vec![ConversionRule {
+            from: "喫".to_string(),
+            to: "吃".to_string(),
+            tags: "rime-conversion,modern-zh-tw".to_string(),
+        }];
+
+        let (records, seen, skipped) = parse_rime_essay(
+            &path,
+            &cfg,
+            &char_readings,
+            &existing_phrases,
+            &existing_qstring_weights,
+            &conversion_rules,
+        )
+        .unwrap();
+
+        assert_eq!(seen, 2);
+        assert_eq!(skipped, 0);
+        let converted = records
+            .iter()
+            .find(|record| record.phrase == "吃壞")
+            .expect("喫壞 should import as 吃壞");
+        assert_eq!(converted.qstring, "@04e");
+        assert!(records.iter().all(|record| record.phrase != "喫壞"));
+        assert_eq!(
+            converted.tags,
+            "unigram,rime-essay,supplemental,conversion-fix,rime-conversion,modern-zh-tw"
+        );
+
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn applies_conversion_rules_to_rime_existing_reranks() {
+        let path = temp_file(
+            "rime-conversion-existing-rerank",
+            "喫壞\t539\n就是\t664963\n",
+        );
+        let cfg = test_config();
+        let existing = vec![("@04e".to_string(), "吃壞".to_string(), -3.2)];
+        let existing_qstring_weights =
+            HashMap::from([("@0".to_string(), -1.254153), ("4e".to_string(), -1.530062)]);
+        let conversion_rules = vec![ConversionRule {
+            from: "喫".to_string(),
+            to: "吃".to_string(),
+            tags: "rime-conversion,modern-zh-tw".to_string(),
+        }];
+
+        let (records, seen, skipped) = parse_rime_existing_phrase_reranks(
+            &path,
+            &cfg,
+            &existing,
+            &existing_qstring_weights,
+            &conversion_rules,
+        )
+        .unwrap();
+
+        assert_eq!(seen, 2);
+        assert_eq!(skipped, 0);
+        assert_eq!(records.len(), 1);
+        assert_eq!(records[0].qstring, "@04e");
+        assert_eq!(records[0].phrase, "吃壞");
+        assert_eq!(
+            records[0].tags,
+            "unigram,rime-essay,existing-rerank,conversion-fix"
+        );
+
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
     fn reranks_existing_same_qstring_candidates_with_rime_scores() {
         let path = temp_file("rime-overlap", "賄選\t531\n會選\t662\n選成\t429\n");
         let cfg = test_config();
@@ -1412,7 +1611,8 @@ mod tests {
             ("BZ=M".to_string(), "選成".to_string(), -1.640198),
         ];
 
-        let (records, seen, skipped) = parse_rime_overlap_reranks(&path, &cfg, &existing).unwrap();
+        let (records, seen, skipped) =
+            parse_rime_overlap_reranks(&path, &cfg, &existing, &[]).unwrap();
 
         assert_eq!(seen, 3);
         assert_eq!(skipped, 0);
@@ -1426,6 +1626,25 @@ mod tests {
     }
 
     #[test]
+    fn parses_conversion_rule_rows() {
+        let path = temp_file(
+            "rime-conversion-rules",
+            "# from\tto\ttags\n喫\t吃\trime-conversion,modern-zh-tw\n",
+        );
+
+        let (records, seen, skipped) = parse_conversion_rules(&path).unwrap();
+
+        assert_eq!(seen, 1);
+        assert_eq!(skipped, 0);
+        assert_eq!(records.len(), 1);
+        assert_eq!(records[0].from, "喫");
+        assert_eq!(records[0].to, "吃");
+        assert_eq!(records[0].tags, "rime-conversion,modern-zh-tw");
+
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
     fn limits_overlap_rerank_boost_for_far_weaker_candidates() {
         let path = temp_file("rime-overlap-boost-limit", "回文\t171\n迴文\t525\n");
         let cfg = test_config();
@@ -1434,7 +1653,8 @@ mod tests {
             ("}FGK".to_string(), "迴文".to_string(), -2.302193),
         ];
 
-        let (records, seen, skipped) = parse_rime_overlap_reranks(&path, &cfg, &existing).unwrap();
+        let (records, seen, skipped) =
+            parse_rime_overlap_reranks(&path, &cfg, &existing, &[]).unwrap();
 
         assert_eq!(seen, 2);
         assert_eq!(skipped, 0);
@@ -1464,9 +1684,14 @@ mod tests {
             ("NX".to_string(), -0.570839),
         ]);
 
-        let (records, seen, skipped) =
-            parse_rime_existing_phrase_reranks(&path, &cfg, &existing, &existing_qstring_weights)
-                .unwrap();
+        let (records, seen, skipped) = parse_rime_existing_phrase_reranks(
+            &path,
+            &cfg,
+            &existing,
+            &existing_qstring_weights,
+            &[],
+        )
+        .unwrap();
 
         assert_eq!(seen, 3);
         assert_eq!(skipped, 0);
@@ -1495,7 +1720,8 @@ mod tests {
             ("0_=_".to_string(), "事例".to_string(), -1.306103),
         ];
 
-        let (records, seen, skipped) = parse_rime_overlap_reranks(&path, &cfg, &existing).unwrap();
+        let (records, seen, skipped) =
+            parse_rime_overlap_reranks(&path, &cfg, &existing, &[]).unwrap();
 
         assert_eq!(seen, 6);
         assert_eq!(skipped, 0);

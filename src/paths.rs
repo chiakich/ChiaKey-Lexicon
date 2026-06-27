@@ -7,7 +7,8 @@ use crate::config::{
     MOZC_EMOTICON_CATEGORIZED_PATH, MOZC_EMOTICON_SOURCE_ID, MOZC_EMOTICON_TSV_PATH,
     OPENCC_VARIANT_SOURCE_ID, OPENFORMOSA_COMMON_VOICE_SOURCE_ID, OVERLAY_SOURCE_ID,
     PREPOPULATED_SERVICE_SOURCE_ID, PUNCTUATION_SOURCE_ID, PUNCTUATION_VENDOR_PATH,
-    RIME_ESSAY_SOURCE_ID, SIMPLEX_EXT_VENDOR_PATH, SYMBOL_OVERLAY_PATH, SYMBOL_OVERLAY_SOURCE_ID,
+    RIME_CONVERSION_SOURCE_ID, RIME_ESSAY_SOURCE_ID, SIMPLEX_EXT_VENDOR_PATH, SYMBOL_OVERLAY_PATH,
+    SYMBOL_OVERLAY_SOURCE_ID,
 };
 use std::path::PathBuf;
 
@@ -21,6 +22,7 @@ pub struct ReleasePaths {
     pub bpmf_ext_source_dir: PathBuf,
     pub libchewing_source_dir: PathBuf,
     pub rime_essay_source_dir: PathBuf,
+    pub rime_conversion_source_dir: PathBuf,
     pub overlay_source_dir: PathBuf,
     pub chiaki_web_overlay_source_dir: PathBuf,
     pub chiaki_synthetic_source_dir: PathBuf,
@@ -58,6 +60,8 @@ pub struct ReleasePaths {
     pub libchewing_inventory: PathBuf,
     pub rime_essay_inventory: PathBuf,
     pub rime_essay_raw: PathBuf,
+    pub rime_conversion_inventory: PathBuf,
+    pub rime_conversion_replacements: PathBuf,
     pub overlay_inventory: PathBuf,
     pub chiaki_web_overlay_inventory: PathBuf,
     pub chiaki_synthetic_inventory: PathBuf,
@@ -89,6 +93,7 @@ impl ReleasePaths {
         let bpmf_ext_source_dir = cfg.root.join("sources").join(BPMF_EXT_SOURCE_ID);
         let libchewing_source_dir = cfg.root.join("sources").join(LIBCHEWING_SOURCE_ID);
         let rime_essay_source_dir = cfg.root.join("sources").join(RIME_ESSAY_SOURCE_ID);
+        let rime_conversion_source_dir = cfg.root.join("sources").join(RIME_CONVERSION_SOURCE_ID);
         let overlay_source_dir = cfg.root.join("sources").join(OVERLAY_SOURCE_ID);
         let chiaki_web_overlay_source_dir =
             cfg.root.join("sources").join(CHIAKI_WEB_OVERLAY_SOURCE_ID);
@@ -140,6 +145,8 @@ impl ReleasePaths {
             libchewing_inventory: libchewing_source_dir.join("source-inventory.sha256"),
             rime_essay_inventory: rime_essay_source_dir.join("source-inventory.sha256"),
             rime_essay_raw: rime_essay_source_dir.join("raw/essay.txt"),
+            rime_conversion_inventory: rime_conversion_source_dir.join("source-inventory.sha256"),
+            rime_conversion_replacements: rime_conversion_source_dir.join("replacements.tsv"),
             overlay_inventory: overlay_source_dir.join("source-inventory.sha256"),
             chiaki_web_overlay_inventory: chiaki_web_overlay_source_dir
                 .join("source-inventory.sha256"),
@@ -166,6 +173,7 @@ impl ReleasePaths {
             bpmf_ext_source_dir,
             libchewing_source_dir,
             rime_essay_source_dir,
+            rime_conversion_source_dir,
             overlay_source_dir,
             chiaki_web_overlay_source_dir,
             chiaki_synthetic_source_dir,

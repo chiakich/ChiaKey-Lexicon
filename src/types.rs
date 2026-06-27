@@ -54,6 +54,13 @@ pub struct VariantDemotionRecord {
     pub tags: String,
 }
 
+#[derive(Clone)]
+pub struct ConversionRule {
+    pub from: String,
+    pub to: String,
+    pub tags: String,
+}
+
 pub struct ImportResult {
     pub source_path: String,
     pub seen: usize,

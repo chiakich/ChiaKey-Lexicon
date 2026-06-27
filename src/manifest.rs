@@ -8,8 +8,9 @@ use crate::config::{
     OPENCC_VARIANT_SOURCE_NAME, OPENFORMOSA_COMMON_VOICE_SOURCE_ID,
     OPENFORMOSA_COMMON_VOICE_SOURCE_NAME, OVERLAY_SOURCE_ID, OVERLAY_SOURCE_NAME,
     PREPOPULATED_SERVICE_SOURCE_ID, PREPOPULATED_SERVICE_SOURCE_NAME, PUNCTUATION_SOURCE_ID,
-    PUNCTUATION_SOURCE_NAME, RIME_ESSAY_SOURCE_ID, RIME_ESSAY_SOURCE_NAME,
-    SYMBOL_OVERLAY_SOURCE_ID, SYMBOL_OVERLAY_SOURCE_NAME,
+    PUNCTUATION_SOURCE_NAME, RIME_CONVERSION_SOURCE_ID, RIME_CONVERSION_SOURCE_NAME,
+    RIME_ESSAY_SOURCE_ID, RIME_ESSAY_SOURCE_NAME, SYMBOL_OVERLAY_SOURCE_ID,
+    SYMBOL_OVERLAY_SOURCE_NAME,
 };
 use crate::db;
 use crate::files::{file_info, sha256_file};
@@ -107,6 +108,14 @@ pub fn release_metadata(
             "Rime essay contributors",
             &paths.rime_essay_inventory,
             db::stats_for_source_rows(source_rows, "sources/rime-essay/raw/"),
+        )?,
+        release_source(
+            RIME_CONVERSION_SOURCE_ID,
+            RIME_CONVERSION_SOURCE_NAME,
+            "CC0-1.0",
+            "ChiaKey Lexicon maintainers",
+            &paths.rime_conversion_inventory,
+            db::stats_for_source_rows(source_rows, "sources/chiakey-rime-conversion-policy/"),
         )?,
         release_source(
             OVERLAY_SOURCE_ID,
@@ -287,6 +296,16 @@ pub fn manifest(
             "Rime essay contributors",
             &paths.rime_essay_inventory,
             220,
+        )?,
+        manifest_source(
+            RIME_CONVERSION_SOURCE_ID,
+            RIME_CONVERSION_SOURCE_NAME,
+            "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiakey-rime-conversion-policy",
+            "tsv",
+            "CC0-1.0",
+            "ChiaKey Lexicon maintainers",
+            &paths.rime_conversion_inventory,
+            225,
         )?,
         manifest_source(
             OVERLAY_SOURCE_ID,
