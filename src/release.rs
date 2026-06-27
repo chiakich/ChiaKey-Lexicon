@@ -139,7 +139,13 @@ pub fn run() -> Result<()> {
     )?;
     import_chiaki_synthetic_bigrams(&mut conn, &cfg, &paths, &mut import_results)?;
     import_openformosa_common_voice_bigrams(&mut conn, &cfg, &paths, &mut import_results)?;
-    import_chiaki_web_bigrams(&mut conn, &cfg, &paths, &mut import_results)?;
+    import_chiaki_web_bigrams(
+        &mut conn,
+        &cfg,
+        &paths,
+        &mut source_keys,
+        &mut import_results,
+    )?;
     import_punctuations(
         &mut conn,
         &cfg,
@@ -968,10 +974,37 @@ fn import_chiaki_web_bigrams(
     conn: &mut Connection,
     cfg: &Config,
     paths: &ReleasePaths,
+    source_keys: &mut HashMap<(String, String), SourceRecord>,
     import_results: &mut Vec<ImportResult>,
 ) -> Result<()> {
     let (records, seen, skipped) =
         importers::parse_bigram_overlay(&paths.chiaki_web_overlay_bigrams, cfg)?;
+    let existing_phrases = db::load_existing_phrases(conn)?;
+    let qstring_weights = db::load_best_qstring_weights(conn)?;
+    let phrase_weights = db::load_best_unigram_weights_by_current(conn)?;
+    let joined_records = importers::joined_phrase_records_from_bigrams(
+        &records,
+        &existing_phrases,
+        &qstring_weights,
+        &phrase_weights,
+        cfg.max_phrase_codepoints,
+        config::CHIAKI_WEB_OVERLAY_SOURCE_ID,
+    );
+    let joined_seen = records.len();
+    let joined_skipped = joined_seen.saturating_sub(joined_records.len());
+    let joined_result = db::apply_records(
+        conn,
+        joined_records,
+        "generated/chiaki-web-bigram-joined-phrases",
+        "chiaki-web-bigram-joined-phrases",
+        &sha256_file(&paths.chiaki_web_overlay_bigrams)?,
+        joined_seen,
+        joined_skipped,
+        false,
+    )?;
+    remember_records(source_keys, &joined_result);
+    import_results.push(joined_result);
+
     let result = db::apply_bigram_records(
         conn,
         &records,

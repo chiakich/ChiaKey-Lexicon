@@ -507,6 +507,9 @@ pub fn parse_chiaki_synthetic_overlay(
 
 // Log-prob ceiling for calibrated bigrams; keeps a boosted edge from exceeding ~prob 1.
 const BIGRAM_PROB_CEILING: f64 = -0.05;
+const BIGRAM_JOINED_PHRASE_MARGIN: f64 = 0.01;
+const BIGRAM_JOINED_PHRASE_MAX_WEIGHT: f64 = RIME_SPLIT_RERANK_MAX_WEIGHT;
+const BIGRAM_JOINED_PHRASE_MAX_PREVIOUS_GAP: f64 = SINGLE_CHAR_HOMOPHONE_RERANK_MAX_WEIGHT_GAP;
 
 pub fn parse_bigram_overlay(
     path: &Path,
@@ -585,6 +588,69 @@ pub fn calibrate_bigram_boost(
         }
     }
     records
+}
+
+pub fn joined_phrase_records_from_bigrams(
+    records: &[BigramRecord],
+    existing_phrases: &HashSet<String>,
+    qstring_weights: &HashMap<String, f64>,
+    phrase_weights: &HashMap<String, f64>,
+    max_phrase_codepoints: usize,
+    source_id: &'static str,
+) -> Vec<SourceRecord> {
+    let mut joined_records = Vec::new();
+
+    for record in records {
+        if record.previous.is_empty() || record.current.is_empty() {
+            continue;
+        }
+        let Some((previous_qstring, current_qstring)) = record.qstring.split_once(' ') else {
+            continue;
+        };
+        if record.previous.chars().count() != 1 || record.current.chars().count() < 2 {
+            continue;
+        }
+        let Some(previous_weight) = phrase_weights.get(&record.previous) else {
+            continue;
+        };
+        let Some(previous_qstring_weight) = qstring_weights.get(previous_qstring) else {
+            continue;
+        };
+        let previous_gap = previous_qstring_weight - previous_weight;
+        if previous_gap <= 0.0 || previous_gap > BIGRAM_JOINED_PHRASE_MAX_PREVIOUS_GAP {
+            continue;
+        }
+
+        let phrase = format!("{}{}", record.previous, record.current);
+        if existing_phrases.contains(&phrase)
+            || !phrase_candidate(&phrase, 2, max_phrase_codepoints)
+        {
+            continue;
+        }
+
+        let qstring = format!("{previous_qstring}{current_qstring}");
+        if qstring.chars().count() != phrase.chars().count() * 2 {
+            continue;
+        }
+
+        let Some(current_weight) = qstring_weights.get(current_qstring) else {
+            continue;
+        };
+
+        let weight = round6(
+            (previous_qstring_weight + current_weight + BIGRAM_JOINED_PHRASE_MARGIN)
+                .min(BIGRAM_JOINED_PHRASE_MAX_WEIGHT),
+        );
+        joined_records.push(SourceRecord {
+            qstring,
+            phrase,
+            weight,
+            source_id,
+            tags: format!("unigram,{source_id},bigram-joined-phrase"),
+        });
+    }
+
+    dedupe_records(joined_records)
 }
 
 fn parse_explicit_records(
@@ -925,15 +991,15 @@ fn round6(value: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::{
-        calibrate_bigram_boost, libchewing_character_weight, libchewing_weight,
-        parse_bigram_overlay, parse_explicit_overlay, parse_fragment_demotions, parse_rime_essay,
-        parse_rime_existing_phrase_reranks, parse_rime_overlap_reranks,
+        calibrate_bigram_boost, joined_phrase_records_from_bigrams, libchewing_character_weight,
+        libchewing_weight, parse_bigram_overlay, parse_explicit_overlay, parse_fragment_demotions,
+        parse_rime_essay, parse_rime_existing_phrase_reranks, parse_rime_overlap_reranks,
         parse_single_char_homophone_reranks, parse_variant_demotions,
         phrase_evidence_character_records, round6, LIBCHEWING_PHRASE_SEGMENT_BONUS,
         LIBCHEWING_PHRASE_SEGMENT_BONUS_THRESHOLD, RIME_OVERLAP_RERANK_MARGIN,
         SINGLE_CHAR_HOMOPHONE_RERANK_MARGIN,
     };
-    use crate::config::Config;
+    use crate::config::{Config, CHIAKI_WEB_OVERLAY_SOURCE_ID};
     use std::collections::{HashMap, HashSet};
     use std::fs;
     use std::path::PathBuf;
@@ -1020,6 +1086,96 @@ mod tests {
                 .probability,
             -1.0
         );
+    }
+
+    #[test]
+    fn infers_joined_phrase_unigrams_from_bigrams_above_best_split() {
+        use crate::types::BigramRecord;
+
+        let records = vec![BigramRecord {
+            qstring: "p= ;:^l".to_string(),
+            previous: "清".to_string(),
+            current: "乾淨".to_string(),
+            probability: -1.12,
+        }];
+        let existing_phrases = HashSet::new();
+        let qstring_weights = HashMap::from([
+            ("p=".to_string(), -1.163153),
+            (";:^l".to_string(), -0.807221),
+        ]);
+        let phrase_weights = HashMap::from([("清".to_string(), -1.163174)]);
+
+        let joined = joined_phrase_records_from_bigrams(
+            &records,
+            &existing_phrases,
+            &qstring_weights,
+            &phrase_weights,
+            7,
+            CHIAKI_WEB_OVERLAY_SOURCE_ID,
+        );
+
+        assert_eq!(joined.len(), 1);
+        assert_eq!(joined[0].qstring, "p=;:^l");
+        assert_eq!(joined[0].phrase, "清乾淨");
+        assert_eq!(joined[0].weight, -1.960374);
+        assert_eq!(
+            joined[0].tags,
+            "unigram,chiaki-web-overlay,bigram-joined-phrase"
+        );
+    }
+
+    #[test]
+    fn skips_joined_phrase_unigrams_when_phrase_already_exists() {
+        use crate::types::BigramRecord;
+
+        let records = vec![BigramRecord {
+            qstring: "M1 ;:^l".to_string(),
+            previous: "擦".to_string(),
+            current: "乾淨".to_string(),
+            probability: -0.1,
+        }];
+        let existing_phrases = HashSet::from(["擦乾淨".to_string()]);
+        let qstring_weights =
+            HashMap::from([("M1".to_string(), -1.1), (";:^l".to_string(), -0.807221)]);
+        let phrase_weights = HashMap::from([("擦".to_string(), -1.11)]);
+
+        let joined = joined_phrase_records_from_bigrams(
+            &records,
+            &existing_phrases,
+            &qstring_weights,
+            &phrase_weights,
+            7,
+            CHIAKI_WEB_OVERLAY_SOURCE_ID,
+        );
+
+        assert!(joined.is_empty());
+    }
+
+    #[test]
+    fn skips_joined_phrase_unigrams_for_contextual_multiword_prefixes() {
+        use crate::types::BigramRecord;
+
+        let records = vec![BigramRecord {
+            qstring: "CE^: p=".to_string(),
+            previous: "臺灣".to_string(),
+            current: "清".to_string(),
+            probability: -1.09,
+        }];
+        let existing_phrases = HashSet::new();
+        let qstring_weights =
+            HashMap::from([("CE^:".to_string(), -1.0), ("p=".to_string(), -1.163153)]);
+        let phrase_weights = HashMap::from([("清".to_string(), -1.163174)]);
+
+        let joined = joined_phrase_records_from_bigrams(
+            &records,
+            &existing_phrases,
+            &qstring_weights,
+            &phrase_weights,
+            7,
+            CHIAKI_WEB_OVERLAY_SOURCE_ID,
+        );
+
+        assert!(joined.is_empty());
     }
 
     #[test]
