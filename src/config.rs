@@ -56,7 +56,6 @@ pub const OPENFORMOSA_COMMON_VOICE_SOURCE_ID: &str = "openformosa-common-voice-2
 pub const OPENFORMOSA_COMMON_VOICE_SOURCE_NAME: &str =
     "OpenFormosa Common Voice 25 zh-TW bigram overlay";
 pub const OPENCC_VARIANT_SOURCE_ID: &str = "opencc-variant-policy";
-pub const OPENCC_VARIANT_SOURCE_NAME: &str = "OpenCC-derived Traditional Chinese variant policy";
 pub const FRAGMENT_DENYLIST_SOURCE_ID: &str = "chiakey-fragment-denylist";
 pub const FRAGMENT_DENYLIST_SOURCE_NAME: &str = "ChiaKey non-lexical fragment weight caps";
 pub const DATABASE_SCHEMA_VERSION: i64 = 1;

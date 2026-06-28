@@ -99,7 +99,6 @@ cargo run --release -- prepare-release
 目標：把外部證據轉成預設繁中（zh-TW）輸出期待，並抑制已知斷詞風險。
 
 - `chiakey-rime-conversion-policy`：OpenCC `t2tw` 後的 Rime 例外規則，只保留地名 `里`、食物詞 `里肌` 等 `t2tw` 無法安全判斷的專案偏好。
-- `opencc-variant-policy`：variant 權重上限策略（避免簡體或非台灣慣用字前置）。
 - `chiakey-fragment-denylist`：句段碎片權重上限（降低偷字造成的錯誤斷詞）。
 
 
@@ -116,7 +115,7 @@ release builder 的整合流程是 deterministic 的：
 7. 匯入 `chiakey-modern-overlay/phrases.tsv`，讓專案自有修正可以替換已知問題詞。
 8. 匯入 `chiakey-modern-overlay/explicit.tsv`，處理需要指定 qstring 或排序的精準修正。
 9. 匯入 `chiaki-web-overlay/explicit.tsv` 與 `chiaki-synthetic-overlay/unigrams.tsv`。
-10. 套用 `opencc-variant-policy`，降低不符合預設繁中期待的 variant 權重，再套用 `chiakey-fragment-denylist`，把偷字的非詞彙碎片壓到安全界。
+10. 由 OpenCC `t2tw` 產生同 qstring variant 權重上限，降低不符合預設繁中期待、且已有台灣標準 counterpart 的候選；再套用 `chiakey-fragment-denylist`，把偷字的非詞彙碎片壓到安全界。
 11. 匯入 `chiaki-synthetic-overlay/bigrams.tsv`、`openformosa-common-voice-25-zh-tw/bigrams.tsv`，再匯入 `chiaki-web-overlay/bigrams.tsv`，讓 reviewed web bigrams 可以覆蓋重疊的統計來源 rows。
 12. 補入 runtime compatibility data：BPMF 標點、ChiaKey supplemental symbol list、canned messages、Mozc 顏文字、module CIN tables。
 13. 從最終 `unigrams` 派生 `associated_phrases`，供聯想詞提示使用。

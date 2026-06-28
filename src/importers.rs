@@ -1,6 +1,7 @@
 use crate::config::{
     Config, CHIAKEY_AUTO_HOTWORDS_SOURCE_ID, CHIAKI_SYNTHETIC_SOURCE_ID,
-    CHIAKI_WEB_OVERLAY_SOURCE_ID, LIBCHEWING_SOURCE_ID, OVERLAY_SOURCE_ID, RIME_ESSAY_SOURCE_ID,
+    CHIAKI_WEB_OVERLAY_SOURCE_ID, LIBCHEWING_SOURCE_ID, OPENCC_VARIANT_SOURCE_ID,
+    OVERLAY_SOURCE_ID, RIME_ESSAY_SOURCE_ID,
 };
 use crate::opencc;
 use crate::phonetics::{phrase_candidate, qstring_for_bpmf_sequence};
@@ -31,6 +32,7 @@ const RIME_SPLIT_RERANK_MAX_WEIGHT: f64 = RIME_OVERLAP_RERANK_STRONG_GROUP_THRES
 const RIME_EXISTING_RERANK_MAX_SPLIT_BOOST: f64 = 0.05;
 const SINGLE_CHAR_HOMOPHONE_RERANK_MARGIN: f64 = 0.01;
 const SINGLE_CHAR_HOMOPHONE_RERANK_MAX_WEIGHT_GAP: f64 = 0.25;
+const OPENCC_VARIANT_DEMOTION_MARGIN: f64 = 0.01;
 
 #[derive(Clone, Copy)]
 struct RimeScore {
@@ -873,6 +875,7 @@ pub fn phrase_evidence_character_records(
     dedupe_records(records)
 }
 
+#[cfg(test)]
 pub fn parse_variant_demotions(path: &Path) -> Result<(Vec<VariantDemotionRecord>, usize, usize)> {
     let file = File::open(path).with_context(|| format!("read {}", path.display()))?;
     let reader = BufReader::new(file);
@@ -913,6 +916,74 @@ pub fn parse_variant_demotions(path: &Path) -> Result<(Vec<VariantDemotionRecord
     }
 
     Ok((records, seen, skipped))
+}
+
+pub fn generate_opencc_variant_demotions(
+    unigram_rows: &[(String, String, f64)],
+    opencc_binary: &Path,
+    opencc_config: &Path,
+) -> Result<(Vec<SourceRecord>, usize, usize)> {
+    let mut phrases = unigram_rows
+        .iter()
+        .map(|(_qstring, phrase, _weight)| phrase.clone())
+        .collect::<Vec<_>>();
+    phrases.sort();
+    phrases.dedup();
+
+    let converted = opencc::convert_lines(opencc_binary, opencc_config, &phrases)?;
+    let converted_by_phrase = phrases
+        .into_iter()
+        .zip(converted)
+        .filter(|(phrase, converted)| phrase != converted)
+        .collect::<HashMap<_, _>>();
+
+    let mut best_weight_by_key: HashMap<(String, String), f64> = HashMap::new();
+    for (qstring, phrase, weight) in unigram_rows {
+        best_weight_by_key
+            .entry((qstring.clone(), phrase.clone()))
+            .and_modify(|existing| *existing = existing.max(*weight))
+            .or_insert(*weight);
+    }
+
+    let mut records_by_key: HashMap<(String, String), SourceRecord> = HashMap::new();
+    let mut skipped = 0;
+    for ((qstring, phrase), weight) in &best_weight_by_key {
+        let Some(counterpart) = converted_by_phrase.get(phrase) else {
+            skipped += 1;
+            continue;
+        };
+        let Some(counterpart_weight) =
+            best_weight_by_key.get(&(qstring.clone(), counterpart.clone()))
+        else {
+            skipped += 1;
+            continue;
+        };
+        let max_weight = round6(counterpart_weight - OPENCC_VARIANT_DEMOTION_MARGIN);
+        if *weight <= max_weight {
+            skipped += 1;
+            continue;
+        }
+        records_by_key.insert(
+            (qstring.clone(), phrase.clone()),
+            SourceRecord {
+                qstring: qstring.clone(),
+                phrase: phrase.clone(),
+                weight: max_weight,
+                source_id: OPENCC_VARIANT_SOURCE_ID,
+                tags: format!(
+                    "unigram,{OPENCC_VARIANT_SOURCE_ID},opencc-t2tw-counterpart,traditional-preference,{counterpart}"
+                ),
+            },
+        );
+    }
+
+    let mut records = records_by_key.into_values().collect::<Vec<_>>();
+    records.sort_by(|left, right| {
+        left.qstring
+            .cmp(&right.qstring)
+            .then_with(|| left.phrase.cmp(&right.phrase))
+    });
+    Ok((records, best_weight_by_key.len(), skipped))
 }
 
 // Same shape as parse_variant_demotions but for multi-character fragment caps

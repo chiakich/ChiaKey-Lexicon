@@ -446,6 +446,87 @@ pub fn apply_variant_demotions(
     })
 }
 
+pub fn load_unigram_rows(conn: &Connection) -> Result<Vec<(String, String, f64)>> {
+    let mut stmt = conn.prepare("SELECT qstring, current, probability FROM unigrams")?;
+    let rows = stmt.query_map([], |row| {
+        Ok((
+            row.get::<_, String>(0)?,
+            row.get::<_, String>(1)?,
+            row.get::<_, f64>(2)?,
+        ))
+    })?;
+    rows.collect::<std::result::Result<Vec<_>, _>>()
+        .map_err(Into::into)
+}
+
+pub fn apply_qstring_variant_demotions(
+    conn: &mut Connection,
+    records: &[SourceRecord],
+    source_path: &str,
+    kind: &str,
+    source_sha256: &str,
+    seen: usize,
+    skipped: usize,
+) -> Result<ImportResult> {
+    let tx = conn.transaction()?;
+    let mut affected = Vec::new();
+
+    for record in records {
+        {
+            let mut stmt = tx.prepare(
+                "SELECT qstring, current
+                 FROM unigrams
+                 WHERE qstring = ?1 AND current = ?2 AND probability > ?3",
+            )?;
+            let rows = stmt.query_map(
+                params![record.qstring, record.phrase, record.weight],
+                |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?)),
+            )?;
+            for row in rows {
+                let (qstring, phrase) = row?;
+                affected.push(SourceRecord {
+                    qstring,
+                    phrase,
+                    weight: record.weight,
+                    source_id: record.source_id,
+                    tags: record.tags.clone(),
+                });
+            }
+        }
+        tx.execute(
+            "UPDATE unigrams
+             SET probability = ?3
+             WHERE qstring = ?1 AND current = ?2 AND probability > ?3",
+            params![record.qstring, record.phrase, record.weight],
+        )?;
+    }
+
+    tx.execute(
+        "DELETE FROM chiaki_db_sources WHERE source = ?1",
+        params![source_path],
+    )?;
+    tx.execute(
+        "INSERT INTO chiaki_db_sources VALUES(?1, ?2, ?3, ?4, ?5, ?6)",
+        params![
+            source_path,
+            kind,
+            source_sha256,
+            seen as i64,
+            affected.len() as i64,
+            skipped as i64
+        ],
+    )?;
+
+    tx.commit()?;
+    Ok(ImportResult {
+        source_path: source_path.to_string(),
+        seen,
+        added: affected.len(),
+        skipped,
+        records: affected,
+    })
+}
+
 pub fn update_release_metadata_rows(conn: &Connection, cfg: &Config) -> Result<()> {
     conn.execute("DELETE FROM cooked_information WHERE key = 'version'", [])?;
     conn.execute(

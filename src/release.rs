@@ -3,8 +3,8 @@ use crate::bpmf_ext;
 use crate::config::{self, Config};
 use crate::db;
 use crate::files::{
-    file_info, repo_relative, sha256_file, verify_required_files, write_inventory, write_json,
-    write_text,
+    file_info, repo_relative, sha256_bytes, sha256_file, verify_required_files, write_inventory,
+    write_json, write_text,
 };
 use crate::importers;
 use crate::manifest;
@@ -233,7 +233,6 @@ fn verify_inputs(
         paths.chiakey_auto_hotwords_phrases.clone(),
         paths.chiakey_auto_hotwords_state.clone(),
         paths.openformosa_common_voice_bigrams.clone(),
-        paths.opencc_variant_demotions.clone(),
         paths.fragment_demotions.clone(),
         paths.rime_essay_raw.clone(),
         paths.rime_conversion_replacements.clone(),
@@ -263,7 +262,6 @@ fn create_output_dirs(cfg: &Config, paths: &ReleasePaths) -> Result<()> {
     fs::create_dir_all(&paths.chiaki_synthetic_source_dir)?;
     fs::create_dir_all(&paths.chiakey_auto_hotwords_source_dir)?;
     fs::create_dir_all(&paths.openformosa_common_voice_source_dir)?;
-    fs::create_dir_all(&paths.opencc_variant_source_dir)?;
     fs::create_dir_all(&paths.fragment_denylist_source_dir)?;
     Ok(())
 }
@@ -766,21 +764,26 @@ fn import_overlay(
 fn import_opencc_variant_policy(
     conn: &mut Connection,
     cfg: &Config,
-    paths: &ReleasePaths,
+    _paths: &ReleasePaths,
     source_keys: &mut HashMap<(String, String), SourceRecord>,
     import_results: &mut Vec<ImportResult>,
 ) -> Result<()> {
-    let (records, seen, skipped) =
-        importers::parse_variant_demotions(&paths.opencc_variant_demotions)?;
-    let result = db::apply_variant_demotions(
+    let rows = db::load_unigram_rows(conn)?;
+    let (records, seen, skipped) = importers::generate_opencc_variant_demotions(
+        &rows,
+        &cfg.opencc_binary,
+        &cfg.opencc_t2tw_config,
+    )?;
+    let source_path = "generated/opencc-t2tw-variant-demotions";
+    let source_sha256 = sha256_bytes(b"opencc-t2tw qstring variant demotions v1");
+    let result = db::apply_qstring_variant_demotions(
         conn,
         &records,
-        &repo_relative(&cfg.root, &paths.opencc_variant_demotions)?,
+        source_path,
         "opencc-variant-demotion",
-        &sha256_file(&paths.opencc_variant_demotions)?,
+        &source_sha256,
         seen,
         skipped,
-        config::OPENCC_VARIANT_SOURCE_ID,
     )?;
     remember_records(source_keys, &result);
     import_results.push(result);

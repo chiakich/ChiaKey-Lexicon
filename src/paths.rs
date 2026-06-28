@@ -5,10 +5,9 @@ use crate::config::{
     CJ_PUNCTUATIONS_HALFWIDTH_VENDOR_PATH, CJ_PUNCTUATIONS_MIXEDWIDTH_VENDOR_PATH,
     FRAGMENT_DENYLIST_SOURCE_ID, LIBCHEWING_SOURCE_ID, MODULE_CIN_SOURCE_ID,
     MOZC_EMOTICON_CATEGORIZED_PATH, MOZC_EMOTICON_SOURCE_ID, MOZC_EMOTICON_TSV_PATH,
-    OPENCC_VARIANT_SOURCE_ID, OPENFORMOSA_COMMON_VOICE_SOURCE_ID, OVERLAY_SOURCE_ID,
-    PREPOPULATED_SERVICE_SOURCE_ID, PUNCTUATION_SOURCE_ID, PUNCTUATION_VENDOR_PATH,
-    RIME_CONVERSION_SOURCE_ID, RIME_ESSAY_SOURCE_ID, SIMPLEX_EXT_VENDOR_PATH, SYMBOL_OVERLAY_PATH,
-    SYMBOL_OVERLAY_SOURCE_ID,
+    OPENFORMOSA_COMMON_VOICE_SOURCE_ID, OVERLAY_SOURCE_ID, PREPOPULATED_SERVICE_SOURCE_ID,
+    PUNCTUATION_SOURCE_ID, PUNCTUATION_VENDOR_PATH, RIME_CONVERSION_SOURCE_ID,
+    RIME_ESSAY_SOURCE_ID, SIMPLEX_EXT_VENDOR_PATH, SYMBOL_OVERLAY_PATH, SYMBOL_OVERLAY_SOURCE_ID,
 };
 use std::path::PathBuf;
 
@@ -28,7 +27,6 @@ pub struct ReleasePaths {
     pub chiaki_synthetic_source_dir: PathBuf,
     pub chiakey_auto_hotwords_source_dir: PathBuf,
     pub openformosa_common_voice_source_dir: PathBuf,
-    pub opencc_variant_source_dir: PathBuf,
     pub fragment_denylist_source_dir: PathBuf,
     pub overlay_phrases: PathBuf,
     pub overlay_explicit: PathBuf,
@@ -60,7 +58,6 @@ pub struct ReleasePaths {
     pub rime_essay_inventory: PathBuf,
     pub rime_essay_raw: PathBuf,
     pub rime_conversion_replacements: PathBuf,
-    pub opencc_variant_demotions: PathBuf,
     pub fragment_demotions: PathBuf,
     pub db_filename: String,
     pub metadata_filename: String,
@@ -97,7 +94,6 @@ impl ReleasePaths {
             .root
             .join("sources")
             .join(OPENFORMOSA_COMMON_VOICE_SOURCE_ID);
-        let opencc_variant_source_dir = cfg.root.join("sources").join(OPENCC_VARIANT_SOURCE_ID);
         let fragment_denylist_source_dir =
             cfg.root.join("sources").join(FRAGMENT_DENYLIST_SOURCE_ID);
         let db_filename = format!("ChiaKeySource-{}.db", cfg.release_version);
@@ -136,7 +132,6 @@ impl ReleasePaths {
             rime_essay_inventory: rime_essay_source_dir.join("source-inventory.sha256"),
             rime_essay_raw: rime_essay_source_dir.join("raw/essay.txt"),
             rime_conversion_replacements: rime_conversion_source_dir.join("replacements.tsv"),
-            opencc_variant_demotions: opencc_variant_source_dir.join("variant-demotions.tsv"),
             fragment_demotions: fragment_denylist_source_dir.join("fragment-demotions.tsv"),
             db: cfg.dist_dir.join(&db_filename),
             metadata: cfg.dist_dir.join(&metadata_filename),
@@ -157,7 +152,6 @@ impl ReleasePaths {
             chiaki_synthetic_source_dir,
             chiakey_auto_hotwords_source_dir,
             openformosa_common_voice_source_dir,
-            opencc_variant_source_dir,
             fragment_denylist_source_dir,
             db_filename,
             metadata_filename,

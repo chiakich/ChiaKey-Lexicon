@@ -229,20 +229,17 @@ BopomofoCorrection-bopomofo-correction-cin
 sources/keykey-module-cin/source-inventory.sha256
 ```
 
-## 自 2026.06.7 起納入
+## Release builder generated policy
 
 ### opencc-variant-policy
 
-- 名稱：OpenCC-derived Traditional Chinese variant policy
-- 本地來源：`sources/opencc-variant-policy/variant-demotions.tsv`
+- 來源代號：`opencc-variant-policy`
+- 類型：release build generated stage，不是 `sources/` input source
 - 上游參考：<https://github.com/BYVoid/OpenCC>
-- 授權：Apache-2.0-derived policy
+- 授權脈絡：Generated from OpenCC `t2tw` at release build time
 - 署名：OpenCC contributors; ChiaKey Lexicon maintainers
-- 再散布決策：自 `2026.06.7` 起納入公開 release
 
-這個來源是由 OpenCC 簡繁轉換知識衍生的小型 reviewed policy table。它不會被當作 frequency dictionary 匯入；release builder 只在簡體或非台灣偏好的 variants 原本會與繁體候選 tie 時降低其排序。
-
-第一列會降低 `个`，也就是 `個` 的簡體 counterpart，讓 neutral-tone `ㄍㄜ˙` / `ek7` 不會只因 tie-break 排在 `個` 前面。
+這個 policy 不再維護手寫 TSV。release builder 會掃描目前 database 內的 unigram 候選，批次套用 OpenCC `t2tw`；只有在原詞與 `t2tw` 後的詞形同時存在於同一個 qstring group 時，才會把原詞權重壓到 `t2tw` 詞形下方。這讓 `个` / `個`、`喫` / `吃`、`爲` / `為` 等同音 variant 可以自動處理，同時避免對沒有 counterpart 的歷史、人名或相容資料做粗暴降權。
 
 ## 自 2026.06.8 起納入
 
