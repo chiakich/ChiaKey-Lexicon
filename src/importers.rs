@@ -25,7 +25,7 @@ const LIBCHEWING_CHARACTER_PHRASE_EVIDENCE_PENALTY: f64 = 1.0;
 const LIBCHEWING_CHARACTER_PHRASE_EVIDENCE_MAX_WEIGHT: f64 = -1.35;
 const RIME_OVERLAP_RERANK_MARGIN: f64 = 0.01;
 const RIME_OVERLAP_RERANK_MAX_WEIGHT: f64 = -0.5;
-const RIME_OVERLAP_RERANK_MAX_BOOST: f64 = 0.5;
+const RIME_OVERLAP_RERANK_MAX_BOOST: f64 = 0.35;
 const RIME_OVERLAP_RERANK_STRONG_GROUP_THRESHOLD: f64 = -0.75;
 const RIME_SPLIT_RERANK_MARGIN: f64 = 0.01;
 const RIME_SPLIT_RERANK_MAX_WEIGHT: f64 = RIME_OVERLAP_RERANK_STRONG_GROUP_THRESHOLD;
@@ -1867,8 +1867,34 @@ mod tests {
         assert_eq!(records.len(), 1);
         assert_eq!(records[0].qstring, "}FGK");
         assert_eq!(records[0].phrase, "迴文");
-        assert_eq!(records[0].weight, -1.802193);
+        assert_eq!(records[0].weight, -1.952193);
         assert!(records[0].weight < -1.062714);
+        assert_eq!(records[0].tags, "unigram,rime-essay,overlap-rerank");
+
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn does_not_overtake_when_overlap_rerank_would_need_too_much_boost() {
+        let path = temp_file("rime-overlap-close-limit", "現成\t1560\n縣城\t3617\n");
+        let cfg = test_config();
+        let existing = vec![
+            ("Ei=M".to_string(), "現成".to_string(), -1.128131),
+            ("Ei=M".to_string(), "縣城".to_string(), -1.483416),
+        ];
+        let conversion_rules = Vec::new();
+        let normalization = RimeNormalization::without_opencc(&conversion_rules);
+
+        let (records, seen, skipped) =
+            parse_rime_overlap_reranks(&path, &cfg, &existing, &normalization).unwrap();
+
+        assert_eq!(seen, 2);
+        assert_eq!(skipped, 0);
+        assert_eq!(records.len(), 1);
+        assert_eq!(records[0].qstring, "Ei=M");
+        assert_eq!(records[0].phrase, "縣城");
+        assert_eq!(records[0].weight, -1.133416);
+        assert!(records[0].weight < -1.128131);
         assert_eq!(records[0].tags, "unigram,rime-essay,overlap-rerank");
 
         let _ = fs::remove_file(path);
