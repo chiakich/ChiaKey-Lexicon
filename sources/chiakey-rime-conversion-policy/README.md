@@ -7,7 +7,7 @@ Rime essay is a broad phrase and language-model source, but some entries use
 phrase shapes that do not match the default modern Taiwan Traditional Chinese
 lexicon. This layer keeps the frequency evidence while moving it onto the
 preferred output form. For example, Rime's `喫壞` evidence is imported and
-reranked as `吃壞`.
+reranked as `吃壞`, and `爲啥` evidence is used as `為啥`.
 
 `replacements.tsv` format:
 
