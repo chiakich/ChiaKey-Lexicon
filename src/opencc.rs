@@ -1,5 +1,5 @@
 use anyhow::{bail, Context, Result};
-use std::io::Write;
+use std::io::{self, IsTerminal, Write};
 use std::path::Path;
 use std::process::{Command, Stdio};
 use std::thread;
@@ -8,6 +8,8 @@ pub fn convert_lines(binary: &Path, config: &Path, input: &[String]) -> Result<V
     if input.is_empty() {
         return Ok(Vec::new());
     }
+
+    ensure_opencc_cli(binary)?;
 
     let mut child = Command::new(binary)
         .arg("-c")
@@ -54,4 +56,97 @@ pub fn convert_lines(binary: &Path, config: &Path, input: &[String]) -> Result<V
         );
     }
     Ok(converted)
+}
+
+fn ensure_opencc_cli(binary: &Path) -> Result<()> {
+    if command_exists(binary) {
+        return Ok(());
+    }
+
+    let binary_name = binary.file_name().and_then(|name| name.to_str());
+    if binary_name != Some("opencc") {
+        bail!(
+            "OpenCC CLI {} was not found. Install OpenCC or set OPENCC_BINARY to a valid executable.",
+            binary.display()
+        );
+    }
+
+    if !io::stdin().is_terminal() {
+        bail!(
+            "OpenCC CLI was not found. Install it with `brew install opencc`, or set OPENCC_BINARY to a valid executable."
+        );
+    }
+
+    eprint!("OpenCC CLI was not found. Install it with Homebrew now? [y/N] ");
+    io::stderr()
+        .flush()
+        .context("flush OpenCC install prompt")?;
+
+    let mut answer = String::new();
+    io::stdin()
+        .read_line(&mut answer)
+        .context("read OpenCC install prompt answer")?;
+    if !is_yes(&answer) {
+        bail!(
+            "OpenCC CLI is required. Install it with `brew install opencc`, or set OPENCC_BINARY to a valid executable."
+        );
+    }
+
+    if !command_exists(Path::new("brew")) {
+        bail!("Homebrew was not found. Install OpenCC manually, or set OPENCC_BINARY to a valid executable.");
+    }
+
+    let status = Command::new("brew")
+        .arg("install")
+        .arg("opencc")
+        .status()
+        .context("run `brew install opencc`")?;
+    if !status.success() {
+        bail!("`brew install opencc` failed with {status}");
+    }
+
+    if !command_exists(binary) {
+        bail!(
+            "OpenCC CLI still was not found after installation. Set OPENCC_BINARY to the installed executable path."
+        );
+    }
+
+    Ok(())
+}
+
+fn command_exists(binary: &Path) -> bool {
+    match Command::new(binary)
+        .arg("--version")
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+    {
+        Ok(_) => true,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => false,
+        Err(_) => false,
+    }
+}
+
+fn is_yes(answer: &str) -> bool {
+    matches!(
+        answer.trim().to_ascii_lowercase().as_str(),
+        "y" | "yes" | "是" | "對"
+    )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_yes;
+
+    #[test]
+    fn parses_install_confirmation() {
+        assert!(is_yes("y"));
+        assert!(is_yes("YES\n"));
+        assert!(is_yes("是"));
+        assert!(is_yes("對"));
+        assert!(!is_yes(""));
+        assert!(!is_yes("n"));
+        assert!(!is_yes("no"));
+    }
 }
