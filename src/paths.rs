@@ -109,8 +109,8 @@ impl ReleasePaths {
         let opencc_variant_source_dir = cfg.root.join("sources").join(OPENCC_VARIANT_SOURCE_ID);
         let fragment_denylist_source_dir =
             cfg.root.join("sources").join(FRAGMENT_DENYLIST_SOURCE_ID);
-        let db_filename = format!("KeyKeySource-{}.db", cfg.release_version);
-        let metadata_filename = format!("KeyKeySource-{}.json", cfg.release_version);
+        let db_filename = format!("ChiaKeySource-{}.db", cfg.release_version);
+        let metadata_filename = format!("ChiaKeySource-{}.json", cfg.release_version);
 
         Self {
             overlay_phrases: overlay_source_dir.join("phrases.tsv"),

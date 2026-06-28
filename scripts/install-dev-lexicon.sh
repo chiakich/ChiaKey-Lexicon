@@ -6,8 +6,8 @@
 #   ├── active                  -> versions/$SLOT   (symlink the IME follows)
 #   └── versions/
 #       ├── $SLOT/
-#       │   ├── ChiaKeySource.db          (built KeyKeySource-dev.db, renamed)
-#       │   ├── metadata.json             (built KeyKeySource-dev.json, renamed)
+#       │   ├── ChiaKeySource.db          (built ChiaKeySource-dev.db, renamed)
+#       │   ├── metadata.json             (built ChiaKeySource-dev.json, renamed)
 #       │   └── lexicon-manifest.json
 #       └── $SLOT-backup-<timestamp>/     (previous slot, kept before overwrite)
 #
@@ -33,8 +33,8 @@ if [[ "$build" == 1 ]]; then
   ( cd "$REPO_ROOT" && cargo run --release -- prepare-release )
 fi
 
-db_src="$DIST_DIR/KeyKeySource-dev.db"
-meta_src="$DIST_DIR/KeyKeySource-dev.json"
+db_src="$DIST_DIR/ChiaKeySource-dev.db"
+meta_src="$DIST_DIR/ChiaKeySource-dev.json"
 manifest_src="$DIST_DIR/lexicon-manifest.json"
 for f in "$db_src" "$meta_src" "$manifest_src"; do
   [[ -f "$f" ]] || { echo "ERROR: missing build artifact: $f" >&2; exit 1; }

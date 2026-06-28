@@ -387,7 +387,7 @@ pub fn manifest(
         "database_schema_version": DATABASE_SCHEMA_VERSION,
         "sources": sources,
         "artifacts": [
-            artifact_json("smart-mandarin-db", "keykey-source-db", &cfg.release_base_url, &paths.db_filename, db_info, &cfg.language_model_version),
+            artifact_json("smart-mandarin-db", "chiakey-source-db", &cfg.release_base_url, &paths.db_filename, db_info, &cfg.language_model_version),
             artifact_json("smart-mandarin-metadata", "metadata", &cfg.release_base_url, &paths.metadata_filename, metadata_info, &cfg.language_model_version),
             artifact_json("smart-mandarin-checksums", "checksum", &cfg.release_base_url, "SHA256SUMS", checksum_info, &cfg.language_model_version)
         ]

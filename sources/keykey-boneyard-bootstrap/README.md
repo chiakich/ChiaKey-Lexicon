@@ -36,7 +36,7 @@ BONEYARD_DB=/path/to/KeyKeySource.db cargo run --release -- prepare-release
 
 - `normalized/smart-mandarin.tsv`
 - `manifests/lexicon-manifest.json`
-- `dist/<version>/KeyKeySource-<version>.db`
-- `dist/<version>/KeyKeySource-<version>.json`
+- `dist/<version>/ChiaKeySource-<version>.db`
+- `dist/<version>/ChiaKeySource-<version>.json`
 - `dist/<version>/lexicon-manifest.json`
 - `dist/<version>/SHA256SUMS`

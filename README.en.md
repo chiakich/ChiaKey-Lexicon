@@ -14,14 +14,14 @@ The main app repository should stay focused on the macOS input method runtime, d
 2. Input engine integration.
 3. Database schema and reader.
 4. Builder or installation scripts that can consume this repo's release artifacts.
-5. A bundled fallback `KeyKeySource.db`.
+5. A bundled fallback `ChiaKeySource.db`.
 
 `ChiaKey-Lexicon` owns:
 
 1. Source manifests.
 2. Source license and attribution records.
 3. Vendored raw lexicon sources.
-4. Release-ready `KeyKeySource` database artifacts.
+4. Release-ready `ChiaKeySource` database artifacts.
 5. Checksums or signatures.
 6. Lexicon release changelog.
 
@@ -29,7 +29,7 @@ The main app repository should stay focused on the macOS input method runtime, d
 
 This repository has an active seed release pipeline. Pushes to `main` build and publish versioned lexicon releases through GitHub Actions.
 
-The current pipeline builds a complete `KeyKeySource.db` from reviewed source data, project-owned corrections, generated metadata, source inventories, and checksum manifests. Local verification builds default to `dist/dev/`; public release versions are computed by CI, injected into the builder, and uploaded to GitHub Releases.
+The current pipeline builds a complete `ChiaKeySource.db` from reviewed source data, project-owned corrections, generated metadata, source inventories, and checksum manifests. Local verification builds default to `dist/dev/`; public release versions are computed by CI, injected into the builder, and uploaded to GitHub Releases.
 
 Start with:
 
@@ -100,13 +100,13 @@ Normal CI release builds do not need network access to fetch source data.
 A GitHub Release should publish:
 
 ```text
-KeyKeySource-YYYY.MM.N.db
-KeyKeySource-YYYY.MM.N.json
+ChiaKeySource-YYYY.MM.N.db
+ChiaKeySource-YYYY.MM.N.json
 lexicon-manifest.json
 SHA256SUMS
 ```
 
-The main app should download and verify `lexicon-manifest.json`, then install a compatible `KeyKeySource` database into:
+The main app should download and verify `lexicon-manifest.json`, then install a compatible `ChiaKeySource` database into:
 
 ```text
 ~/Library/Application Support/ChiaKey/Lexicons/

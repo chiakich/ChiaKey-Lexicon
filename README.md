@@ -14,20 +14,20 @@
 2. 輸入引擎整合。
 3. 資料庫 schema 與 reader。
 4. 可消費此 repo release artifacts 的 builder 或安裝 script。
-5. bundled fallback `KeyKeySource.db`。
+5. bundled fallback `ChiaKeySource.db`。
 
 `ChiaKey-Lexicon` 負責：
 
 1. source manifests。
 2. source license 與 attribution records。
 3. vendored raw lexicon sources。
-4. release-ready `KeyKeySource` database artifacts。
+4. release-ready `ChiaKeySource` database artifacts。
 5. checksums 或 signatures。
 6. lexicon release changelog。
 
 ## 目前狀態
 
-目前 pipeline 會從已審查來源資料、專案維護修正、生成 metadata、source inventories 與 checksum manifests 建出完整的 `KeyKeySource.db`。本機檢查 build 預設會輸出到 `dist/dev/`，公開 release 的版本號則由 CI 計算後注入，並上傳到 GitHub Releases。
+目前 pipeline 會從已審查來源資料、專案維護修正、生成 metadata、source inventories 與 checksum manifests 建出完整的 `ChiaKeySource.db`。本機檢查 build 預設會輸出到 `dist/dev/`，公開 release 的版本號則由 CI 計算後注入，並上傳到 GitHub Releases。
 
 合併到 `main` 後，會透過 GitHub Actions 建置並發布版本化詞庫 release。
 
@@ -107,7 +107,7 @@ release builder 的整合流程是 deterministic 的：
 13. 從最終 `unigrams` 派生 `associated_phrases`，供聯想詞提示使用。
 14. 執行 runtime-required validations，寫出 normalized TSV、release metadata、manifest 與 checksums。
 
-整合後，每筆可追蹤的詞庫 row 會帶有 source path、source kind、checksum 與 tags；輸入法端消費的是最後生成的 `KeyKeySource.db` 和 `lexicon-manifest.json`，維護端可在本機 build 後從 generated `normalized/smart-mandarin.tsv` 和 metadata 回查來源。
+整合後，每筆可追蹤的詞庫 row 會帶有 source path、source kind、checksum 與 tags；輸入法端消費的是最後生成的 `ChiaKeySource.db` 和 `lexicon-manifest.json`，維護端可在本機 build 後從 generated `normalized/smart-mandarin.tsv` 和 metadata 回查來源。
 
 各來源的授權、redistribution decision 與風險紀錄放在 [Docs/SourceReview.md](Docs/SourceReview.md)。日常 release 操作放在 [Docs/ReleaseFlow.zh-TW.md](Docs/ReleaseFlow.zh-TW.md)。
 
@@ -146,13 +146,13 @@ cargo run --release -- fetch-modern-sources
 GitHub Release 應發布：
 
 ```text
-KeyKeySource-YYYY.MM.N.db
-KeyKeySource-YYYY.MM.N.json
+ChiaKeySource-YYYY.MM.N.db
+ChiaKeySource-YYYY.MM.N.json
 lexicon-manifest.json
 SHA256SUMS
 ```
 
-輸入法端應下載並驗證 `lexicon-manifest.json`，再把相容的 `KeyKeySource` database 安裝到：
+輸入法端應下載並驗證 `lexicon-manifest.json`，再把相容的 `ChiaKeySource` database 安裝到：
 
 ```text
 ~/Library/Application Support/ChiaKey/Lexicons/

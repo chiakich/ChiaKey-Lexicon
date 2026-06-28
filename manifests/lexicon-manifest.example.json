@@ -20,9 +20,9 @@
   "artifacts": [
     {
       "id": "smart-mandarin-db",
-      "kind": "keykey-source-db",
-      "url": "https://github.com/akira02/ChiaKey-Lexicon/releases/download/2026.06/KeyKeySource-2026.06.db",
-      "filename": "KeyKeySource-2026.06.db",
+      "kind": "chiakey-source-db",
+      "url": "https://github.com/akira02/ChiaKey-Lexicon/releases/download/2026.06/ChiaKeySource-2026.06.db",
+      "filename": "ChiaKeySource-2026.06.db",
       "sha256": "TBD",
       "size": 0,
       "database_schema_version": 1,
