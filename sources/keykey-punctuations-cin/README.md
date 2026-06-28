@@ -1,29 +1,47 @@
-# KeyKey BPMF Punctuation Table
+# KeyKey 注音標點 CIN 字表
 
-Source id: `keykey-punctuations-cin`
+## 來源代號
 
-This source vendors the original KeyKey BPMF punctuation CIN table:
+`keykey-punctuations-cin`
+
+## 資料層
+
+相容性基底詞庫
+
+## 用途與定位
+
+此來源收錄 KeyKey 原始 BPMF 標點 CIN 字表，作為 Smart Mandarin runtime 標點查表的相容基底。
+
+## 檔案與格式
+
+主要檔案：
 
 ```text
 sources/keykey-punctuations-cin/vendor/bpmf-punctuations.cin
 ```
 
-The upstream source path is:
+上游路徑：
 
 ```text
 YahooKeyKey-Source-1.1.2528/DataTables/bpmf-punctuations.cin
 ```
 
-The release builder imports only rows inside `%chardef` whose keys start with `_punctuation_` or `_ctrl_`. These rows are required by Smart Mandarin runtime punctuation lookup, for example Shift+, resolves `_punctuation_<` and expects `，`.
-
-The source inventory is stored at:
+來源清單（含雜湊）：
 
 ```text
 sources/keykey-punctuations-cin/source-inventory.sha256
 ```
 
-## 中文補充（資料層）
+## Release 匯入規則
 
-- 資料層分類：相容性基底詞庫。
-- 選用理由：Smart Mandarin runtime 會查 `_punctuation_*`、`_ctrl_*`，缺少這批資料會導致標點查表異常。
-- 在 release 的角色：提供 BPMF 標點與控制符號相容資料，確保既有按鍵行為不變。
+Release builder 只匯入 `%chardef` 區段中 key 以 `_punctuation_` 或 `_ctrl_` 開頭的列。
+
+這些列是 runtime 標點查找必需資料，例如 Shift+, 會解析 `_punctuation_<` 並預期回傳 `，`。
+
+## 上游與授權
+
+資料來自 Yahoo KeyKey 原始標點字表。
+
+## 驗證
+
+可用 `source-inventory.sha256` 驗證 vendored 檔案完整性。

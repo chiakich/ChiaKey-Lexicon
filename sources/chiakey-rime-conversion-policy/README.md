@@ -1,27 +1,40 @@
-# ChiaKey Rime Conversion Policy
+# ChiaKey Rime 詞形轉換政策
 
-Project-owned conversion rules for Rime essay phrases before they are used as
-ChiaKey supplemental vocabulary or rerank evidence.
+## 來源代號
 
-Rime essay is a broad phrase and language-model source, but some entries use
-phrase shapes that do not match the default modern Taiwan Traditional Chinese
-lexicon. This layer keeps the frequency evidence while moving it onto the
-preferred output form. For example, Rime's `喫壞` evidence is imported and
-reranked as `吃壞`, and `爲啥` evidence is used as `為啥`.
+`chiakey-rime-conversion-policy`
 
-`replacements.tsv` format:
+## 資料層
+
+校正層
+
+## 用途與定位
+
+此來源定義專案自有的詞形轉換規則，用於 Rime essay 片語在進入 ChiaKey 補詞與 rerank 前的前處理。
+
+Rime essay 涵蓋廣泛詞彙與語言模型訊號，但部分詞形不符合現代台灣繁中預設輸出。此層會保留原頻率證據，同時映射到專案偏好詞形，例如將 `喫壞` 證據轉為 `吃壞`，將 `爲啥` 證據轉為 `為啥`。
+
+## 檔案與格式
+
+`replacements.tsv`：
 
 ```text
 from<TAB>to<TAB>tags
 ```
 
-Rules are applied to Rime phrase text only. Both sides must have the same
-character count so the inferred qstring stays aligned with the phrase.
+## Release 匯入規則
 
-License: CC0-1.0.
+規則僅作用於 Rime 片語文本，且 `from`/`to` 必須字數相同，以維持推導 qstring 與片語對齊。
 
-## 中文補充（資料層）
+## 上游與授權
 
-- 資料層分類：校正層。
-- 選用理由：Rime 詞形常與預設台灣繁中輸出偏好不同，直接捨棄證據會浪費其頻率價值。
-- 在 release 的角色：在 Rime rerank 與補詞前先做 from/to 轉換，將頻率證據轉移到專案偏好詞形。
+此層為專案自有政策資料。
+
+授權：CC0-1.0
+
+## 驗證
+
+此來源屬於 internal（專案詞庫或校正層）資料。
+
+- release 流程不產生 `source-inventory.sha256`
+- 不需要額外進行 inventory 驗證

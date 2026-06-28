@@ -42,7 +42,6 @@ pub struct ReleasePaths {
     pub boneyard_inventory: PathBuf,
     pub punctuation_inventory: PathBuf,
     pub punctuation_cin: PathBuf,
-    pub symbol_overlay_inventory: PathBuf,
     pub symbol_overlay_symbols: PathBuf,
     pub prepopulated_service_inventory: PathBuf,
     pub canned_messages_plist: PathBuf,
@@ -118,7 +117,6 @@ impl ReleasePaths {
             boneyard_inventory: boneyard_source_dir.join("source-inventory.sha256"),
             punctuation_inventory: punctuation_source_dir.join("source-inventory.sha256"),
             punctuation_cin: cfg.root.join(PUNCTUATION_VENDOR_PATH),
-            symbol_overlay_inventory: symbol_overlay_source_dir.join("source-inventory.sha256"),
             symbol_overlay_symbols: cfg.root.join(SYMBOL_OVERLAY_PATH),
             prepopulated_service_inventory: prepopulated_service_source_dir
                 .join("source-inventory.sha256"),

@@ -1,40 +1,47 @@
-# KeyKey prepopulated service data
+# KeyKey 預載服務資料
 
-Source id: `keykey-prepopulated-service-data`
+## 來源代號
 
-This source vendors the original Yahoo KeyKey prepopulated canned-message data:
+`keykey-prepopulated-service-data`
+
+## 資料層
+
+相容性基底詞庫
+
+## 用途與定位
+
+此來源收錄 Yahoo KeyKey 原始預載 canned-message 資料。
+
+主要檔案：
 
 - `sources/keykey-prepopulated-service-data/vendor/CannedMessages.plist`
 
-Upstream path:
+上游路徑：
 
 - `YahooKeyKey-Source-1.1.2528/Distributions/Takao/OnlineData/CannedMessages.plist`
 
-The release builder stores the plist contents in `prepopulated_service_data`
-under `canned_messages`, and writes a positive release timestamp under
-`canned_messages_timestamp`.
+## Release 匯入規則
 
-During release cooking, the payload is augmented before it is written:
+Release builder 會把 plist 內容寫入 `prepopulated_service_data`：
 
-- `chiakey-symbols-overlay/symbols.tsv` becomes eight supplemental button
-  categories: `補充標點`, `貨幣與標記`, `數字序號`, `補充箭頭`, `補充數學`,
-  `勾叉與星號`, `花色與音樂`, and `單位符號`.
-- `mozc-emoticon-data` replaces the original annotated `顏文字` category with
-  a clean Mozc `Messages` list.
+- `canned_messages`
+- `canned_messages_timestamp`（正值 release timestamp）
 
-OneKey service data is intentionally omitted. Modern ChiaKey no longer
-loads the Yahoo-era OneKey URL launcher, so releases must not ship
-`onekey_services` or `onekey_services_timestamp`.
+在 release cooking 過程，payload 會再做兩項增補：
 
-Verify vendored files with:
+- `chiakey-symbols-overlay/symbols.tsv` 轉成 8 個補充按鈕分類：
+  `補充標點`、`貨幣與標記`、`數字序號`、`補充箭頭`、`補充數學`、`勾叉與星號`、`花色與音樂`、`單位符號`
+- 以 `mozc-emoticon-data` 全面替換原本帶註解的 `顏文字` 分類，改為乾淨的 Mozc `Messages` 清單
+
+`onekey_services` 與 `onekey_services_timestamp` 刻意不輸出，因現代 ChiaKey 已不再載入 Yahoo 時代 OneKey URL launcher。
+
+## 上游與授權
+
+此層為 KeyKey 相容資料與專案整合輸出。
+
+## 驗證
 
 ```sh
 cd sources/keykey-prepopulated-service-data
 shasum -a 256 -c source-inventory.sha256
 ```
-
-## 中文補充（資料層）
-
-- 資料層分類：相容性基底詞庫。
-- 選用理由：`canned_messages` 是 ChiaKey 仍會讀取的預載資料，且需要有效 timestamp 才不會被 user DB 空資料覆蓋。
-- 在 release 的角色：寫入 `prepopulated_service_data/canned_messages` 與 `canned_messages_timestamp`，並在 cooking 時套入符號補充與 Mozc 顏文字替換。

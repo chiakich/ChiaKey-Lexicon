@@ -268,9 +268,10 @@ fn write_source_inventories(
     paths: &ReleasePaths,
     libchewing_files: &[crate::types::LibchewingFile],
 ) -> Result<()> {
-    // Keep source inventories focused on vendored/pinned upstream inputs.
-    // Project-owned overlays/policies are maintained in git and do not need
-    // per-release source-inventory churn.
+    // Keep source inventories focused on compatibility and external
+    // vendored/pinned upstream inputs.
+    // Internal project-owned overlays/policies are maintained in git and do not
+    // need per-release source-inventory churn.
     let mut libchewing_paths = libchewing_files
         .iter()
         .map(|entry| entry.path.clone())
@@ -287,12 +288,6 @@ fn write_source_inventories(
         &paths.punctuation_inventory,
         &paths.punctuation_source_dir,
         std::slice::from_ref(&paths.punctuation_cin),
-        true,
-    )?;
-    write_inventory(
-        &paths.symbol_overlay_inventory,
-        &paths.symbol_overlay_source_dir,
-        std::slice::from_ref(&paths.symbol_overlay_symbols),
         true,
     )?;
     write_inventory(

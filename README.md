@@ -49,7 +49,7 @@ cargo run --release -- prepare-release
 
 這個 repository 以可重現的資料 pipeline 為核心：
 
-1. `sources/<source-id>/` 放每個已審查 input source 與本地 README；有 vendored/pinned upstream 檔案的 source 會另外附 `source-inventory.sha256` provenance file。
+1. `sources/<source-id>/` 放每個已審查 input source 與本地 README；`source-inventory.sha256` 只在「相容性基底詞庫」與「外部詞庫」中維護，用於 vendored/pinned upstream 檔案的 provenance。
 2. `LICENSES/` 記錄每個可公開 release source 所需的 license text 或 license notes。
 3. `src/` 是 Rust release toolchain，負責驗證 inputs、將資料層匯入 KeyKey database shape、寫出 generated audit artifacts、更新 release metadata、產生 manifests。
 4. `normalized/smart-mandarin.tsv` 是 Smart Mandarin language-model rows 的 generated normalized audit view，不 commit。
@@ -75,15 +75,15 @@ cargo run --release -- prepare-release
 - `keykey-punctuations-cin`：BPMF 標點與 `_ctrl_*` 相容資料。
 - `keykey-module-cin`：`Generic-cj-cin`、`Generic-simplex-cin`、倉頡標點、`BopomofoCorrection-bopomofo-correction-cin`。
 - `keykey-prepopulated-service-data`：`canned_messages` 與 timestamp。
-- `mozc-emoticon-data`：補 `顏文字` 預載分類。
+- `bpmf-ext-cin`：補單字 `(reading, character)` coverage。
 
 ### 外部詞庫
 
 目標：提供可審查、可再散布的外部詞彙與讀音覆蓋。
 
 - `libchewing-data`：主要現代繁中/注音詞庫層。
-- `bpmf-ext-cin`：補單字 `(reading, character)` coverage。
 - `rime-essay`：低優先補充詞與 rerank 證據層。
+- `mozc-emoticon-data`：補 `顏文字` 預載分類。
 
 ### 專案詞庫
 
@@ -91,8 +91,8 @@ cargo run --release -- prepare-release
 
 - `chiakey-modern-overlay`：專案自有修正詞與 explicit 讀音/排序調整。
 - `chiaki-web-overlay`：人工審核後的網路用語 unigram/bigram 補充。
-- `chiaki-synthetic-overlay`：Chiaki.C 維護的 synthetic unigram/bigram 補充。
-- `openformosa-common-voice-25-zh-tw`：從 Common Voice 句料挑選的 runtime bigram rows。
+- `chiaki-synthetic-overlay`：合成語料提煉的 unigram/bigram 補充。
+- `openformosa-common-voice-25-zh-tw`：從 Common Voice 句料挑選的 bigram rows。
 - `chiakey-auto-hotwords-overlay`：自動刷新 hotwords overlay（僅保留專案輸出 rows）。
 - `chiakey-symbols-overlay`：補 `_punctuation_list` 缺漏符號。
 
@@ -100,7 +100,7 @@ cargo run --release -- prepare-release
 
 目標：把外部證據轉成預設繁中（zh-TW）輸出期待，並抑制已知斷詞風險。
 
-- `chiakey-rime-conversion-policy`：Rime 詞形轉換規則（例如 `喫壞` → `吃壞`）。
+- `chiakey-rime-conversion-policy`：修正 Rime 詞形轉換規則（例如 `喫壞` → `吃壞`）。
 - `opencc-variant-policy`：variant 權重上限策略（避免簡體或非台灣慣用字前置）。
 - `chiakey-fragment-denylist`：句段碎片權重上限（降低偷字造成的錯誤斷詞）。
 
@@ -110,7 +110,7 @@ cargo run --release -- prepare-release
 
 release builder 的整合流程是 deterministic 的：
 
-1. 先驗證每個必要 source file 存在，並為有 vendored/pinned upstream 檔案的 source 產生 `source-inventory.sha256`。
+1. 先驗證每個必要 source file 存在，並為「相容性基底詞庫」與「外部詞庫」中有 vendored/pinned upstream 檔案的 source 產生 `source-inventory.sha256`。
 2. 複製 `keykey-boneyard-bootstrap` 的 cooked `KeyKeySource.db` 作為基底。
 3. 匯入 `libchewing-data`，以明確注音資料補強現代詞彙；libchewing phrase 會替換 bootstrap 中同詞的舊推導資料。
 4. 匯入 `bpmf-ext-cin`，只補缺少的單字讀音，不覆蓋既有資料。

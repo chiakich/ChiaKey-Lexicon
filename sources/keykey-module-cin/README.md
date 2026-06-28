@@ -1,9 +1,20 @@
-# KeyKey module CIN tables
+# KeyKey 模組 CIN 字表
 
-Source id: `keykey-module-cin`
+## 來源代號
 
-This source vendors original Yahoo KeyKey / OpenVanilla CIN tables used by
-runtime modules outside the Smart Mandarin language model:
+`keykey-module-cin`
+
+## 資料層
+
+相容性基底詞庫
+
+## 用途與定位
+
+此來源收錄 Yahoo KeyKey / OpenVanilla 原始 CIN 字表，供 Smart Mandarin 語言模型之外的 runtime 模組使用。
+
+## 檔案與格式
+
+匯入對應：
 
 - `vendor/cj-ext.cin` -> `Generic-cj-cin`
 - `vendor/simplex-ext.cin` -> `Generic-simplex-cin`
@@ -11,25 +22,25 @@ runtime modules outside the Smart Mandarin language model:
 - `vendor/cj-punctuations-mixedwidth.cin` -> `Punctuations-cj-mixedwidth-cin`
 - `vendor/bopomofo-correction.cin` -> `BopomofoCorrection-bopomofo-correction-cin`
 
-Upstream paths are under:
+上游路徑位於：
 
 ```text
 YahooKeyKey-Source-1.1.2528/DataTables/
 ```
 
-The release builder imports these as module SQLite key/value tables. They
-are not merged into `unigrams`, so they do not affect Smart Mandarin candidate
-ranking.
+## Release 匯入規則
 
-Verify vendored files with:
+Release builder 會將這些檔案匯入為模組用 SQLite key/value tables。
+
+這些資料不會併入 `unigrams`，因此不影響 Smart Mandarin 候選排序。
+
+## 上游與授權
+
+資料來自 Yahoo KeyKey 原始模組字表。
+
+## 驗證
 
 ```sh
 cd sources/keykey-module-cin
 shasum -a 256 -c source-inventory.sha256
 ```
-
-## 中文補充（資料層）
-
-- 資料層分類：相容性基底詞庫。
-- 選用理由：KeyKey runtime 不只讀 Smart Mandarin 詞庫，也會使用其他 module tables；缺少會造成相容性破洞。
-- 在 release 的角色：匯入倉頡、簡體、標點與注音校正等 module CIN tables，但不參與 Smart Mandarin 候選排序。

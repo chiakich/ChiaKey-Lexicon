@@ -1,36 +1,48 @@
-# Public Domain Extended BPMF Character Table
+# 公有領域 BPMF 擴充字表
 
-Source id: `bpmf-ext-cin`
+## 來源代號
 
-This source vendors the public-domain `bpmf-ext.cin` character table from the KeyKey Boneyard tree:
+`bpmf-ext-cin`
+
+## 資料層
+
+相容性基底詞庫
+
+## 用途與定位
+
+此來源收錄來自 KeyKey Boneyard 的公有領域 `bpmf-ext.cin` 字表，作為低優先級單字補充層。
+
+此層只在 release 準備時補齊缺漏，不會覆蓋既有頻率權重，主要用來填補 `libchewing` 與 bootstrap 可能缺少的單字候選。
+
+## 檔案與格式
+
+主要檔案：
 
 ```text
 sources/bpmf-ext-cin/vendor/bpmf-ext.cin
 ```
 
-The file header says it was revised from `opendesktop.org.tw`'s `phone.cin` to include CNS11643 and Unicode-compatible characters, with license marked as Public Domain.
-
-The release builder uses this source only as a low-priority single-character reading supplement:
-
-1. It imports CJK BMP characters only.
-2. It excludes non-BMP and private-use characters.
-3. It only adds missing exact `(reading, character)` pairs.
-4. It does not override libchewing character frequencies.
-
-This source fills character-level gaps such as the native/Yahoo `ㄨㄛˇ` candidate set:
-
-```text
-我 婐 捰 倭 䂺 婑 䰀 㦱
-```
-
-The source inventory is stored at:
+來源清單（含雜湊）：
 
 ```text
 sources/bpmf-ext-cin/source-inventory.sha256
 ```
 
-## 中文補充（資料層）
+## Release 匯入規則
 
-- 資料層分類：外部詞庫。
-- 選用理由：libchewing 與 bootstrap 仍可能缺少部分單字候選，這份 public-domain CIN 能補齊 coverage。
-- 在 release 的角色：只補缺失的單字 `(reading, character)` pair，不覆蓋既有資料權重。
+1. 只匯入 CJK BMP 字元。
+2. 排除非 BMP 與私用區字元。
+3. 只新增缺失的精確 `(reading, character)` 配對。
+4. 不覆蓋 `libchewing` 的既有單字頻率。
+
+## 上游與授權
+
+檔頭記載此字表由 `opendesktop.org.tw` 的 `phone.cin` 修訂而來，並標示為 Public Domain。
+
+## 補充說明
+
+此層可補上原生/Yahoo 常見的 `ㄨㄛˇ` 候選集合，例如：
+
+```text
+我 婐 捰 倭 䂺 婑 䰀 㦱
+```

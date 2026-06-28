@@ -1,51 +1,63 @@
-# Chiaki.C Synthetic Taiwan Internet Usage Overlay
+# Chiaki.C 合成台灣網路語用覆蓋層
 
-This source contains reviewed unigram additions with explicit qstrings and
-synthetic bigram language-model rows maintained by Chiaki.C.
+## 來源代號
 
-The raw synthetic corpus is not redistributed here; only reviewed lexicon rows
-are kept for release builds:
+`chiaki-synthetic-overlay`
+
+## 資料層
+
+專案詞庫
+
+## 用途與定位
+
+此來源收錄由 Chiaki.C 維護並經審核的 unigram 與 synthetic bigram 資料列。
+
+專案不散布原始 synthetic 語料，只保留可供 release 使用的最終詞庫列。
+
+## 檔案與格式
+
+`unigrams.tsv`：
 
 ```text
 qstring<TAB>phrase<TAB>weight<TAB>tags
+```
+
+`bigrams.tsv`：
+
+```text
 qstring<TAB>previous<TAB>current<TAB>probability
 ```
 
-The release builder imports `unigrams.tsv` before variant demotion policy and
-imports `bigrams.tsv` before reviewed web bigrams. Sentence-boundary bigram rows
-may leave either `previous` or `current` empty.
+句界 bigram 允許 `previous` 或 `current` 其中一側為空。
 
-## Bigram calibration
+## Release 匯入規則
 
-The raw synthetic bigram scores are conditional log-probabilities, but the final
-ChiaKey unigram table uses its own lifted weight scale. During release import,
-the builder re-anchors this source's bigrams to the current unigram floor:
+- `unigrams.tsv`：在 variant demotion policy 前匯入。
+- `bigrams.tsv`：在 reviewed web bigrams 前匯入。
+
+Bigram 校準公式：
 
 ```text
 stored = min(unigram(current) + boost + (raw - raw_max_of_source), -0.05)
 ```
 
-This keeps the source's internal ordering while letting strong disambiguation
-edges beat the unigram path. Weaker pairs stay below the unigram floor and remain
-inert. The default `boost` is `1.5` and can be overridden with
-`SYNTHETIC_BIGRAM_BOOST`; setting it to `0` leaves the raw values unchanged.
+此機制保留來源內部排序，同時讓強 disambiguation 邊可高於 unigram 路徑；較弱配對會留在 unigram floor 下方而不生效。
 
-## Files
+- 預設 `boost`：`1.5`
+- 覆寫環境變數：`SYNTHETIC_BIGRAM_BOOST`
+- 設為 `0` 時：保留原始數值
 
-- `unigrams.tsv`: reviewed unigram additions with explicit qstrings.
-- `bigrams.tsv`: synthetic bigram probabilities, including sentence-boundary
-  rows.
+## 上游與授權
 
-## License
+授權：CC BY-NC 4.0（Chiaki.C）
 
-This source is licensed under CC BY-NC 4.0 by Chiaki.C. Non-commercial and
-open-source projects may use this source with attribution to Chiaki.C.
-Commercial use requires separate permission from Chiaki.C.
+非商業與開源專案可於標示來源為 Chiaki.C 前提下使用；商業用途需另行取得授權。
 
-See [LICENSES/chiaki-synthetic-overlay-NC.txt](../../LICENSES/chiaki-synthetic-overlay-NC.txt).
+授權全文見：`LICENSES/chiaki-synthetic-overlay-NC.txt`
 
-## 中文補充（資料層）
+## 驗證
 
-- 資料層分類：專案詞庫。
-- 選用理由：補充 Chiaki.C 維護的 synthetic 台灣網路語用資料，覆蓋一般公開詞庫較弱的使用場景。
-- 在 release 的角色：匯入 unigram rows 與 runtime bigram probabilities，保留其內部排序訊號。
+此來源屬於 internal（專案詞庫或校正層）資料。
+
+- release 流程不產生 `source-inventory.sha256`
+- 不需要額外進行 inventory 驗證

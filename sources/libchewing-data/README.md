@@ -1,30 +1,49 @@
-# libchewing-data
+# libchewing-data 來源
 
-Source id: `libchewing-data`
+## 來源代號
 
-This source imports the New Chewing built-in dictionary data as the main modern Traditional Chinese / Zhuyin lexicon layer.
+`libchewing-data`
 
-Pinned upstream files:
+## 資料層
 
-- `dict/chewing/tsi.csv` from `chewing/libchewing-data` tag `v2026.3.22`
-- `dict/chewing/word.csv` from `chewing/libchewing-data` tag `v2026.3.22`
-- `dict/chewing/alt.csv` from `chewing/libchewing-data` tag `v2026.3.22`
+外部詞庫
 
-Local raw files are vendored under `sources/libchewing-data/raw/` so normal
-release builds do not need network access. Maintainers refresh pinned snapshots
-with:
+## 用途與定位
+
+此來源匯入 New Chewing 內建辭典，作為主要現代繁體中文注音詞庫層。
+
+## 檔案與格式
+
+固定上游檔案（`chewing/libchewing-data` tag `v2026.3.22`）：
+
+- `dict/chewing/tsi.csv`
+- `dict/chewing/word.csv`
+- `dict/chewing/alt.csv`
+
+本機 vendored 路徑：
+
+```text
+sources/libchewing-data/raw/
+```
+
+## Release 匯入規則
+
+一般 release build 直接使用 repo 內 vendored raw 檔案，不需網路下載。
+
+維護者更新固定快照時可執行：
 
 ```sh
 cargo run --release -- fetch-modern-sources
 ```
 
-The raw files are tracked in git. Their checksums are recorded in
-`source-inventory.sha256`.
+raw 檔案受 git 追蹤，檔案雜湊記錄於 `source-inventory.sha256`。
 
-License: LGPL-2.1-or-later, based on the source file `dc:license` headers and libchewing project license.
+## 上游與授權
 
-## 中文補充（資料層）
+授權：LGPL-2.1-or-later
 
-- 資料層分類：外部詞庫。
-- 選用理由：libchewing-data 為持續維護的繁中注音資料，含明確讀音，可靠度高於僅靠舊 bootstrap 推導。
-- 在 release 的角色：作為主要現代詞庫層；`tsi.csv`、`alt.csv` 提供詞與替代讀音，`word.csv` 補單字讀音與排序訊號。
+判定依據為來源檔案 `dc:license` 標頭與 libchewing 專案授權。
+
+## 驗證
+
+可用 `source-inventory.sha256` 驗證 vendored 檔案完整性。
