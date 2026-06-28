@@ -1,32 +1,43 @@
-# Mozc Emoticon Data
+# Mozc 顏文字資料
 
-Source id: `mozc-emoticon-data`
+## 來源代號
 
-This source vendors the Mozc emoticon data used to populate ChiaKey's
-preloaded `顏文字` canned-message category.
+`mozc-emoticon-data`
 
-Vendored files:
+## 資料層
+
+外部詞庫
+
+## 用途與定位
+
+此來源收錄 Mozc 顏文字資料，用於填充 ChiaKey 預載 `顏文字` canned-message 分類。
+
+## 檔案與格式
+
+vendored 檔案：
 
 - `sources/mozc-emoticon-data/raw/categorized.tsv`
 - `sources/mozc-emoticon-data/raw/emoticon.tsv`
 
-Upstream:
+上游資訊：
 
 - Repository: <https://github.com/google/mozc>
 - Commit: `28da5a39f9a7fd70251c85d269f4a8b47aa31cf8`
 - Source directory: `src/data/emoticon/`
 
-License:
+## Release 匯入規則
 
-- BSD-3-Clause, stored at `LICENSES/mozc-BSD-3-Clause.txt`
+Release builder 先讀 `categorized.tsv`，再追加 `emoticon.tsv` 中尚未出現的顏文字。
 
-The release builder reads `categorized.tsv` first, then appends additional
-unique emoticons from `emoticon.tsv`. Only the emoticon value column is shipped
-in `prepopulated_service_data/canned_messages`; Japanese reading keys and
-descriptions are retained only as source context and are not displayed in the
-symbol table.
+最終只輸出顏文字值到 `prepopulated_service_data/canned_messages`；日文讀音鍵與說明文字僅作來源上下文，不會顯示在符號表。
 
-Verify vendored files with:
+## 上游與授權
+
+授權：BSD-3-Clause
+
+授權檔：`sources/mozc-emoticon-data/LICENSE`
+
+## 驗證
 
 ```sh
 cd sources/mozc-emoticon-data

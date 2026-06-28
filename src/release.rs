@@ -3,8 +3,8 @@ use crate::bpmf_ext;
 use crate::config::{self, Config};
 use crate::db;
 use crate::files::{
-    file_info, repo_relative, sha256_file, verify_required_files, write_inventory, write_json,
-    write_text,
+    file_info, repo_relative, sha256_bytes, sha256_file, verify_required_files, write_inventory,
+    write_json, write_text,
 };
 use crate::importers;
 use crate::manifest;
@@ -60,10 +60,12 @@ pub fn run() -> Result<()> {
         &mut source_keys,
         &mut import_results,
     )?;
+    let normalized_rime = prepare_rime_essay(&cfg, &paths)?;
     import_rime_overlap_rerank(
         &mut conn,
         &cfg,
         &paths,
+        &normalized_rime,
         &mut source_keys,
         &mut import_results,
     )?;
@@ -71,6 +73,7 @@ pub fn run() -> Result<()> {
         &mut conn,
         &cfg,
         &paths,
+        &normalized_rime,
         &mut source_keys,
         &mut import_results,
     )?;
@@ -78,6 +81,7 @@ pub fn run() -> Result<()> {
         &mut conn,
         &cfg,
         &paths,
+        &normalized_rime,
         &mut source_keys,
         &mut import_results,
     )?;
@@ -216,6 +220,7 @@ fn verify_inputs(
         paths.boneyard_inventory.clone(),
         paths.punctuation_cin.clone(),
         paths.symbol_overlay_symbols.clone(),
+        paths.symbol_overlay_alternatives.clone(),
         paths.canned_messages_plist.clone(),
         paths.mozc_emoticon_categorized.clone(),
         paths.mozc_emoticon_tsv.clone(),
@@ -229,7 +234,6 @@ fn verify_inputs(
         paths.chiakey_auto_hotwords_phrases.clone(),
         paths.chiakey_auto_hotwords_state.clone(),
         paths.openformosa_common_voice_bigrams.clone(),
-        paths.opencc_variant_demotions.clone(),
         paths.fragment_demotions.clone(),
         paths.rime_essay_raw.clone(),
         paths.rime_conversion_replacements.clone(),
@@ -259,7 +263,6 @@ fn create_output_dirs(cfg: &Config, paths: &ReleasePaths) -> Result<()> {
     fs::create_dir_all(&paths.chiaki_synthetic_source_dir)?;
     fs::create_dir_all(&paths.chiakey_auto_hotwords_source_dir)?;
     fs::create_dir_all(&paths.openformosa_common_voice_source_dir)?;
-    fs::create_dir_all(&paths.opencc_variant_source_dir)?;
     fs::create_dir_all(&paths.fragment_denylist_source_dir)?;
     Ok(())
 }
@@ -268,6 +271,10 @@ fn write_source_inventories(
     paths: &ReleasePaths,
     libchewing_files: &[crate::types::LibchewingFile],
 ) -> Result<()> {
+    // Keep source inventories focused on compatibility and external
+    // vendored/pinned upstream inputs.
+    // Internal project-owned overlays/policies are maintained in git and do not
+    // need per-release source-inventory churn.
     let mut libchewing_paths = libchewing_files
         .iter()
         .map(|entry| entry.path.clone())
@@ -284,12 +291,6 @@ fn write_source_inventories(
         &paths.punctuation_inventory,
         &paths.punctuation_source_dir,
         std::slice::from_ref(&paths.punctuation_cin),
-        true,
-    )?;
-    write_inventory(
-        &paths.symbol_overlay_inventory,
-        &paths.symbol_overlay_source_dir,
-        std::slice::from_ref(&paths.symbol_overlay_symbols),
         true,
     )?;
     write_inventory(
@@ -325,66 +326,7 @@ fn write_source_inventories(
         std::slice::from_ref(&paths.rime_essay_raw),
         true,
     )?;
-    write_inventory(
-        &paths.rime_conversion_inventory,
-        &paths.rime_conversion_source_dir,
-        std::slice::from_ref(&paths.rime_conversion_replacements),
-        true,
-    )?;
-    write_inventory(
-        &paths.overlay_inventory,
-        &paths.overlay_source_dir,
-        &[
-            paths.overlay_phrases.clone(),
-            paths.overlay_explicit.clone(),
-        ],
-        true,
-    )?;
-    write_inventory(
-        &paths.chiaki_web_overlay_inventory,
-        &paths.chiaki_web_overlay_source_dir,
-        &[
-            paths.chiaki_web_overlay_explicit.clone(),
-            paths.chiaki_web_overlay_bigrams.clone(),
-        ],
-        true,
-    )?;
-    write_inventory(
-        &paths.chiaki_synthetic_inventory,
-        &paths.chiaki_synthetic_source_dir,
-        &[
-            paths.chiaki_synthetic_unigrams.clone(),
-            paths.chiaki_synthetic_bigrams.clone(),
-        ],
-        true,
-    )?;
-    write_inventory(
-        &paths.chiakey_auto_hotwords_inventory,
-        &paths.chiakey_auto_hotwords_source_dir,
-        &[
-            paths.chiakey_auto_hotwords_phrases.clone(),
-            paths.chiakey_auto_hotwords_state.clone(),
-        ],
-        true,
-    )?;
-    write_inventory(
-        &paths.openformosa_common_voice_inventory,
-        &paths.openformosa_common_voice_source_dir,
-        std::slice::from_ref(&paths.openformosa_common_voice_bigrams),
-        true,
-    )?;
-    write_inventory(
-        &paths.opencc_variant_inventory,
-        &paths.opencc_variant_source_dir,
-        std::slice::from_ref(&paths.opencc_variant_demotions),
-        true,
-    )?;
-    write_inventory(
-        &paths.fragment_denylist_inventory,
-        &paths.fragment_denylist_source_dir,
-        std::slice::from_ref(&paths.fragment_demotions),
-        true,
-    )
+    Ok(())
 }
 
 fn import_libchewing(
@@ -522,6 +464,24 @@ fn import_symbol_overlay(
     import_results: &mut Vec<ImportResult>,
 ) -> Result<()> {
     let existing_exact_keys = db::load_existing_exact_keys(conn)?;
+    let (records, seen, skipped) = punctuations::parse_symbol_alternatives(
+        &paths.symbol_overlay_alternatives,
+        &existing_exact_keys,
+    )?;
+    let result = db::apply_records(
+        conn,
+        records,
+        &repo_relative(&cfg.root, &paths.symbol_overlay_alternatives)?,
+        "chiakey-symbol-alternatives-overlay",
+        &sha256_file(&paths.symbol_overlay_alternatives)?,
+        seen,
+        skipped,
+        false,
+    )?;
+    remember_records(source_keys, &result);
+    import_results.push(result);
+
+    let existing_exact_keys = db::load_existing_exact_keys(conn)?;
     let (records, seen, skipped) =
         punctuations::parse_symbol_overlay(&paths.symbol_overlay_symbols, &existing_exact_keys)?;
     let result = db::apply_records(
@@ -652,25 +612,37 @@ fn import_bpmf_ext(
     Ok(())
 }
 
+fn prepare_rime_essay(
+    cfg: &Config,
+    paths: &ReleasePaths,
+) -> Result<importers::NormalizedRimeEssay> {
+    let (conversion_rules, _conversion_seen, _conversion_skipped) =
+        importers::parse_conversion_rules(&paths.rime_conversion_replacements)?;
+    let normalization = importers::RimeNormalization::with_opencc(
+        &conversion_rules,
+        &cfg.opencc_binary,
+        &cfg.opencc_t2tw_config,
+    );
+    importers::read_normalized_rime_essay(&paths.rime_essay_raw, &normalization)
+}
+
 fn import_rime(
     conn: &mut Connection,
     cfg: &Config,
     paths: &ReleasePaths,
+    normalized_rime: &importers::NormalizedRimeEssay,
     source_keys: &mut HashMap<(String, String), SourceRecord>,
     import_results: &mut Vec<ImportResult>,
 ) -> Result<()> {
     let char_readings = db::load_primary_character_readings(conn)?;
     let existing_phrases = db::load_existing_phrases(conn)?;
     let existing_qstring_weights = db::load_best_qstring_weights(conn)?;
-    let (conversion_rules, _conversion_seen, _conversion_skipped) =
-        importers::parse_conversion_rules(&paths.rime_conversion_replacements)?;
-    let (records, seen, skipped) = importers::parse_rime_essay(
-        &paths.rime_essay_raw,
+    let (records, seen, skipped) = importers::parse_normalized_rime_essay(
+        normalized_rime,
         cfg,
         &char_readings,
         &existing_phrases,
         &existing_qstring_weights,
-        &conversion_rules,
     )?;
     let result = db::apply_records(
         conn,
@@ -724,18 +696,13 @@ fn import_rime_overlap_rerank(
     conn: &mut Connection,
     cfg: &Config,
     paths: &ReleasePaths,
+    normalized_rime: &importers::NormalizedRimeEssay,
     source_keys: &mut HashMap<(String, String), SourceRecord>,
     import_results: &mut Vec<ImportResult>,
 ) -> Result<()> {
     let existing_records = db::load_existing_phrase_weights(conn)?;
-    let (conversion_rules, _conversion_seen, _conversion_skipped) =
-        importers::parse_conversion_rules(&paths.rime_conversion_replacements)?;
-    let (records, seen, skipped) = importers::parse_rime_overlap_reranks(
-        &paths.rime_essay_raw,
-        cfg,
-        &existing_records,
-        &conversion_rules,
-    )?;
+    let (records, seen, skipped) =
+        importers::parse_normalized_rime_overlap_reranks(normalized_rime, cfg, &existing_records)?;
     let result = db::apply_records(
         conn,
         records,
@@ -758,19 +725,17 @@ fn import_rime_existing_phrase_rerank(
     conn: &mut Connection,
     cfg: &Config,
     paths: &ReleasePaths,
+    normalized_rime: &importers::NormalizedRimeEssay,
     source_keys: &mut HashMap<(String, String), SourceRecord>,
     import_results: &mut Vec<ImportResult>,
 ) -> Result<()> {
     let existing_records = db::load_existing_phrase_weights(conn)?;
     let existing_qstring_weights = db::load_best_qstring_weights(conn)?;
-    let (conversion_rules, _conversion_seen, _conversion_skipped) =
-        importers::parse_conversion_rules(&paths.rime_conversion_replacements)?;
-    let (records, seen, skipped) = importers::parse_rime_existing_phrase_reranks(
-        &paths.rime_essay_raw,
+    let (records, seen, skipped) = importers::parse_normalized_rime_existing_phrase_reranks(
+        normalized_rime,
         cfg,
         &existing_records,
         &existing_qstring_weights,
-        &conversion_rules,
     )?;
     let result = db::apply_records(
         conn,
@@ -818,21 +783,26 @@ fn import_overlay(
 fn import_opencc_variant_policy(
     conn: &mut Connection,
     cfg: &Config,
-    paths: &ReleasePaths,
+    _paths: &ReleasePaths,
     source_keys: &mut HashMap<(String, String), SourceRecord>,
     import_results: &mut Vec<ImportResult>,
 ) -> Result<()> {
-    let (records, seen, skipped) =
-        importers::parse_variant_demotions(&paths.opencc_variant_demotions)?;
-    let result = db::apply_variant_demotions(
+    let rows = db::load_unigram_rows(conn)?;
+    let (records, seen, skipped) = importers::generate_opencc_variant_demotions(
+        &rows,
+        &cfg.opencc_binary,
+        &cfg.opencc_t2tw_config,
+    )?;
+    let source_path = "generated/opencc-t2tw-variant-demotions";
+    let source_sha256 = sha256_bytes(b"opencc-t2tw qstring variant demotions v1");
+    let result = db::apply_qstring_variant_demotions(
         conn,
         &records,
-        &repo_relative(&cfg.root, &paths.opencc_variant_demotions)?,
+        source_path,
         "opencc-variant-demotion",
-        &sha256_file(&paths.opencc_variant_demotions)?,
+        &source_sha256,
         seen,
         skipped,
-        config::OPENCC_VARIANT_SOURCE_ID,
     )?;
     remember_records(source_keys, &result);
     import_results.push(result);

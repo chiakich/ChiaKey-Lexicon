@@ -118,7 +118,7 @@
         },
         "kind": {
           "type": "string",
-          "enum": ["keykey-source-db", "metadata", "checksum"]
+          "enum": ["chiakey-source-db", "metadata", "checksum"]
         },
         "url": {
           "type": "string",

@@ -78,10 +78,10 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install SQLite dependencies
+      - name: Install release dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y pkg-config libsqlite3-dev unzip
+          sudo apt-get install -y pkg-config libsqlite3-dev unzip opencc
 
       - name: Build current normalized lexicon
         run: cargo run --release -- prepare-release

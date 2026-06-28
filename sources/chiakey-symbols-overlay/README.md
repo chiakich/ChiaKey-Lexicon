@@ -1,25 +1,56 @@
-# ChiaKey Supplemental Symbol List
+# ChiaKey 補充符號清單
 
-This source contains project-owned supplemental symbols for the Smart Mandarin
-punctuation list.
+## 來源代號
 
-Yahoo KeyKey's original `bpmf-punctuations.cin` remains the compatibility base.
-This overlay only appends missing symbols to `_punctuation_list`; it does not
-change direct punctuation key mappings such as `_punctuation_<`.
+`chiakey-symbols-overlay`
 
-`symbols.tsv` format:
+## 資料層
+
+專案詞庫
+
+## 用途與定位
+
+此來源收錄專案自有補充符號，作為 Smart Mandarin 標點清單的增補層。
+
+Yahoo KeyKey 原始 `bpmf-punctuations.cin` 仍是相容基底；本層只補 `_punctuation_list` 缺漏，不改動 `_punctuation_<` 等直接按鍵映射。
+
+## 檔案與格式
+
+`symbols.tsv`：
 
 ```text
 symbol<TAB>tags
 ```
 
-The release builder writes every accepted symbol as:
+`punctuation-alternatives.tsv`：
+
+```text
+qstring<TAB>symbol<TAB>tags
+```
+
+## Release 匯入規則
+
+每個通過檢查的符號會寫成：
 
 ```text
 _punctuation_list<TAB>symbol
 ```
 
-Existing Yahoo punctuation-list symbols are skipped so their ordering is not
-changed.
+若符號已存在於 Yahoo 原始列表，則跳過以維持原有順序。
 
-License: CC0-1.0.
+`punctuation-alternatives.tsv` 會補充既有 runtime 標點 key 的候選符號，例如在
+`_punctuation_[` 原本輸出 `「` 之後，追加 `『`、`《`、`﹁` 等同族開符號候選。
+若 exact key/value 已存在，則跳過以維持 Yahoo 原始資料的排序與相容性。
+
+## 上游與授權
+
+此層為專案自有資料。
+
+授權：CC0-1.0
+
+## 驗證
+
+此來源屬於 internal（專案詞庫或校正層）資料。
+
+- release 流程不產生 `source-inventory.sha256`
+- 不需要額外進行 inventory 驗證

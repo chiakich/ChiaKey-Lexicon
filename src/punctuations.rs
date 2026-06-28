@@ -108,6 +108,68 @@ pub fn parse_symbol_overlay(
     Ok((records, seen, skipped))
 }
 
+pub fn parse_symbol_alternatives(
+    path: &Path,
+    existing_exact_keys: &HashSet<(String, String)>,
+) -> Result<(Vec<SourceRecord>, usize, usize)> {
+    let file = File::open(path).with_context(|| format!("read {}", path.display()))?;
+    let reader = BufReader::new(file);
+    let mut ranks: HashMap<String, usize> = HashMap::new();
+    let mut seen_pairs: HashSet<(String, String)> = HashSet::new();
+    let mut records = Vec::new();
+    let mut seen = 0;
+    let mut skipped = 0;
+
+    for line in reader.lines() {
+        let line = line?;
+        let line = line.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+
+        seen += 1;
+        let parts = line.splitn(3, '\t').collect::<Vec<_>>();
+        if parts.len() < 2 {
+            skipped += 1;
+            continue;
+        }
+
+        let qstring = parts[0].trim();
+        let symbol = parts[1].trim();
+        if qstring.is_empty()
+            || symbol.is_empty()
+            || qstring.contains('\n')
+            || symbol.contains('\n')
+        {
+            skipped += 1;
+            continue;
+        }
+
+        let key = (qstring.to_string(), symbol.to_string());
+        if existing_exact_keys.contains(&key) || !seen_pairs.insert(key) {
+            skipped += 1;
+            continue;
+        }
+
+        let rank = ranks.entry(qstring.to_string()).or_default();
+        let tag_suffix = parts
+            .get(2)
+            .map(|tags| tags.trim())
+            .filter(|tags| !tags.is_empty())
+            .unwrap_or("punctuation-alternative");
+        records.push(SourceRecord {
+            qstring: qstring.to_string(),
+            phrase: symbol.to_string(),
+            weight: SYMBOL_OVERLAY_BASE_WEIGHT - (*rank as f64 * RANK_STEP),
+            source_id: SYMBOL_OVERLAY_SOURCE_ID,
+            tags: format!("unigram,{SYMBOL_OVERLAY_SOURCE_ID},{tag_suffix}"),
+        });
+        *rank += 1;
+    }
+
+    Ok((records, seen, skipped))
+}
+
 fn parse_chardef_line(line: &str, ranks: &mut HashMap<String, usize>) -> Option<SourceRecord> {
     let split_at = line.find(char::is_whitespace)?;
     let key = line[..split_at].trim();
@@ -134,7 +196,7 @@ fn parse_chardef_line(line: &str, ranks: &mut HashMap<String, usize>) -> Option<
 
 #[cfg(test)]
 mod tests {
-    use super::{parse_chardef_line, parse_symbol_overlay};
+    use super::{parse_chardef_line, parse_symbol_alternatives, parse_symbol_overlay};
     use std::collections::{HashMap, HashSet};
     use std::fs;
     use std::path::PathBuf;
@@ -182,6 +244,27 @@ mod tests {
         assert_eq!(records[0].qstring, "_punctuation_list");
         assert_eq!(records[0].phrase, "€");
         assert_eq!(records[0].tags, "unigram,chiakey-symbols-overlay,currency");
+
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn appends_symbol_alternatives_to_runtime_punctuation_keys() {
+        let path = temp_file(
+            "symbol-alternatives",
+            "# qstring<TAB>symbol<TAB>tags\n_punctuation_[\t『\tquote\n_punctuation_[\t「\tduplicate\n_punctuation_[\t『\tduplicate\n",
+        );
+        let existing_exact_keys = HashSet::from([("_punctuation_[".to_string(), "「".to_string())]);
+
+        let (records, seen, skipped) =
+            parse_symbol_alternatives(&path, &existing_exact_keys).unwrap();
+
+        assert_eq!(seen, 3);
+        assert_eq!(skipped, 2);
+        assert_eq!(records.len(), 1);
+        assert_eq!(records[0].qstring, "_punctuation_[");
+        assert_eq!(records[0].phrase, "『");
+        assert_eq!(records[0].tags, "unigram,chiakey-symbols-overlay,quote");
 
         let _ = fs::remove_file(path);
     }

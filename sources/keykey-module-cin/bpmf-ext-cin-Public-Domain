@@ -1,0 +1,5 @@
+The vendored source file `sources/bpmf-ext-cin/vendor/bpmf-ext.cin` contains this license notice in its header:
+
+License: Public Domain
+
+The same header says the file was revised from opendesktop.org.tw's phone.cin to include CNS11643 and Unicode-compatible characters.

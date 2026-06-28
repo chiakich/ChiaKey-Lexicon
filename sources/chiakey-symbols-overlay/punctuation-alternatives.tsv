@@ -1,0 +1,21 @@
+# qstring<TAB>symbol<TAB>tags
+_punctuation_[	『	punctuation,quote,opening,alternative
+_punctuation_[	《	punctuation,bracket,opening,alternative
+_punctuation_[	〈	punctuation,bracket,opening,alternative
+_punctuation_[	【	punctuation,bracket,opening,alternative
+_punctuation_[	〔	punctuation,bracket,opening,alternative
+_punctuation_[	｛	punctuation,bracket,opening,alternative
+_punctuation_[	“	punctuation,quote,opening,alternative
+_punctuation_[	‘	punctuation,quote,opening,alternative
+_punctuation_[	﹁	punctuation,quote,opening,vertical
+_punctuation_[	﹃	punctuation,quote,opening,vertical
+_punctuation_]	』	punctuation,quote,closing,alternative
+_punctuation_]	》	punctuation,bracket,closing,alternative
+_punctuation_]	〉	punctuation,bracket,closing,alternative
+_punctuation_]	】	punctuation,bracket,closing,alternative
+_punctuation_]	〕	punctuation,bracket,closing,alternative
+_punctuation_]	｝	punctuation,bracket,closing,alternative
+_punctuation_]	”	punctuation,quote,closing,alternative
+_punctuation_]	’	punctuation,quote,closing,alternative
+_punctuation_]	﹂	punctuation,quote,closing,vertical
+_punctuation_]	﹄	punctuation,quote,closing,vertical

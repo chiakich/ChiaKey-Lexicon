@@ -29,5 +29,4 @@ release-artifacts/
 *.db-wal
 
 # Keep directory placeholders.
-!sources/.gitkeep
 !normalized/.gitkeep

@@ -15,6 +15,8 @@ pub const PUNCTUATION_VENDOR_PATH: &str =
 pub const SYMBOL_OVERLAY_SOURCE_ID: &str = "chiakey-symbols-overlay";
 pub const SYMBOL_OVERLAY_SOURCE_NAME: &str = "ChiaKey supplemental symbol list";
 pub const SYMBOL_OVERLAY_PATH: &str = "sources/chiakey-symbols-overlay/symbols.tsv";
+pub const SYMBOL_OVERLAY_ALTERNATIVES_PATH: &str =
+    "sources/chiakey-symbols-overlay/punctuation-alternatives.tsv";
 pub const PREPOPULATED_SERVICE_SOURCE_ID: &str = "keykey-prepopulated-service-data";
 pub const PREPOPULATED_SERVICE_SOURCE_NAME: &str = "KeyKey prepopulated service data";
 pub const CANNED_MESSAGES_VENDOR_PATH: &str =
@@ -41,7 +43,7 @@ pub const LIBCHEWING_SOURCE_NAME: &str = "libchewing-data Traditional Chinese Zh
 pub const RIME_ESSAY_SOURCE_ID: &str = "rime-essay";
 pub const RIME_ESSAY_SOURCE_NAME: &str = "Rime essay shared vocabulary and language model";
 pub const RIME_CONVERSION_SOURCE_ID: &str = "chiakey-rime-conversion-policy";
-pub const RIME_CONVERSION_SOURCE_NAME: &str = "ChiaKey Rime conversion policy";
+pub const RIME_CONVERSION_SOURCE_NAME: &str = "ChiaKey Rime OpenCC override policy";
 pub const OVERLAY_SOURCE_ID: &str = "chiakey-modern-overlay";
 pub const OVERLAY_SOURCE_NAME: &str = "ChiaKey modern overlay phrases";
 pub const CHIAKI_WEB_OVERLAY_SOURCE_ID: &str = "chiaki-web-overlay";
@@ -56,7 +58,6 @@ pub const OPENFORMOSA_COMMON_VOICE_SOURCE_ID: &str = "openformosa-common-voice-2
 pub const OPENFORMOSA_COMMON_VOICE_SOURCE_NAME: &str =
     "OpenFormosa Common Voice 25 zh-TW bigram overlay";
 pub const OPENCC_VARIANT_SOURCE_ID: &str = "opencc-variant-policy";
-pub const OPENCC_VARIANT_SOURCE_NAME: &str = "OpenCC-derived Traditional Chinese variant policy";
 pub const FRAGMENT_DENYLIST_SOURCE_ID: &str = "chiakey-fragment-denylist";
 pub const FRAGMENT_DENYLIST_SOURCE_NAME: &str = "ChiaKey non-lexical fragment weight caps";
 pub const DATABASE_SCHEMA_VERSION: i64 = 1;
@@ -79,8 +80,8 @@ pub const DOWNLOADS: &[SourceDownload] = &[
         sha256: "66df78f53ff18ab97bc39b3f3108a1f6d8d5be3237d9e72ff9f6f7186b4d6b2e",
     },
     SourceDownload {
-        url: "https://raw.githubusercontent.com/chewing/libchewing/v0.12.0/COPYING",
-        path: "LICENSES/libchewing-data-LGPL-2.1-or-later.txt",
+        url: "https://codeberg.org/chewing/libchewing/raw/tag/v0.12.0/COPYING",
+        path: "sources/libchewing-data/COPYING",
         sha256: "dc626520dcd53a22f727af3ee42c770e56c97a64fe3adb063799d8ab032fe551",
     },
     SourceDownload {
@@ -90,7 +91,7 @@ pub const DOWNLOADS: &[SourceDownload] = &[
     },
     SourceDownload {
         url: "https://raw.githubusercontent.com/rime/rime-essay/48c7538f0b760fcc8c9d6bf08711f82cfbd2e9ed/LICENSE",
-        path: "LICENSES/rime-essay-LGPL-3.0.txt",
+        path: "sources/rime-essay/LICENSE",
         sha256: "da7eabb7bafdf7d3ae5e9f223aa5bdc1eece45ac569dc21b3b037520b4464768",
     },
     SourceDownload {
@@ -105,7 +106,7 @@ pub const DOWNLOADS: &[SourceDownload] = &[
     },
     SourceDownload {
         url: "https://raw.githubusercontent.com/google/mozc/28da5a39f9a7fd70251c85d269f4a8b47aa31cf8/LICENSE",
-        path: "LICENSES/mozc-BSD-3-Clause.txt",
+        path: "sources/mozc-emoticon-data/LICENSE",
         sha256: "44cdd923b91ea9199293abecc2762c70c87dbf1e581c027a94c416368d1a648c",
     },
 ];
@@ -120,6 +121,8 @@ pub struct Config {
     pub release_base_url: String,
     pub max_phrase_codepoints: usize,
     pub rime_essay_min_score: i64,
+    pub opencc_binary: PathBuf,
+    pub opencc_t2tw_config: PathBuf,
     // How much each source's strongest collocation should beat its unigram floor
     // when re-anchored to the unigram scale (see importers::calibrate_bigram_boost).
     // 0 = raw passthrough.
@@ -150,6 +153,8 @@ pub fn load() -> Result<Config> {
     let rime_essay_min_score = env_or("RIME_ESSAY_MIN_SCORE", "40")
         .parse()
         .context("parse RIME_ESSAY_MIN_SCORE")?;
+    let opencc_binary = PathBuf::from(env_or("OPENCC_BINARY", "opencc"));
+    let opencc_t2tw_config = PathBuf::from(env_or("OPENCC_T2TW_CONFIG", "t2tw.json"));
     let synthetic_bigram_boost = env_or("SYNTHETIC_BIGRAM_BOOST", "1.5")
         .parse()
         .context("parse SYNTHETIC_BIGRAM_BOOST")?;
@@ -195,6 +200,8 @@ pub fn load() -> Result<Config> {
         release_base_url,
         max_phrase_codepoints,
         rime_essay_min_score,
+        opencc_binary,
+        opencc_t2tw_config,
         synthetic_bigram_boost,
         commonvoice_bigram_boost,
         homophone_rerank_min_ratio,

@@ -33,10 +33,10 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install SQLite tools
+      - name: Install release tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y pkg-config libsqlite3-dev sqlite3
+          sudo apt-get install -y pkg-config libsqlite3-dev sqlite3 opencc
 
       - name: Compute release version
         id: version
@@ -71,11 +71,11 @@ jobs:
         run: |
           set -euo pipefail
           release_dir="dist/${LEXICON_VERSION}"
-          db_name="KeyKeySource-${LEXICON_VERSION}.db"
+          db_name="ChiaKeySource-${LEXICON_VERSION}.db"
 
           cd "$release_dir"
           sha256sum -c SHA256SUMS
-          test -f "KeyKeySource-${LEXICON_VERSION}.json"
+          test -f "ChiaKeySource-${LEXICON_VERSION}.json"
           test -f "lexicon-manifest.json"
 
           row_count="$(sqlite3 "$db_name" "select count(*) from unigrams;")"
@@ -223,7 +223,7 @@ jobs:
           set -euo pipefail
           version="${{ steps.version.outputs.version }}"
           release_dir="dist/${version}"
-          metadata="${release_dir}/KeyKeySource-${version}.json"
+          metadata="${release_dir}/ChiaKeySource-${version}.json"
           notes="${release_dir}/RELEASE_NOTES.md"
 
           previous_tag="$(git tag --sort=-v:refname | grep -v "^${version}$" | head -n 1 || true)"
@@ -414,8 +414,8 @@ jobs:
           release_dir="dist/${version}"
 
           gh release create "$version" \
-            "${release_dir}/KeyKeySource-${version}.db" \
-            "${release_dir}/KeyKeySource-${version}.json" \
+            "${release_dir}/ChiaKeySource-${version}.db" \
+            "${release_dir}/ChiaKeySource-${version}.json" \
             "${release_dir}/lexicon-manifest.json" \
             "${release_dir}/SHA256SUMS" \
             --target "$GITHUB_SHA" \

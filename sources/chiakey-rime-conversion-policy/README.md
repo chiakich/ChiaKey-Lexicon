@@ -1,21 +1,42 @@
-# ChiaKey Rime Conversion Policy
+# ChiaKey Rime OpenCC 例外轉換
 
-Project-owned conversion rules for Rime essay phrases before they are used as
-ChiaKey supplemental vocabulary or rerank evidence.
+## 來源代號
 
-Rime essay is a broad phrase and language-model source, but some entries use
-phrase shapes that do not match the default modern Taiwan Traditional Chinese
-lexicon. This layer keeps the frequency evidence while moving it onto the
-preferred output form. For example, Rime's `喫壞` evidence is imported and
-reranked as `吃壞`.
+`chiakey-rime-conversion-policy`
 
-`replacements.tsv` format:
+## 資料層
+
+校正層
+
+## 用途與定位
+
+此來源定義專案自有的 OpenCC 後處理例外，用於 Rime essay 片語在進入 ChiaKey 補詞與 rerank 前的前處理。
+
+Rime essay 涵蓋廣泛詞彙與語言模型訊號。匯入流程會先使用 OpenCC `t2tw` 將一般傳統異體字正規化為台灣標準繁體，例如 `喫`、`爲`、`羣`、`裏` 系列。此層只保留 `t2tw` 無法安全判斷、但 ChiaKey 明確需要的例外，例如地名中的 `里` 與食物詞 `里肌`。
+
+## 檔案與格式
+
+`replacements.tsv`：
 
 ```text
 from<TAB>to<TAB>tags
 ```
 
-Rules are applied to Rime phrase text only. Both sides must have the same
-character count so the inferred qstring stays aligned with the phrase.
+## Release 匯入規則
 
-License: CC0-1.0.
+Rime 片語會先套 OpenCC `t2tw`，再套此檔案的例外規則。
+
+規則僅作用於 Rime 片語文本，且 `from`/`to` 必須字數相同，以維持推導 qstring 與片語對齊。
+
+## 上游與授權
+
+此層為專案自有政策資料。
+
+授權：CC0-1.0
+
+## 驗證
+
+此來源屬於 internal（專案詞庫或校正層）資料。
+
+- release 流程不產生 `source-inventory.sha256`
+- 不需要額外進行 inventory 驗證

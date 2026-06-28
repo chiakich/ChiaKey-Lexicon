@@ -1,0 +1,28 @@
+Chiaki.C Web Overlay License Notice
+
+Source id: chiaki-web-overlay
+Copyright (c) Chiaki.C
+
+This lexicon source is licensed under the Creative Commons
+Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0).
+
+Canonical license URL:
+https://creativecommons.org/licenses/by-nc/4.0/
+
+Under CC BY-NC 4.0, non-commercial users may share and adapt this source with
+attribution to Chiaki.C. Open-source projects may use this source under CC
+BY-NC 4.0.
+
+Commercial use is not granted by CC BY-NC 4.0. For commercial use, including
+redistribution in a commercial product or service, paid integration, or other
+revenue-generating use, contact Chiaki.C for separate written permission.
+
+This notice applies only to the chiaki-web-overlay source rows.
+Other ChiaKey Lexicon sources remain governed by their own source-specific
+licenses and notices.
+
+Provenance note:
+
+The reviewed rows are derived from web usage materials curated for ChiaKey
+lexicon maintenance. Raw source text is not redistributed in this repository;
+this repository stores only reviewed qstring, phrase, weight, and tag rows.

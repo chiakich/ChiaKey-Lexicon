@@ -22,13 +22,15 @@
 cargo run --release -- prepare-release
 ```
 
+`prepare-release` 需要本機可執行 OpenCC CLI。預設使用 `opencc -c t2tw.json` 正規化 Rime essay；如需指定路徑，可覆寫 `OPENCC_BINARY` 與 `OPENCC_T2TW_CONFIG`。
+
 未設定 `LEXICON_VERSION` 時會使用 `dev` placeholder，預設輸出：
 
 ```text
 normalized/smart-mandarin.tsv
 manifests/lexicon-manifest.json
-dist/dev/KeyKeySource-dev.db
-dist/dev/KeyKeySource-dev.json
+dist/dev/ChiaKeySource-dev.db
+dist/dev/ChiaKeySource-dev.json
 dist/dev/lexicon-manifest.json
 dist/dev/SHA256SUMS
 ```
@@ -61,8 +63,8 @@ scripts/install-dev-lexicon.sh --no-build # 直接安裝現有的 dist/dev build
 ├── active                  -> versions/local-dev   （symlink）
 └── versions/
     ├── local-dev/
-    │   ├── ChiaKeySource.db          ← dist/dev/KeyKeySource-dev.db
-    │   ├── metadata.json             ← dist/dev/KeyKeySource-dev.json
+    │   ├── ChiaKeySource.db          ← dist/dev/ChiaKeySource-dev.db
+    │   ├── metadata.json             ← dist/dev/ChiaKeySource-dev.json
     │   └── lexicon-manifest.json
     └── local-dev-backup-<timestamp>/ ← 覆蓋前自動備份的舊 slot
 ```
@@ -137,7 +139,7 @@ dev -> main
 
 發版完成後至少確認：
 
-- GitHub Release 有四個 artifacts：`KeyKeySource-<version>.db`、`KeyKeySource-<version>.json`、`lexicon-manifest.json`、`SHA256SUMS`。
+- GitHub Release 有四個 artifacts：`ChiaKeySource-<version>.db`、`ChiaKeySource-<version>.json`、`lexicon-manifest.json`、`SHA256SUMS`。
 - Release notes 有本次變更摘要，且完整 commit list、changed files、source import summary、artifact checksums 可展開查看。
 - `SHA256SUMS` 驗證通過。
 - `lexicon-manifest.json` 裡的 artifact URL 指向該 release tag，且 manifest version 與 release tag 一致。

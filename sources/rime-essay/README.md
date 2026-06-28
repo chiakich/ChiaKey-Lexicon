@@ -1,21 +1,47 @@
-# Rime essay
+# Rime essay 來源
 
-Source id: `rime-essay`
+## 來源代號
 
-This source imports Rime's shared vocabulary and language model as a low-priority supplemental phrase layer. Because `essay.txt` does not include Zhuyin readings, the release builder only imports entries whose readings can be inferred from the current database's single-character readings.
+`rime-essay`
 
-Pinned upstream file:
+## 資料層
 
-- `essay.txt` from `rime/rime-essay` commit `48c7538f0b760fcc8c9d6bf08711f82cfbd2e9ed`
+外部詞庫
 
-Local raw files are vendored under `sources/rime-essay/raw/` so normal release
-builds do not need network access. Maintainers refresh pinned snapshots with:
+## 用途與定位
+
+此來源匯入 Rime 共享詞彙與語言模型，作為低優先級補充片語層。
+
+由於 `essay.txt` 不含注音讀音，release builder 只會匯入可由當前資料庫單字讀音安全推導的條目。
+
+## 檔案與格式
+
+固定上游檔案：
+
+- `rime/rime-essay` commit `48c7538f0b760fcc8c9d6bf08711f82cfbd2e9ed` 的 `essay.txt`
+
+本機 vendored 路徑：
+
+```text
+sources/rime-essay/raw/
+```
+
+## Release 匯入規則
+
+一般 release build 直接使用 repo 內 vendored raw 檔案，不需網路下載。
+
+維護者更新固定快照時可執行：
 
 ```sh
 cargo run --release -- fetch-modern-sources
 ```
 
-The raw file is tracked in git. Its checksum is recorded in
-`source-inventory.sha256`.
+raw 檔案受 git 追蹤，檔案雜湊記錄於 `source-inventory.sha256`。
 
-License: LGPL-3.0.
+## 上游與授權
+
+授權：LGPL-3.0
+
+## 驗證
+
+可用 `source-inventory.sha256` 驗證 vendored 檔案完整性。

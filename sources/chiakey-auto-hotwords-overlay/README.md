@@ -1,52 +1,66 @@
-# ChiaKey Auto Hotwords Overlay
+# ChiaKey 自動熱門詞覆蓋層
 
-This source contains a small, automatically refreshed hotwords overlay.
+## 來源代號
 
-Google Trends is used only as a discovery signal. Daily collection queries the
-24-hour, 48-hour, and 7-day trending windows, then stores minimal normalized
-observations as GitHub Actions artifacts. The weekly refresh job aggregates
-those observations and writes only the resulting ChiaKey-owned overlay rows into
-this directory.
+`chiakey-auto-hotwords-overlay`
 
-`phrases.tsv` format:
+## 資料層
+
+專案詞庫
+
+## 用途與定位
+
+此來源為自動更新的小型熱門詞覆蓋層。
+
+Google Trends 只用於「發現訊號」：每日流程收集 24 小時、48 小時、7 天視窗，保存最小化正規化觀測值為 GitHub Actions artifacts；每週流程再聚合觀測值，只將 ChiaKey 自有的最終覆蓋列寫回本目錄。
+
+此層會隨時間變動，不視為人工審查來源。
+
+## 檔案與格式
+
+`phrases.tsv`：
 
 ```text
 phrase<TAB>weight<TAB>tags
 ```
 
-The release builder infers qstrings from existing single-character readings.
-Rows that cannot be inferred are skipped during release preparation.
+Release builder 會依既有單字讀音推導 qstring；無法推導的列在 release 準備時會被略過。
 
-Automation policy:
+## Release 匯入規則
 
-- Keep only Han-only terms after normalization.
-- Drop ASCII letters and digits.
-- Keep only 2-4 codepoint terms.
-- Drop query-like terms such as weather, stock-price, target-price, ranking, and
-  index queries.
-- Drop terms already present in the base lexicon.
-- Drop terms that are already typeable as top-ranked existing segments.
-- Keep 7-day-only terms as weak signal; they do not enter the overlay on their
-  own.
-- Retain active terms for up to 30 days after last observation.
+自動化策略：
 
-Weights are intentionally conservative:
+- 正規化後只保留全漢字詞。
+- 移除 ASCII 字母與數字。
+- 只保留 2 到 4 個 codepoint 的詞。
+- 移除天氣、股價、目標價、排行、指數等查詢型詞。
+- 移除已存在於基底詞庫的詞。
+- 移除已可由既有高排名片段自然輸入的詞。
+- 僅出現在 7 天視窗的詞視為弱訊號，不會單獨進入覆蓋層。
+- 活躍詞自最後觀測日起最多保留 30 天。
 
-- `-2.4` for terms that pass the multi-window signal threshold.
-- `-2.1` after stronger repeated signal in the last 14 days.
-- `-1.9` after sustained repeated signal in the last 30 days.
-- `-2.6` while decaying after 14 days without observation.
+權重策略（保守）：
 
-Signal scoring:
+- `-2.4`：通過多視窗門檻。
+- `-2.1`：近 14 天重複訊號更強。
+- `-1.9`：近 30 天持續重複訊號。
+- `-2.6`：14 天未觀測後進入衰退期。
 
-- `24h`: 1 point
-- `48h`: 2 points
-- `7d`: 3 points
+訊號計分：
 
-A term is emitted only when it has enough short-window corroboration, such as
-appearing in both `24h` and `48h`, appearing in a short window plus `7d`, or
-appearing across multiple collection days. A single `7d` observation is treated
-as background context rather than a reason to add a word.
+- `24h`：1 分
+- `48h`：2 分
+- `7d`：3 分
 
-This layer is expected to change over time and should not be treated as a
-manual review source.
+詞條僅在短視窗有足夠交叉佐證時才會輸出（例如同時出現在 `24h` 與 `48h`、短視窗加 `7d`、或跨多日重複出現）。單一 `7d` 觀測只作背景，不足以新增詞條。
+
+## 上游與授權
+
+本覆蓋層為專案自動產生與維護之衍生資料列，實際輸出為 ChiaKey 擁有之結果資料。
+
+## 驗證
+
+此來源屬於 internal（專案詞庫或校正層）資料。
+
+- release 流程不產生 `source-inventory.sha256`
+- 不需要額外進行 inventory 驗證

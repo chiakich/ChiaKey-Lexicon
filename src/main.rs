@@ -8,6 +8,7 @@ mod files;
 mod importers;
 mod manifest;
 mod module_cin;
+mod opencc;
 mod paths;
 mod phonetics;
 mod prepopulated;
