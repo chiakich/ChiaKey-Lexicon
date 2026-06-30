@@ -2,46 +2,35 @@
 
 [English](README.en.md)
 
-千秋輸入法綜合詞庫（ChiaKey Lexicon）是[千秋輸入法（ChiaKey）](https://github.com/chiakich/ChiaKey)衍生的詞庫專案。
+千秋輸入法綜合詞庫（ChiaKey Lexicon）是[千秋輸入法（ChiaKey）](https://github.com/chiakich/ChiaKey)衍生的詞庫專案。輸入法專案將專注在輸入法本體，本詞庫則負責持續演進的外部詞庫資料同步、轉換、融合與實驗語料資料、處理授權等。
 
-主輸入法專案將專注在輸入法本體，這個 repository 則負責持續演進的詞庫資料、來源 manifest、授權等。
+## 為什麼有這個專案
 
-## 分工
+繁體中文 / 注音的開源詞庫資源其實不算少，但它們幾乎都集中在單詞組詞組 + 頻率這一種形式：
 
-`ChiaKey` 負責：
+- 新酷音（libchewing）的 `tsi.csv` 是「詞組, 頻率, 注音」。
+- Rime 共享的 `essay.txt` 是「詞, 頻率」。
 
-1. macOS IMK runtime。
-2. 輸入引擎整合。
-3. 資料庫 schema 與 reader。
-4. 可消費此 repo release artifacts 的 builder 或安裝 script。
-5. bundled fallback `ChiaKeySource.db`。
+這類資料能告訴你「哪個詞比較常用」，卻很少描述詞與詞之間的接續關係（bigram，或者說轉移機率），無法告訴我們「打完 A 之後，接 C 是否比 B 更合理」。而這恰好是同音歧義與自動選字最吃重的資訊。（Rime 雖能透過 octagram〔八股文〕語法插件支援 n-gram，但那是引擎外掛搭配另外訓練的 `.gram` 模型，並非隨詞庫一起散布的共享語料。）
 
-`ChiaKey-Lexicon` 負責：
+千秋輸入法綜合詞庫的目標是：嘗試融合成熟的 unigram 詞庫，並在此在之上，疊加各種自製的 bigram 資料（來自網路語料、Mozilla Common Voice 句料與合成語料），並以可重現、可追蹤來源的 pipeline 產生輸入法可直接消費的 release DB。
 
-1. source manifests。
-2. source license 與 attribution records。
-3. vendored raw lexicon sources。
-4. release-ready `ChiaKeySource` database artifacts。
-5. checksums 或 signatures。
-6. lexicon release changelog。
+## 致謝
 
-合併到 `main` 後，會透過 GitHub Actions 建置並發布版本化詞庫 release。
+本專案建立在許多優秀開源詞庫與社群多年累積之上，謹此致謝：
+
+- **新酷音 / libchewing**（`chewing/libchewing-data`）：提供主要的現代繁中 / 注音詞彙與明確讀音基底。
+- **Rime / 中州韻**（`rime/rime-essay`）：提供高品質詞頻與斷詞證據，是候選 rerank 與補充詞的重要依據。
+- **Mozilla Common Voice / OpenFormosa**：bigram 句料的語料來源。
+- **Mozc**：顏文字預載分類資料。
+
+我們的工作主要是「整理、銜接與補強」，把這些前人的成果，整合成帶有 bigram、可重現、可追蹤來源的現代輸入法詞庫。各來源的授權、redistribution decision 與風險紀錄詳見 [Docs/SourceReview.md](Docs/SourceReview.md)。
 
 更多說明請見：
 
-- [Docs/ReleaseFlow.zh-TW.md](Docs/ReleaseFlow.zh-TW.md)
-- [Docs/SourceReview.md](Docs/SourceReview.md)
+- [Docs/ReleaseFlow.zh-TW.md](詞庫 Release 流程 Docs/ReleaseFlow.zh-TW.md)
+- [Docs/SourceReview.md](來源審查 Docs/SourceReview.md)
 - [Docs/WalkerScoring.zh-TW.md](Docs/WalkerScoring.zh-TW.md)
-
-若要建立本機檢查用 package 請執行：
-
-```sh
-cargo run --release -- prepare-release
-```
-
-`prepare-release` 需要本機可執行 OpenCC CLI，Rime essay 匯入時會先套 `t2tw`，再套專案保留的少量例外規則。可用 `OPENCC_BINARY` 與 `OPENCC_T2TW_CONFIG` 覆寫預設的 `opencc` / `t2tw.json`。
-
-合併到 `main` 後，會透過 GitHub Actions 建置並發布版本化詞庫 release。
 
 ## 架構
 
@@ -88,11 +77,11 @@ cargo run --release -- prepare-release
 目標：由專案維護、直接反映 ChiaKey 使用情境的詞庫資料。
 
 - `chiakey-modern-overlay`：專案自有修正詞與 explicit 讀音/排序調整。
-- `chiaki-web-overlay`：人工審核後的網路用語 unigram/bigram 補充。
-- `chiaki-synthetic-overlay`：合成語料提煉的 unigram/bigram 補充。
-- `openformosa-common-voice-25-zh-tw`：從 Common Voice 句料挑選的 bigram rows。
 - `chiakey-auto-hotwords-overlay`：自動刷新 hotwords overlay（僅保留專案輸出 rows）。
 - `chiakey-symbols-overlay`：補 `_punctuation_list` 缺漏符號與 runtime 標點候選。
+- `openformosa-common-voice-25-zh-tw`：從 Common Voice 句料挑選的 bigram rows。
+- `chiaki-web-overlay`：人工審核後的網路用語 unigram/bigram 補充。
+- `chiaki-synthetic-overlay`：合成語料提煉的 unigram/bigram 補充。
 
 ### 校正層
 
@@ -104,7 +93,7 @@ cargo run --release -- prepare-release
 
 ## 整合方式
 
-release builder 的整合流程是 deterministic 的：
+Release builder 的整合流程是具有確定性的：
 
 1. 先驗證每個必要 source file 存在，並為「相容性基底詞庫」與「外部詞庫」中有 vendored/pinned upstream 檔案的 source 產生 `source-inventory.sha256`。
 2. 複製 `keykey-boneyard-bootstrap` 的 cooked `KeyKeySource.db` 作為基底。
@@ -128,52 +117,6 @@ release builder 的整合流程是 deterministic 的：
 
 各來源的授權、redistribution decision 與風險紀錄放在 [Docs/SourceReview.md](Docs/SourceReview.md)。日常 release 操作放在 [Docs/ReleaseFlow.zh-TW.md](Docs/ReleaseFlow.zh-TW.md)。
 
-## Repository 目錄
-
-```text
-Docs/
-  ReleaseFlow.zh-TW.md
-  SourceReview.md
-src/
-  main.rs
-manifests/
-  lexicon-manifest.example.json
-normalized/
-  .gitkeep
-schemas/
-  lexicon-manifest.schema.json
-sources/
-  .gitkeep
-```
-
-建置完成的 release artifacts 不會 commit 進 git。請用 `dist/` 之類的本機 staging 目錄，再由 GitHub Releases 發布 artifacts。
-
-若要更新 pinned 外部來源，可由維護者手動執行：
-
-```sh
-cargo run --release -- fetch-modern-sources
-```
-
-這個指令會更新 vendored raw source snapshots 與 source inventories；一般 CI release build 不需要網路下載來源資料。
-
-## Release 內容
-
-GitHub Release 應發布：
-
-```text
-ChiaKeySource-YYYY.MM.N.db
-ChiaKeySource-YYYY.MM.N.json
-lexicon-manifest.json
-SHA256SUMS
-```
-
-輸入法端應下載並驗證 `lexicon-manifest.json`，再把相容的 `ChiaKeySource` database 安裝到：
-
-```text
-~/Library/Application Support/ChiaKey/Lexicons/
-```
-
-runtime 載入資料庫時，若 active external database 不存在、無效或不相容，應 fallback 到 bundled database。
 
 ## 授權政策
 

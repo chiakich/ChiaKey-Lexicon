@@ -4,48 +4,29 @@
 
 ChiaKey Lexicon is the lexicon-data repository for ChiaKey.
 
-The main input-method repository should focus on the macOS runtime, database reading layer, builder scripts, installation tooling, and a small bundled fallback database. This repository is responsible for evolving lexicon data, source manifests, licensing records, release database artifacts, checksums, and changelog history.
+The main input-method repository stay focus on the macOS runtime. This repository is responsible for evolving lexicon data, source manifests, licensing records, release database artifacts, checksums, and changelog history.
 
-## Responsibilities
+## Why this project exists
 
-`ChiaKey` is responsible for:
+There is no shortage of open-source Traditional Chinese / bopomofo lexicons, but almost all of them are "unigram" data — i.e. "word / phrase + frequency":
 
-1. macOS IMK runtime.
-2. Input engine integration.
-3. Database schema and reader.
-4. Builder or installation scripts that consume this repo's release artifacts.
-5. Bundled fallback `ChiaKeySource.db`.
+- libchewing's `tsi.csv` is "phrase, frequency, bopomofo".
+- Rime's shared `essay.txt` is "word, frequency".
 
-`ChiaKey-Lexicon` is responsible for:
+This kind of data tells you which word is more common, but rarely describes the transition between words (bigram / transition probability) — i.e. "after typing A, is B or C the more sensible continuation". That is exactly the information that matters most for homophone disambiguation and auto candidate selection. (Rime *can* support n-grams via the octagram grammar plugin, but that is an engine add-on paired with a separately trained `.gram` model, not shared corpus data distributed alongside the lexicon.)
 
-1. Source manifests.
-2. Source-specific license and attribution records.
-3. Vendored raw lexicon sources.
-4. Release-ready `ChiaKeySource` database artifacts.
-5. Checksums or signatures.
-6. Lexicon release changelog.
+What `ChiaKey-Lexicon` aims to add is precisely this layer: on top of mature unigram lexicons, it overlays bigram data (from web corpora, Mozilla Common Voice sentences, and synthetic corpora), produced through a reproducible, source-traceable pipeline into releases the input method can consume directly.
 
-## Current Status
+## Thanks
 
-The current pipeline builds a complete `ChiaKeySource.db` from reviewed source data, project-maintained corrections, generated metadata, source inventories, and checksum manifests. Local verification builds default to `dist/dev/`; public release versions are computed and injected by CI, then uploaded to GitHub Releases.
+This project did not appear out of nowhere; it builds on excellent open-source lexicons and years of community effort. With gratitude to:
 
-After merges to `main`, GitHub Actions builds and publishes versioned lexicon releases.
+- **Chewing / libchewing** (`chewing/libchewing-data`): the primary modern Traditional Chinese / bopomofo vocabulary and explicit-reading base.
+- **Rime** (`rime/rime-essay`): high-quality word frequencies and segmentation evidence, a key basis for candidate rerank and supplemental phrases.
+- **Mozilla Common Voice / OpenFormosa**: the corpus source for bigram sentences.
+- **Mozc**: preloaded emoticon (`顏文字`) category data.
 
-See:
-
-- [Docs/ReleaseFlow.zh-TW.md](Docs/ReleaseFlow.zh-TW.md)
-- [Docs/SourceReview.md](Docs/SourceReview.md)
-- [Docs/WalkerScoring.zh-TW.md](Docs/WalkerScoring.zh-TW.md)
-
-To build a local verification package:
-
-```sh
-cargo run --release -- prepare-release
-```
-
-`prepare-release` requires the OpenCC CLI. Rime essay phrases are normalized with `t2tw` before project-specific override rules are applied. `OPENCC_BINARY` and `OPENCC_T2TW_CONFIG` can override the default `opencc` / `t2tw.json` commands.
-
-Public releases do not require manual version edits in the repo; GitHub Actions computes the next `YYYY.MM.N` from existing tags.
+Our work is mostly "curation, connection, and reinforcement": integrating these predecessors' work into a modern, bigram-aware, reproducible, source-traceable input-method lexicon. License, redistribution decisions, and risk notes for each source are documented in [Docs/SourceReview.md](Docs/SourceReview.md).
 
 ## Architecture
 
@@ -61,7 +42,7 @@ This repository is centered on a reproducible data pipeline:
 The data layer model has four categories:
 
 1. **Runtime compatibility data**: KeyKey-origin data required by existing readers and input modules.
-2. **Lexicon sources**: modern Traditional Chinese / Zhuyin vocabulary and supplemental coverage.
+2. **Lexicon sources**: modern Traditional Chinese / bopomofo vocabulary and supplemental coverage.
 3. **Project-owned corrections**: small overlays for known input gaps, explicit readings, and candidate-order adjustments.
 4. **Policy layers**: reviewed rule layers that keep default Traditional Chinese releases aligned with expected language and region behavior.
 
@@ -83,7 +64,7 @@ Goal: keep compatibility with ChiaKey runtime expectations, existing schema, and
 
 Goal: provide reviewable and redistributable external vocabulary and reading coverage.
 
-- `libchewing-data`: primary modern Traditional Chinese / Zhuyin lexicon layer.
+- `libchewing-data`: primary modern Traditional Chinese / bopomofo lexicon layer.
 - `rime-essay`: lower-priority supplemental terms and rerank evidence.
 - `mozc-emoticon-data`: supplemental `Emoticon` preloaded category rows.
 
@@ -113,7 +94,7 @@ The release builder integration flow is deterministic:
 
 1. Validate required source files. Generate `source-inventory.sha256` for compatibility-base and external-source entries that include vendored or pinned upstream files.
 2. Copy cooked `KeyKeySource.db` from `keykey-boneyard-bootstrap` as the base.
-3. Import `libchewing-data` to strengthen modern vocabulary with explicit Zhuyin readings; overlapping bootstrap phrases are replaced by libchewing data.
+3. Import `libchewing-data` to strengthen modern vocabulary with explicit bopomofo readings; overlapping bootstrap phrases are replaced by libchewing data.
 4. Import `bpmf-ext-cin` to fill missing single-character readings without overwriting existing rows.
 5. Batch-normalize Rime essay phrases with OpenCC `t2tw`, then apply the small `chiakey-rime-conversion-policy` override table; the normalized result is shared by Rime rerank and supplemental import passes.
 6. Apply `rime-essay` rerank: cap same-pronunciation boosts, allow limited uplift from Rime evidence for weak existing phrases, apply small single-character homophone reorders where frequency advantage is sufficient, then import only safe supplemental phrases not already in DB.
@@ -131,52 +112,6 @@ After integration, each traceable row carries source path, source kind, checksum
 
 Source-specific licensing decisions, redistribution decisions, and risk records are documented in [Docs/SourceReview.md](Docs/SourceReview.md). Day-to-day release operations are documented in [Docs/ReleaseFlow.zh-TW.md](Docs/ReleaseFlow.zh-TW.md).
 
-## Repository Layout
-
-```text
-Docs/
-  ReleaseFlow.zh-TW.md
-  SourceReview.md
-src/
-  main.rs
-manifests/
-  lexicon-manifest.example.json
-normalized/
-  .gitkeep
-schemas/
-  lexicon-manifest.schema.json
-sources/
-  .gitkeep
-```
-
-Built release artifacts are not committed to git. Use a local staging directory such as `dist/`, then publish artifacts via GitHub Releases.
-
-Maintainers can update pinned external sources with:
-
-```sh
-cargo run --release -- fetch-modern-sources
-```
-
-This command refreshes vendored raw-source snapshots and source inventories. Normal CI release builds do not need network downloads for source data.
-
-## Release Contents
-
-A GitHub Release should publish:
-
-```text
-ChiaKeySource-YYYY.MM.N.db
-ChiaKeySource-YYYY.MM.N.json
-lexicon-manifest.json
-SHA256SUMS
-```
-
-The app should download and verify `lexicon-manifest.json`, then install a compatible `ChiaKeySource` database into:
-
-```text
-~/Library/Application Support/ChiaKey/Lexicons/
-```
-
-At runtime, if the active external database is missing, invalid, or incompatible, loading should fall back to the bundled database.
 
 ## License Policy
 
