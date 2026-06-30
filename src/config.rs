@@ -65,17 +65,17 @@ pub const DEFAULT_RELEASE_VERSION: &str = "dev";
 
 pub const DOWNLOADS: &[SourceDownload] = &[
     SourceDownload {
-        url: "https://raw.githubusercontent.com/chewing/libchewing-data/v2026.3.22/dict/chewing/tsi.csv",
+        url: "https://codeberg.org/chewing/libchewing-data/raw/tag/v2026.3.22/dict/chewing/tsi.csv",
         path: "sources/libchewing-data/raw/dict/chewing/tsi.csv",
         sha256: "c889a1ac3ae1901b3f8f62748bc41b958f010bf995f7f88dbaf9e3494f341428",
     },
     SourceDownload {
-        url: "https://raw.githubusercontent.com/chewing/libchewing-data/v2026.3.22/dict/chewing/word.csv",
+        url: "https://codeberg.org/chewing/libchewing-data/raw/tag/v2026.3.22/dict/chewing/word.csv",
         path: "sources/libchewing-data/raw/dict/chewing/word.csv",
         sha256: "da55b8e599c1389bc486453554f3410cf9c621d0ffff0ce38855698d26b3892a",
     },
     SourceDownload {
-        url: "https://raw.githubusercontent.com/chewing/libchewing-data/v2026.3.22/dict/chewing/alt.csv",
+        url: "https://codeberg.org/chewing/libchewing-data/raw/tag/v2026.3.22/dict/chewing/alt.csv",
         path: "sources/libchewing-data/raw/dict/chewing/alt.csv",
         sha256: "66df78f53ff18ab97bc39b3f3108a1f6d8d5be3237d9e72ff9f6f7186b4d6b2e",
     },

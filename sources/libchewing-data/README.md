@@ -14,7 +14,7 @@
 
 ## 檔案與格式
 
-固定上游檔案（`chewing/libchewing-data` tag `v2026.3.22`）：
+固定上游檔案（`chewing/libchewing-data` tag `v2026.3.22`，上游 home 已移至 Codeberg：<https://codeberg.org/chewing/libchewing-data>）：
 
 - `dict/chewing/tsi.csv`
 - `dict/chewing/word.csv`
