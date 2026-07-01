@@ -5,9 +5,9 @@
 千秋輸入法綜合詞庫（ChiaKey Lexicon）是[千秋輸入法（ChiaKey）](https://github.com/chiakich/ChiaKey)衍生的台灣用詞詞庫專案。該輸入法專案將專注在輸入法本體，本詞庫則負責持續演進的外部詞庫資料同步、轉換，實驗性的自製語料處理，以及定時收集的網路關鍵字。
 
 
-> 文字的呈現與流轉，需要長期的維護與灌溉。如果你認同這份堅持，歡迎贊助並支持我。贊助將用於本詞庫的開發、更新與維護。
+> 文字的整理與流轉，需要長期的維護與灌溉。如果你認同這份堅持，歡迎贊助並支持！贊助將用於本詞庫的開發、更新與維護。
 
-<a href='https://ko-fi.com/A0A21UAIV9' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://storage.ko-fi.com/cdn/kofi1.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/A0A21UAIV9)
 
 ## 為什麼有這個專案
 
