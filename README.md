@@ -34,9 +34,9 @@
 
 更多說明請見：
 
-- [Docs/ReleaseFlow.zh-TW.md](詞庫 Release 流程 Docs/ReleaseFlow.zh-TW.md)
-- [Docs/SourceReview.md](來源審查 Docs/SourceReview.md)
-- [Docs/WalkerScoring.zh-TW.md](Docs/WalkerScoring.zh-TW.md)
+- 詞庫釋出流程： [Docs/ReleaseFlow.zh-TW.md](Docs/ReleaseFlow.zh-TW.md)
+- 來源審查： [Docs/SourceReview.md](Docs/SourceReview.md)
+- ChiaKey 走訪器實作說明：[Docs/WalkerScoring.zh-TW.md](Docs/WalkerScoring.zh-TW.md)
 
 ## 架構
 
