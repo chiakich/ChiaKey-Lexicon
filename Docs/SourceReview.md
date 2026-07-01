@@ -60,8 +60,8 @@ manifest 記錄的是該 inventory file 的 SHA-256，而不是單一 upstream a
 
 - 名稱：libchewing-data Traditional Chinese Zhuyin dictionary
 - 本地來源：`sources/libchewing-data/raw/`
-- 上游 release：<https://github.com/chewing/libchewing-data/releases/tag/v2026.3.22>
-- 目前上游 home：<https://codeberg.org/chewing/libchewing-data>
+- 上游 home：<https://codeberg.org/chewing/libchewing-data>（原 GitHub repo 已轉為舊鏡像）
+- 上游 release：<https://codeberg.org/chewing/libchewing-data/releases/tag/v2026.3.22>
 - 授權：LGPL-2.1-or-later
 - 署名：libchewing Core Team
 - 再散布決策：自 `2026.06.3` 起納入公開 release

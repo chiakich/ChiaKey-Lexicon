@@ -276,7 +276,7 @@ pub fn manifest(
         manifest_source_from_inventory(
             LIBCHEWING_SOURCE_ID,
             LIBCHEWING_SOURCE_NAME,
-            "https://github.com/chewing/libchewing-data/releases/tag/v2026.3.22",
+            "https://codeberg.org/chewing/libchewing-data/releases/tag/v2026.3.22",
             "csv",
             "LGPL-2.1-or-later",
             "libchewing Core Team",

@@ -1,13 +1,4 @@
 # phrase	weight	tags
 測試	-0.05	chiakey-modern-overlay,qa
-輸入	-0.05	chiakey-modern-overlay,input-method
-輸入法	-0.05	chiakey-modern-overlay,input-method
-測試輸入	-0.05	chiakey-modern-overlay,qa,input-method
-輸入測試	-0.05	chiakey-modern-overlay,qa,input-method
-測試輸入法	-0.05	chiakey-modern-overlay,qa,input-method
-中文輸入	-0.05	chiakey-modern-overlay,input-method
-中文輸入法	-0.05	chiakey-modern-overlay,input-method
-注音輸入	-0.05	chiakey-modern-overlay,input-method
-注音輸入法	-0.05	chiakey-modern-overlay,input-method
 候選字	-0.05	chiakey-modern-overlay,input-method
 候選詞	-0.05	chiakey-modern-overlay,input-method

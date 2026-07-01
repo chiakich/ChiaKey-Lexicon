@@ -84,7 +84,7 @@ jobs:
             exit 1
           fi
 
-          for phrase in 測試輸入 輸入法 台灣 人工智慧 小紅書; do
+          for phrase in 測試 海象 羅東夜市; do
             found="$(sqlite3 "$db_name" "select count(*) from unigrams where current = '${phrase}';")"
             if [[ "$found" -lt 1 ]]; then
               echo "Missing smoke-test phrase: ${phrase}" >&2
