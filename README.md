@@ -2,10 +2,9 @@
 
 [English](README.en.md)
 
-千秋輸入法綜合詞庫（ChiaKey Lexicon）是[千秋輸入法（ChiaKey）](https://github.com/chiakich/ChiaKey)衍生的台灣用詞詞庫專案。該輸入法專案將專注在輸入法本體，本詞庫則負責持續演進的外部詞庫資料同步、轉換，實驗性的自製語料處理，以及定時收集的網路關鍵字。
+千秋輸入法綜合詞庫（ChiaKey Lexicon）是[千秋輸入法（ChiaKey）](https://github.com/chiakich/ChiaKey)衍生的台灣用詞詞庫專案。該輸入法專案將專注在輸入法本體，本詞庫則負責持續演進的外部詞庫資料同步、轉換，實驗性的自製語料處理，以及持續定時收集的網路熱門詞。
 
-
-> 文字的整理與流轉，需要長期的維護與灌溉。如果你認同這份堅持，歡迎贊助並支持！贊助將用於本詞庫的開發、更新與維護。
+> 歡迎贊助與支持！您的贊助將支持本詞庫的持續開發、更新與維護。
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/A0A21UAIV9)
 
@@ -19,7 +18,6 @@
 這類資料能告訴你「哪個詞比較常用」，卻難以描述詞與詞之間的接續關係（打完 A 之後，接 C 是否比 B 更合理），要做到這點，需要依賴二元語法表（bigram，或者轉移機率），這恰好是同音歧義與自動選字最吃重的資訊。台灣開源注音生態長期受限於 n-gram 推論詞庫的匱乏，雖然網路上不乏靜態文本，但能精準反映現代台灣本土語境與日常口語的高品質對話語料卻極度稀缺，這導致傳統統計模型容易面臨語境偏差與選字失準；同時，n-gram 權重表依賴龐大且複雜的資料清洗、機率計算與二進位模型（如 .gram 或 .klm）編譯管線，無法像傳統單詞庫（Unigram）那樣透過簡單修改純文字檔來快速新增時事熱詞，難以長期維持一個持續迭代的台灣繁體推論模型。
 
 千秋輸入法綜合詞庫的目標是：嘗試融合成熟的 unigram 詞庫，並在此在之上，疊加各種自製的 bigram 資料（來自網路語料、Mozilla Common Voice 句料與大語言模型合成語料），並以可重現、可追蹤來源的 pipeline 產生輸入法可直接消費的 release DB。
-
 
 ## 致謝
 
@@ -81,6 +79,7 @@
 ### 專案詞庫
 
 目標：由專案維護詞庫資料。
+
 - `chiaki-modern-overlay`：專案自有修正詞與 explicit 讀音/排序調整。
 - `chiaki-auto-hotwords-overlay`：自動刷新 hotwords overlay（僅保留專案輸出 rows）。
 - `chiaki-symbols-overlay`：補 `_punctuation_list` 缺漏符號與 runtime 標點候選。
@@ -94,7 +93,6 @@
 
 - `chiaki-rime-conversion-policy`：OpenCC `t2tw` 後的 Rime 例外規則，只保留地名 `里`、食物詞 `里肌` 等 `t2tw` 無法安全判斷的專案偏好。
 - `chiaki-fragment-denylist`：句段碎片權重上限（降低偷字造成的錯誤斷詞）。
-
 
 ## 整合方式
 
@@ -121,7 +119,6 @@ Release builder 的整合流程是具有確定性的：
 整合後，每筆可追蹤的詞庫 row 會帶有 source path、source kind、checksum 與 tags；輸入法端消費的是最後生成的 `ChiaKeySource.db` 和 `lexicon-manifest.json`，維護端可在本機 build 後從 generated `normalized/smart-mandarin.tsv` 和 metadata 回查來源。
 
 各來源的授權、redistribution decision 與風險紀錄放在 [Docs/SourceReview.md](Docs/SourceReview.md)。日常 release 操作放在 [Docs/ReleaseFlow.zh-TW.md](Docs/ReleaseFlow.zh-TW.md)。
-
 
 ## 授權政策
 
