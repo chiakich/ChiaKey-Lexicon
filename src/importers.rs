@@ -35,6 +35,7 @@ const RIME_OVERLAP_RERANK_STRONG_GROUP_THRESHOLD: f64 = -0.75;
 const RIME_OVERLAP_RERANK_MIN_SCORE_RATIO: f64 = 1.15;
 const RIME_SPLIT_RERANK_MARGIN: f64 = 0.01;
 const RIME_SPLIT_RERANK_MAX_WEIGHT: f64 = RIME_OVERLAP_RERANK_STRONG_GROUP_THRESHOLD;
+// Kept: protects phrases losing to a [phrase+char] split (e.g. 測試題 vs 測試+提), which the engine length prior can't cover.
 const RIME_SPLIT_RERANK_MAX_BOOST: f64 = 0.35;
 const RIME_SPLIT_RERANK_MAX_GAP: f64 = 0.75;
 const RIME_EXISTING_RERANK_MAX_SPLIT_BOOST: f64 = 0.05;

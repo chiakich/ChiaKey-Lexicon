@@ -134,7 +134,8 @@ pub fn run() -> Result<()> {
         &mut source_keys,
         &mut import_results,
     )?;
-    import_phrase_split_rerank(&mut conn, &mut source_keys, &mut import_results)?;
+    // Retired: superseded by the engine length prior (Node::c_phraseLengthBonus).
+    // import_phrase_split_rerank(&mut conn, &mut source_keys, &mut import_results)?;
     import_fragment_demotions(
         &mut conn,
         &cfg,
@@ -865,6 +866,8 @@ fn import_fragment_demotions(
     Ok(())
 }
 
+// Retired (see run()); kept for history and easy re-enable.
+#[allow(dead_code)]
 fn import_phrase_split_rerank(
     conn: &mut Connection,
     source_keys: &mut HashMap<(String, String), SourceRecord>,
