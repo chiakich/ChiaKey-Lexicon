@@ -34,6 +34,8 @@ tfPO	鑰匙	-1.5	chiaki-modern-overlay,manual,alt-reading,colloquial
 XD	斜	-1.25	chiaki-modern-overlay,manual,polyphone,upstream-freq-fix
 L_u?Ik	不一樣	-1.25	chiaki-modern-overlay,manual,tone-sandhi,common-phrase
 L_F0Ik	不一樣	-1.25	chiaki-modern-overlay,manual,tone-sandhi,common-phrase
+vHwT	瀏海	-1.25	chiaki-modern-overlay,manual,tw-usage,variant-rerank
+F0m_	一句	-1.2	chiaki-modern-overlay,manual,tone-sandhi,demote-uninflected-reading
 0Jml	連動	-2.040361	chiaki-modern-overlay,manual,boneyard-legacy-fix
 0_?0	豉汁	-2.45423	chiaki-modern-overlay,manual,boneyard-legacy-fix
 0_n:	市川	-1.446913	chiaki-modern-overlay,manual,boneyard-legacy-fix
