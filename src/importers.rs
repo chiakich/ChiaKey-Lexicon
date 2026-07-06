@@ -312,6 +312,16 @@ pub fn parse_single_char_homophone_reranks(
             .or_insert(*weight);
     }
 
+    // Count reading groups per character. rime-essay frequency is aggregated
+    // across all readings, so it cannot be attributed to one reading group for a
+    // polyphone (e.g. 會 is mostly ㄏㄨㄟˋ but also ㄎㄨㄞˋ); skip such promotions.
+    let mut char_group_count: HashMap<String, usize> = HashMap::new();
+    for chars in groups.values() {
+        for character in chars.keys() {
+            *char_group_count.entry(character.clone()).or_insert(0) += 1;
+        }
+    }
+
     let mut seen = 0;
     let mut skipped = 0;
     let mut records = Vec::new();
@@ -334,6 +344,11 @@ pub fn parse_single_char_homophone_reranks(
 
         let mut selected = None;
         for (winner, winner_freq) in candidates {
+            // A polyphone's essay frequency belongs mostly to a different reading,
+            // so it must not out-rank the group's true top character.
+            if char_group_count.get(winner).copied().unwrap_or(0) > 1 {
+                continue;
+            }
             let winner_weight = chars.get(winner).copied().unwrap_or(f64::NEG_INFINITY);
             let strongest_competitor = chars
                 .iter()
@@ -2275,6 +2290,31 @@ mod tests {
             records[0].weight,
             round6(-1.091185 + SINGLE_CHAR_HOMOPHONE_RERANK_MARGIN)
         );
+
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn keeps_polyphone_from_out_ranking_reading_group_top() {
+        // 會 (mostly ㄏㄨㄟˋ) also reads ㄎㄨㄞˋ (會計); its aggregate essay
+        // frequency must not out-rank 快 in the ㄎㄨㄞˋ (3e) group.
+        let path = temp_file(
+            "single-char-homophone-rerank-polyphone",
+            "會\t209833\n快\t48871\n",
+        );
+        let existing = vec![
+            ("3e".to_string(), "快".to_string(), -1.185045),
+            ("3e".to_string(), "會".to_string(), -1.185060),
+            // A second reading group marks 會 as a polyphone.
+            ("=f".to_string(), "會".to_string(), -1.159084),
+        ];
+
+        let (records, seen, skipped) =
+            parse_single_char_homophone_reranks(&path, &existing, 2.5).unwrap();
+
+        assert_eq!(seen, 1);
+        assert_eq!(skipped, 1);
+        assert!(records.is_empty());
 
         let _ = fs::remove_file(path);
     }
