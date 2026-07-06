@@ -243,7 +243,7 @@ mod tests {
         assert_eq!(records.len(), 1);
         assert_eq!(records[0].qstring, "_punctuation_list");
         assert_eq!(records[0].phrase, "€");
-        assert_eq!(records[0].tags, "unigram,chiakey-symbols-overlay,currency");
+        assert_eq!(records[0].tags, "unigram,chiaki-symbols-overlay,currency");
 
         let _ = fs::remove_file(path);
     }
@@ -264,7 +264,7 @@ mod tests {
         assert_eq!(records.len(), 1);
         assert_eq!(records[0].qstring, "_punctuation_[");
         assert_eq!(records[0].phrase, "『");
-        assert_eq!(records[0].tags, "unigram,chiakey-symbols-overlay,quote");
+        assert_eq!(records[0].tags, "unigram,chiaki-symbols-overlay,quote");
 
         let _ = fs::remove_file(path);
     }

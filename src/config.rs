@@ -12,11 +12,11 @@ pub const PUNCTUATION_SOURCE_ID: &str = "keykey-punctuations-cin";
 pub const PUNCTUATION_SOURCE_NAME: &str = "KeyKey BPMF punctuation table";
 pub const PUNCTUATION_VENDOR_PATH: &str =
     "sources/keykey-punctuations-cin/vendor/bpmf-punctuations.cin";
-pub const SYMBOL_OVERLAY_SOURCE_ID: &str = "chiakey-symbols-overlay";
+pub const SYMBOL_OVERLAY_SOURCE_ID: &str = "chiaki-symbols-overlay";
 pub const SYMBOL_OVERLAY_SOURCE_NAME: &str = "ChiaKey supplemental symbol list";
-pub const SYMBOL_OVERLAY_PATH: &str = "sources/chiakey-symbols-overlay/symbols.tsv";
+pub const SYMBOL_OVERLAY_PATH: &str = "sources/chiaki-symbols-overlay/symbols.tsv";
 pub const SYMBOL_OVERLAY_ALTERNATIVES_PATH: &str =
-    "sources/chiakey-symbols-overlay/punctuation-alternatives.tsv";
+    "sources/chiaki-symbols-overlay/punctuation-alternatives.tsv";
 pub const PREPOPULATED_SERVICE_SOURCE_ID: &str = "keykey-prepopulated-service-data";
 pub const PREPOPULATED_SERVICE_SOURCE_NAME: &str = "KeyKey prepopulated service data";
 pub const CANNED_MESSAGES_VENDOR_PATH: &str =
@@ -42,23 +42,23 @@ pub const LIBCHEWING_SOURCE_ID: &str = "libchewing-data";
 pub const LIBCHEWING_SOURCE_NAME: &str = "libchewing-data Traditional Chinese Zhuyin dictionary";
 pub const RIME_ESSAY_SOURCE_ID: &str = "rime-essay";
 pub const RIME_ESSAY_SOURCE_NAME: &str = "Rime essay shared vocabulary and language model";
-pub const RIME_CONVERSION_SOURCE_ID: &str = "chiakey-rime-conversion-policy";
+pub const RIME_CONVERSION_SOURCE_ID: &str = "chiaki-rime-conversion-policy";
 pub const RIME_CONVERSION_SOURCE_NAME: &str = "ChiaKey Rime OpenCC override policy";
-pub const OVERLAY_SOURCE_ID: &str = "chiakey-modern-overlay";
+pub const OVERLAY_SOURCE_ID: &str = "chiaki-modern-overlay";
 pub const OVERLAY_SOURCE_NAME: &str = "ChiaKey modern overlay phrases";
 pub const CHIAKI_WEB_OVERLAY_SOURCE_ID: &str = "chiaki-web-overlay";
 pub const CHIAKI_WEB_OVERLAY_SOURCE_NAME: &str = "Chiaki reviewed web corpus overlay";
 pub const CHIAKI_SYNTHETIC_SOURCE_ID: &str = "chiaki-synthetic-overlay";
 pub const CHIAKI_SYNTHETIC_SOURCE_NAME: &str =
     "Chiaki.C GPT-5.5 synthetic Taiwan internet usage overlay";
-pub const CHIAKEY_AUTO_HOTWORDS_SOURCE_ID: &str = "chiakey-auto-hotwords-overlay";
+pub const CHIAKEY_AUTO_HOTWORDS_SOURCE_ID: &str = "chiaki-auto-hotwords-overlay";
 pub const CHIAKEY_AUTO_HOTWORDS_SOURCE_NAME: &str =
     "ChiaKey automatically refreshed hotwords overlay";
 pub const OPENFORMOSA_COMMON_VOICE_SOURCE_ID: &str = "openformosa-common-voice-25-zh-tw";
 pub const OPENFORMOSA_COMMON_VOICE_SOURCE_NAME: &str =
     "OpenFormosa Common Voice 25 zh-TW bigram overlay";
 pub const OPENCC_VARIANT_SOURCE_ID: &str = "opencc-variant-policy";
-pub const FRAGMENT_DENYLIST_SOURCE_ID: &str = "chiakey-fragment-denylist";
+pub const FRAGMENT_DENYLIST_SOURCE_ID: &str = "chiaki-fragment-denylist";
 pub const FRAGMENT_DENYLIST_SOURCE_NAME: &str = "ChiaKey non-lexical fragment weight caps";
 pub const DATABASE_SCHEMA_VERSION: i64 = 1;
 pub const DEFAULT_RELEASE_VERSION: &str = "dev";

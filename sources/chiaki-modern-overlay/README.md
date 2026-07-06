@@ -2,7 +2,7 @@
 
 ## 來源代號
 
-`chiakey-modern-overlay`
+`chiaki-modern-overlay`
 
 ## 資料層
 
@@ -39,7 +39,11 @@ qstring<TAB>phrase<TAB>weight<TAB>tags
 
 此層為專案自有資料。
 
-授權：CC0-1.0
+授權：CC BY-NC 4.0（Chiaki.C）
+
+非商業與開源專案可於標示來源為 Chiaki.C 前提下使用；商業用途需另行取得授權。
+
+授權全文見：`sources/chiaki-modern-overlay/LICENSE`
 
 ## 驗證
 

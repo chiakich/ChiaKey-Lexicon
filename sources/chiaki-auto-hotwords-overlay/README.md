@@ -2,7 +2,7 @@
 
 ## 來源代號
 
-`chiakey-auto-hotwords-overlay`
+`chiaki-auto-hotwords-overlay`
 
 ## 資料層
 
@@ -61,6 +61,12 @@ Release builder 會依既有單字讀音推導 qstring；無法推導的列在 r
 ## 上游與授權
 
 本覆蓋層為專案自動產生與維護之衍生資料列，實際輸出為 ChiaKey 擁有之結果資料。
+
+授權：CC BY-NC 4.0（Chiaki.C）
+
+非商業與開源專案可於標示來源為 Chiaki.C 前提下使用；商業用途需另行取得授權。
+
+授權全文見：`sources/chiaki-auto-hotwords-overlay/LICENSE`
 
 ## 驗證
 

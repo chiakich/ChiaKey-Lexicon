@@ -53,15 +53,15 @@ const RAW_SOURCES = [
     format: (cols) => `freq=${cols[1]}`,
   },
   {
-    label: "chiakey-modern-overlay/phrases.tsv",
-    file: "sources/chiakey-modern-overlay/phrases.tsv",
+    label: "chiaki-modern-overlay/phrases.tsv",
+    file: "sources/chiaki-modern-overlay/phrases.tsv",
     delimiter: "\t",
     phraseCol: 0,
     format: (cols) => `weight=${cols[1]} tags=${cols[2]}`,
   },
   {
-    label: "chiakey-modern-overlay/explicit.tsv",
-    file: "sources/chiakey-modern-overlay/explicit.tsv",
+    label: "chiaki-modern-overlay/explicit.tsv",
+    file: "sources/chiaki-modern-overlay/explicit.tsv",
     delimiter: "\t",
     phraseCol: 1,
     format: (cols) => `qstring=${cols[0]} weight=${cols[2]} tags=${cols[3]}`,
@@ -81,15 +81,15 @@ const RAW_SOURCES = [
     format: (cols) => `qstring=${cols[0]} weight=${cols[2]} tags=${cols[3]}`,
   },
   {
-    label: "chiakey-auto-hotwords-overlay/phrases.tsv",
-    file: "sources/chiakey-auto-hotwords-overlay/phrases.tsv",
+    label: "chiaki-auto-hotwords-overlay/phrases.tsv",
+    file: "sources/chiaki-auto-hotwords-overlay/phrases.tsv",
     delimiter: "\t",
     phraseCol: 0,
     format: (cols) => `weight=${cols[1]} tags=${cols[2]}`,
   },
   {
-    label: "chiakey-fragment-denylist/fragment-demotions.tsv",
-    file: "sources/chiakey-fragment-denylist/fragment-demotions.tsv",
+    label: "chiaki-fragment-denylist/fragment-demotions.tsv",
+    file: "sources/chiaki-fragment-denylist/fragment-demotions.tsv",
     delimiter: "\t",
     phraseCol: 0,
     format: (cols) => `max_weight=${cols[1]} tags=${cols[2]}`,
@@ -149,14 +149,26 @@ function scanBoneyardDb(words) {
 async function scanNormalized(words) {
   // matches: word -> [{ qstring, phrase, weight, sourceId, tags }]
   const matches = new Map(words.map((w) => [w, []]));
+  // bestByQstring: qstring -> strongest unigram candidate, used to explain
+  // why a whole phrase can lose to a split path.
+  const bestByQstring = new Map();
   // homophoneGroups: qstring -> [{ phrase, weight, sourceId, tags }] for any
   // qstring that at least one target word matched, so we can show the full
   // ranking context (useful for the "why is A above B" question).
   const wantedQstrings = new Set();
   await forEachLine(NORMALIZED_PATH, (line) => {
     const [qstring, phrase, weight, sourceId, tags] = line.split("\t");
+    const entry = { qstring, phrase, weight: Number(weight), sourceId, tags };
+    const best = bestByQstring.get(qstring);
+    if (
+      !best ||
+      entry.weight > best.weight ||
+      (entry.weight === best.weight && entry.phrase.localeCompare(best.phrase, "zh-Hant") < 0)
+    ) {
+      bestByQstring.set(qstring, entry);
+    }
     if (matches.has(phrase)) {
-      matches.get(phrase).push({ qstring, phrase, weight, sourceId, tags });
+      matches.get(phrase).push(entry);
       wantedQstrings.add(qstring);
     }
   });
@@ -172,7 +184,35 @@ async function scanNormalized(words) {
     group.sort((a, b) => b.weight - a.weight);
   }
 
-  return { matches, groups };
+  return { matches, groups, bestByQstring };
+}
+
+function bestSplit(row, bestByQstring) {
+  const syllables = row.qstring.length / 2;
+  if (!Number.isInteger(syllables) || syllables < 2) return null;
+
+  let best = null;
+  for (let splitSyllable = 1; splitSyllable < syllables; splitSyllable += 1) {
+    const splitAt = splitSyllable * 2;
+    const prefix = row.qstring.slice(0, splitAt);
+    const suffix = row.qstring.slice(splitAt);
+    const left = bestByQstring.get(prefix);
+    const right = bestByQstring.get(suffix);
+    if (!left || !right) continue;
+    const weight = left.weight + right.weight;
+    if (
+      !best ||
+      weight > best.weight ||
+      (weight === best.weight &&
+        `${left.phrase}${right.phrase}`.localeCompare(
+          `${best.left.phrase}${best.right.phrase}`,
+          "zh-Hant",
+        ) < 0)
+    ) {
+      best = { left, right, weight };
+    }
+  }
+  return best;
 }
 
 async function main() {
@@ -194,7 +234,7 @@ async function main() {
     process.exit(1);
   }
 
-  const { matches, groups } = await scanNormalized(words);
+  const { matches, groups, bestByQstring } = await scanNormalized(words);
   const rawHitsBySource = await Promise.all(
     RAW_SOURCES.map((source) => scanRawSource(source, words)),
   );
@@ -211,6 +251,13 @@ async function main() {
       console.log(
         `  final: qstring=${row.qstring} weight=${row.weight} source=${row.sourceId} tags=${row.tags}`,
       );
+      const split = bestSplit(row, bestByQstring);
+      if (split) {
+        const delta = row.weight - split.weight;
+        console.log(
+          `  best split: ${split.left.phrase}+${split.right.phrase} weight=${split.weight.toFixed(6)} delta=${delta.toFixed(6)}`,
+        );
+      }
     }
 
     console.log("  raw sources:");

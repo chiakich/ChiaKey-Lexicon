@@ -10,7 +10,7 @@
 //   node scripts/audit-boneyard-legacy-weights.mjs [--top 50] [--min-ratio 3]
 //
 // This is a heuristic screen, not a verdict — every hit still needs a human
-// read before touching chiakey-modern-overlay. See scripts/explain-weight.mjs
+// read before touching chiaki-modern-overlay. See scripts/explain-weight.mjs
 // for a per-phrase deep dive on any candidate this surfaces.
 
 import fs from "node:fs";

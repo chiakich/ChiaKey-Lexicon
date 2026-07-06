@@ -1,0 +1,31 @@
+Chiaki.C Fragment Denylist License Notice
+
+Source id: chiaki-fragment-denylist
+Copyright (c) Chiaki.C
+
+This lexicon source is licensed under the Creative Commons
+Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0).
+
+Canonical license URL:
+https://creativecommons.org/licenses/by-nc/4.0/
+
+Under CC BY-NC 4.0, non-commercial users may share and adapt this source with
+attribution to Chiaki.C. Open-source projects may use this source under CC
+BY-NC 4.0.
+
+Commercial use is not granted by CC BY-NC 4.0. For commercial use, including
+redistribution in a commercial product or service, paid integration, or other
+revenue-generating use, contact Chiaki.C for separate written permission.
+
+This notice applies only to the chiaki-fragment-denylist source rows.
+Other ChiaKey Lexicon sources remain governed by their own source-specific
+licenses and notices.
+
+Provenance note:
+
+The rows in this source are a project-owned fragment weight cap list written
+directly by Chiaki.C to suppress non-lexical segmentation shards. Candidate
+fragments were cross-checked offline against the Ministry of Education
+Revised Mandarin Chinese Dictionary (CC BY-ND 3.0 TW) as a reference only;
+that dictionary's text is not redistributed in this repository, and this
+notice does not alter its license.

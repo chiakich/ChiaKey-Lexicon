@@ -151,6 +151,51 @@ pub fn refresh_metadata_counts(conn: &Connection) -> Result<()> {
     Ok(())
 }
 
+pub fn reorder_mandarin_bpmf_candidates(conn: &mut Connection) -> Result<()> {
+    let tx = conn.transaction()?;
+    tx.execute(
+        "CREATE TEMP TABLE chiaki_mandarin_bpmf_preserved AS
+         SELECT rowid AS original_rowid, key, value
+         FROM 'Mandarin-bpmf-cin'
+         WHERE key LIKE '__property_%'
+            OR NOT EXISTS (
+                SELECT 1
+                FROM unigrams
+                WHERE qstring = 'Mandarin-bpmf-cin'.key
+                  AND current = 'Mandarin-bpmf-cin'.value
+            )",
+        [],
+    )?;
+    tx.execute("DELETE FROM 'Mandarin-bpmf-cin'", [])?;
+    tx.execute(
+        "INSERT INTO 'Mandarin-bpmf-cin' (key, value)
+         SELECT key, value
+         FROM chiaki_mandarin_bpmf_preserved
+         WHERE key LIKE '__property_%'
+         ORDER BY original_rowid",
+        [],
+    )?;
+    tx.execute(
+        "INSERT INTO 'Mandarin-bpmf-cin' (key, value)
+         SELECT qstring, current
+         FROM unigrams
+         WHERE current <> ''
+         ORDER BY qstring, probability DESC, current",
+        [],
+    )?;
+    tx.execute(
+        "INSERT INTO 'Mandarin-bpmf-cin' (key, value)
+         SELECT key, value
+         FROM chiaki_mandarin_bpmf_preserved
+         WHERE key NOT LIKE '__property_%'
+         ORDER BY key, original_rowid",
+        [],
+    )?;
+    tx.execute("DROP TABLE chiaki_mandarin_bpmf_preserved", [])?;
+    tx.commit()?;
+    Ok(())
+}
+
 pub fn apply_prepopulated_service_data(
     conn: &mut Connection,
     data: &ServiceData,

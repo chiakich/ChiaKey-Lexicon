@@ -40,14 +40,14 @@ manifest 記錄的是該 inventory file 的 SHA-256，而不是單一 upstream a
 
 ## 自 2026.06.2 起納入
 
-### chiakey-modern-overlay
+### chiaki-modern-overlay
 
 - 名稱：ChiaKey modern overlay phrases
 - 本地來源：
-  - `sources/chiakey-modern-overlay/phrases.tsv`
-  - `sources/chiakey-modern-overlay/explicit.tsv`
-- 授權：CC0-1.0
-- 署名：ChiaKey Lexicon maintainers
+  - `sources/chiaki-modern-overlay/phrases.tsv`
+  - `sources/chiaki-modern-overlay/explicit.tsv`
+- 授權：CC BY-NC 4.0；商用需取得 Chiaki.C 許可
+- 署名：Chiaki.C
 - 再散布決策：納入公開 release
 
 這個來源刻意保持小型且由專案自有維護。它用於實測時發現的明顯 seed lexicon 缺漏，例如不應等未來大型 frequency corpus 才補上的基本輸入法用語。
@@ -104,11 +104,11 @@ sources/libchewing-data/source-inventory.sha256
 
 Rime essay 有可用的現代詞彙與分數，但不包含注音讀音。因此 release builder 只會在另一個來源已提供讀音後使用它。
 
-Rime essay phrase 進入 rerank 與 supplemental 匯入前，會先以 OpenCC `t2tw` 批次正規化為台灣標準繁體。`sources/chiakey-rime-conversion-policy/replacements.tsv` 只作為 `t2tw` 後的專案例外表，保留 OpenCC 無法安全判斷的地名 `里` 與食物詞 `里肌` 等偏好，不再維護一般異體字轉換清單。
+Rime essay phrase 進入 rerank 與 supplemental 匯入前，會先以 OpenCC `t2tw` 批次正規化為台灣標準繁體。`sources/chiaki-rime-conversion-policy/replacements.tsv` 只作為 `t2tw` 後的專案例外表，保留 OpenCC 無法安全判斷的地名 `里` 與食物詞 `里肌` 等偏好，不再維護一般異體字轉換清單。
 
 首先，overlap rerank pass 會用 Rime scores 提升同一 KeyKey qstring group 內的既有候選。這個 pass 只會把較低排序的候選提升到足以尊重 Rime ordering，不會 demote 既有 rows，也會限制 promotion，避免 Rime 把 ambiguous candidate 推過既有高頻詞範圍。
 
-另有 single-character homophone rerank pass 會處理 libchewing 單字頻率對同音字近乎攤平的問題。它只在同一單字 qstring group 內比較 Rime essay 單字頻率，而且 Rime winner 與目前 top candidate 都必須有 Rime 單字頻率；預設 winner 至少要有 `5x` 頻率優勢，才會被小幅提升到目前 top 之上。這個 pass 只 raise，不 demote。
+另有 single-character homophone rerank pass 會處理 libchewing 單字頻率對同音字近乎攤平的問題。它只在同一單字 qstring group 內比較 Rime essay 單字頻率，而且候選與目前 top candidate 都必須有 Rime 單字頻率；預設候選至少要有 `2.5x` 頻率優勢，才會被小幅提升到目前 top 之上。若較高 Rime 頻率的候選沒有通過安全條件，pass 會繼續檢查下一個候選；當候選已有多個同 qstring 開頭的強 phrase rows 支援時，可用較低但仍保守的 Rime 頻率門檻處理 `量` / `ㄌㄧㄤˋ` 這類單字頻率錯置。這個 pass 只 raise，不 demote。
 
 接著，低優先補充詞 pass 會匯入符合以下條件的 entries：
 
@@ -194,7 +194,7 @@ sources/keykey-punctuations-cin/source-inventory.sha256
 
 這個來源恢復原始 KeyKey 預載 canned-message payload。release builder 會把完整 `CannedMessages.plist` 內容寫入 `prepopulated_service_data` 的 `canned_messages`，並以正值 release timestamp 寫入 `canned_messages_timestamp`。
 
-release cooking 時，builder 會用 `chiakey-symbols-overlay/symbols.tsv` 產生一組 button categories 來補強 canned-message payload。這讓可見的符號表取得與 `_punctuation_list` 相同的補充符號，但不會把所有符號塞進單一過大的分類。builder 也會用 Mozc-backed `Messages` list 取代原始帶註解的 `顏文字` 分類，讓符號表只顯示顏文字本體，而不是 `顏文字 + 中文說明` 這類字串。
+release cooking 時，builder 會用 `chiaki-symbols-overlay/symbols.tsv` 產生一組 button categories 來補強 canned-message payload。這讓可見的符號表取得與 `_punctuation_list` 相同的補充符號，但不會把所有符號塞進單一過大的分類。builder 也會用 Mozc-backed `Messages` list 取代原始帶註解的 `顏文字` 分類，讓符號表只顯示顏文字本體，而不是 `顏文字 + 中文說明` 這類字串。
 
 `OneKey.plist` 會刻意從公開 release 省略。OneKey 是 Yahoo 時代的 URL launcher，不是輸入詞庫資料；現代 ChiaKey 也不再載入它。新的 release databases 不應包含 `onekey_services` 或 `onekey_services_timestamp`。
 
@@ -243,14 +243,14 @@ sources/keykey-module-cin/source-inventory.sha256
 
 ## 自 2026.06.8 起納入
 
-### chiakey-auto-hotwords-overlay
+### chiaki-auto-hotwords-overlay
 
 - 名稱：ChiaKey automatically refreshed hotwords overlay
 - 本地來源：
-  - `sources/chiakey-auto-hotwords-overlay/phrases.tsv`
-  - `sources/chiakey-auto-hotwords-overlay/state.json`
-- 授權：CC0-1.0 for the generated overlay rows maintained in this repository
-- 署名：ChiaKey Lexicon maintainers
+  - `sources/chiaki-auto-hotwords-overlay/phrases.tsv`
+  - `sources/chiaki-auto-hotwords-overlay/state.json`
+- 授權：CC BY-NC 4.0 for the generated overlay rows maintained in this repository；商用需取得 Chiaki.C 許可
+- 署名：Chiaki.C
 - 再散布決策：納入公開 release
 
 這個來源是自動維護的短期熱詞補充層。Google Trends 只作為 discovery signal；
@@ -275,14 +275,14 @@ repository 不保存 Google Trends 的原始 CSV、排名表、新聞摘要或�
 
 ## 自 2026.06.9 起納入
 
-### chiakey-symbols-overlay
+### chiaki-symbols-overlay
 
 - 名稱：ChiaKey supplemental symbol list
 - 本地來源：
-  - `sources/chiakey-symbols-overlay/symbols.tsv`
-  - `sources/chiakey-symbols-overlay/punctuation-alternatives.tsv`
-- 授權：CC0-1.0
-- 署名：ChiaKey Lexicon maintainers
+  - `sources/chiaki-symbols-overlay/symbols.tsv`
+  - `sources/chiaki-symbols-overlay/punctuation-alternatives.tsv`
+- 授權：CC BY-NC 4.0；商用需取得 Chiaki.C 許可
+- 署名：Chiaki.C
 - 再散布決策：自 `2026.06.9` 起納入公開 release
 
 這個來源用專案自有符號補強原始 KeyKey punctuation list，涵蓋現代文字輸入常用的 extended punctuation、貨幣符號、法律與商標符號、CJK 符號、圈號數字、羅馬數字變體、補充箭頭、數學運算與關係符號、勾叉、星號、撲克牌花色、音樂符號與單位符號。
@@ -296,7 +296,7 @@ release builder 會把 `symbols.tsv` 匯入為 `_punctuation_list` rows。它會
 產生的 source inventory 存放於：
 
 ```text
-sources/chiakey-symbols-overlay/source-inventory.sha256
+sources/chiaki-symbols-overlay/source-inventory.sha256
 ```
 
 ### mozc-emoticon-data
@@ -325,7 +325,7 @@ sources/mozc-emoticon-data/source-inventory.sha256
 
 - 名稱：Chiaki reviewed web corpus overlay
 - 本地來源：
-  - `sources/chiaki-web-overlay/explicit.tsv`
+  - `sources/chiaki-web-overlay/unigrams.tsv`
   - `sources/chiaki-web-overlay/bigrams.tsv`
 - 來源材料：經審查的 web-derived 台灣網路用語材料
 - 授權：CC BY-NC 4.0；商用需取得 Chiaki.C 許可
@@ -339,7 +339,7 @@ qstring<TAB>phrase<TAB>weight<TAB>tags
 qstring<TAB>previous<TAB>current<TAB>probability
 ```
 
-release builder 會在 `chiakey-modern-overlay` 之後匯入 unigram rows，並在 synthetic 與 Common Voice bigrams 之後匯入 bigram rows。
+release builder 會在 `chiaki-modern-overlay` 之後匯入 unigram rows，並在 synthetic 與 Common Voice bigrams 之後匯入 bigram rows。
 
 產生的 source inventory 存放於：
 

@@ -72,19 +72,19 @@ Goal: provide reviewable and redistributable external vocabulary and reading cov
 
 Goal: project-maintained lexicon data that directly reflects ChiaKey usage context.
 
-- `chiakey-modern-overlay`: project-owned fixes and explicit reading/order adjustments.
+- `chiaki-modern-overlay`: project-owned fixes and explicit reading/order adjustments.
 - `chiaki-web-overlay`: reviewed web-usage unigram and bigram supplements.
 - `chiaki-synthetic-overlay`: synthetic-corpus-derived unigram and bigram supplements.
 - `openformosa-common-voice-25-zh-tw`: selected bigram rows from Common Voice data.
-- `chiakey-auto-hotwords-overlay`: automatically refreshed hotwords overlay (project-output rows only).
-- `chiakey-symbols-overlay`: supplemental `_punctuation_list` symbols and runtime punctuation candidates.
+- `chiaki-auto-hotwords-overlay`: automatically refreshed hotwords overlay (project-output rows only).
+- `chiaki-symbols-overlay`: supplemental `_punctuation_list` symbols and runtime punctuation candidates.
 
 ### Policy Layers
 
 Goal: map external evidence into default zh-TW output expectations and suppress known segmentation risks.
 
-- `chiakey-rime-conversion-policy`: post-OpenCC Rime overrides for cases `t2tw` cannot safely decide, such as `里` in place names and `里肌` food terms.
-- `chiakey-fragment-denylist`: fragment weight caps to reduce bad segmentation from non-lexical shards.
+- `chiaki-rime-conversion-policy`: post-OpenCC Rime overrides for cases `t2tw` cannot safely decide, such as `里` in place names and `里肌` food terms.
+- `chiaki-fragment-denylist`: fragment weight caps to reduce bad segmentation from non-lexical shards.
 
 The release builder also derives `associated_phrases` from final `unigrams` for runtime phrase suggestions. This is not an independent source layer; it provides head-character -> phrase-tail candidates (for example, after `我`, suggest `們` or `的`).
 
@@ -96,13 +96,13 @@ The release builder integration flow is deterministic:
 2. Copy cooked `KeyKeySource.db` from `keykey-boneyard-bootstrap` as the base.
 3. Import `libchewing-data` to strengthen modern vocabulary with explicit bopomofo readings; overlapping bootstrap phrases are replaced by libchewing data.
 4. Import `bpmf-ext-cin` to fill missing single-character readings without overwriting existing rows.
-5. Batch-normalize Rime essay phrases with OpenCC `t2tw`, then apply the small `chiakey-rime-conversion-policy` override table; the normalized result is shared by Rime rerank and supplemental import passes.
+5. Batch-normalize Rime essay phrases with OpenCC `t2tw`, then apply the small `chiaki-rime-conversion-policy` override table; the normalized result is shared by Rime rerank and supplemental import passes.
 6. Apply `rime-essay` rerank: cap same-pronunciation boosts, allow limited uplift from Rime evidence for weak existing phrases, apply small single-character homophone reorders where frequency advantage is sufficient, then import only safe supplemental phrases not already in DB.
    - Supplemental `split-rerank` is intentionally conservative: if the Rime base is too far below the best existing split, it stays on the Rime scale; otherwise it only receives a bounded boost. This prevents high-frequency character splits such as `的`+`是` from flattening every candidate in the same qstring group, for example `地市` and `的事`.
-7. Import `chiakey-modern-overlay/phrases.tsv` so project-owned fixes can replace known problematic phrases.
-8. Import `chiakey-modern-overlay/explicit.tsv` for explicit qstring and ranking corrections.
+7. Import `chiaki-modern-overlay/phrases.tsv` so project-owned fixes can replace known problematic phrases.
+8. Import `chiaki-modern-overlay/explicit.tsv` for explicit qstring and ranking corrections.
 9. Import `chiaki-web-overlay/explicit.tsv` and `chiaki-synthetic-overlay/unigrams.tsv`.
-10. Generate OpenCC `t2tw` same-qstring variant weight caps for candidates that already have Taiwan-standard counterparts, then apply `chiakey-fragment-denylist` to keep non-lexical fragments below safety thresholds.
+10. Generate OpenCC `t2tw` same-qstring variant weight caps for candidates that already have Taiwan-standard counterparts, then apply `chiaki-fragment-denylist` to keep non-lexical fragments below safety thresholds.
 11. Import `chiaki-synthetic-overlay/bigrams.tsv`, then `openformosa-common-voice-25-zh-tw/bigrams.tsv`, then `chiaki-web-overlay/bigrams.tsv` so reviewed web bigrams can override overlapping statistical rows.
 12. Import runtime compatibility data: BPMF punctuations, supplemental symbol list, canned messages, Mozc emoticons, and module CIN tables.
 13. Derive `associated_phrases` from final `unigrams` for runtime phrase suggestions.

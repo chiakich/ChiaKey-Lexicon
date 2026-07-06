@@ -18,6 +18,7 @@ use std::path::{Path, PathBuf};
 
 const LIBCHEWING_PHRASE_SEGMENT_BONUS: f64 = 0.5;
 const LIBCHEWING_PHRASE_SEGMENT_BONUS_THRESHOLD: f64 = -0.75;
+const LIBCHEWING_PHRASE_SEGMENT_BONUS_FULL_AT: f64 = -1.5;
 pub const LIBCHEWING_CHARACTER_PHRASE_EVIDENCE_MIN_PHRASE_WEIGHT: f64 = -1.0;
 const LIBCHEWING_CHARACTER_PHRASE_EVIDENCE_MIN_SUPPORT: usize = 3;
 const LIBCHEWING_CHARACTER_PHRASE_EVIDENCE_CURRENT_THRESHOLD: f64 = -2.4;
@@ -34,11 +35,18 @@ const RIME_OVERLAP_RERANK_STRONG_GROUP_THRESHOLD: f64 = -0.75;
 const RIME_OVERLAP_RERANK_MIN_SCORE_RATIO: f64 = 1.15;
 const RIME_SPLIT_RERANK_MARGIN: f64 = 0.01;
 const RIME_SPLIT_RERANK_MAX_WEIGHT: f64 = RIME_OVERLAP_RERANK_STRONG_GROUP_THRESHOLD;
+// Kept: protects phrases losing to a [phrase+char] split (e.g. 測試題 vs 測試+提), which the engine length prior can't cover.
 const RIME_SPLIT_RERANK_MAX_BOOST: f64 = 0.35;
 const RIME_SPLIT_RERANK_MAX_GAP: f64 = 0.75;
 const RIME_EXISTING_RERANK_MAX_SPLIT_BOOST: f64 = 0.05;
+const PHRASE_SPLIT_RERANK_MARGIN: f64 = 0.01;
+const PHRASE_SPLIT_RERANK_MAX_GAP: f64 = 0.25;
+const PHRASE_SPLIT_RERANK_CEILING: f64 = BIGRAM_PROB_CEILING;
 const SINGLE_CHAR_HOMOPHONE_RERANK_MARGIN: f64 = 0.01;
 const SINGLE_CHAR_HOMOPHONE_RERANK_MAX_WEIGHT_GAP: f64 = 0.25;
+const SINGLE_CHAR_HOMOPHONE_RERANK_PHRASE_EVIDENCE_MIN_RATIO: f64 = 2.0;
+const SINGLE_CHAR_HOMOPHONE_RERANK_PHRASE_EVIDENCE_MIN_SUPPORT: usize = 3;
+const SINGLE_CHAR_HOMOPHONE_RERANK_PHRASE_EVIDENCE_MIN_WEIGHT: f64 = -1.35;
 const OPENCC_VARIANT_DEMOTION_MARGIN: f64 = 0.01;
 
 #[derive(Clone, Copy)]
@@ -272,8 +280,24 @@ pub fn parse_single_char_homophone_reranks(
     }
 
     let mut groups: HashMap<String, HashMap<String, f64>> = HashMap::new();
+    let mut phrase_evidence: HashMap<(String, String), (f64, usize)> = HashMap::new();
     for (qstring, phrase, weight) in existing_records {
         if phrase.chars().count() != 1 || qstring.chars().count() != 2 {
+            if phrase.chars().count() > 1 && qstring.chars().count() == phrase.chars().count() * 2 {
+                let head = phrase.chars().next().unwrap().to_string();
+                let head_qstring = qstring.chars().take(2).collect::<String>();
+                if *weight >= SINGLE_CHAR_HOMOPHONE_RERANK_PHRASE_EVIDENCE_MIN_WEIGHT {
+                    phrase_evidence
+                        .entry((head_qstring, head))
+                        .and_modify(|(best_weight, support_count)| {
+                            if *weight > *best_weight {
+                                *best_weight = *weight;
+                            }
+                            *support_count += 1;
+                        })
+                        .or_insert((*weight, 1));
+                }
+            }
             continue;
         }
         groups
@@ -288,6 +312,16 @@ pub fn parse_single_char_homophone_reranks(
             .or_insert(*weight);
     }
 
+    // Count reading groups per character. rime-essay frequency is aggregated
+    // across all readings, so it cannot be attributed to one reading group for a
+    // polyphone (e.g. 會 is mostly ㄏㄨㄟˋ but also ㄎㄨㄞˋ); skip such promotions.
+    let mut char_group_count: HashMap<String, usize> = HashMap::new();
+    for chars in groups.values() {
+        for character in chars.keys() {
+            *char_group_count.entry(character.clone()).or_insert(0) += 1;
+        }
+    }
+
     let mut seen = 0;
     let mut skipped = 0;
     let mut records = Vec::new();
@@ -296,48 +330,77 @@ pub fn parse_single_char_homophone_reranks(
             continue;
         }
         seen += 1;
-        let Some((winner, winner_freq)) = chars
+        let candidates = chars
             .keys()
             .filter_map(|character| essay_freq.get(character).map(|freq| (character, *freq)))
-            .max_by_key(|(_, freq)| *freq)
-        else {
+            .collect::<Vec<_>>();
+        if candidates.is_empty() {
             skipped += 1;
             continue;
         };
-        let winner_weight = chars.get(winner).copied().unwrap_or(f64::NEG_INFINITY);
-        let strongest_competitor = chars
-            .iter()
-            .filter(|(character, _weight)| *character != winner)
-            .max_by(|left, right| {
-                left.1
-                    .partial_cmp(right.1)
-                    .unwrap()
-                    .then_with(|| left.0.cmp(right.0))
-            });
-        let Some((competitor, competitor_weight)) = strongest_competitor else {
-            skipped += 1;
-            continue;
-        };
-        if winner_weight > *competitor_weight {
-            skipped += 1;
-            continue;
-        };
-        if *competitor_weight - winner_weight > SINGLE_CHAR_HOMOPHONE_RERANK_MAX_WEIGHT_GAP {
-            skipped += 1;
-            continue;
+
+        let mut candidates = candidates;
+        candidates.sort_by(|left, right| right.1.cmp(&left.1).then_with(|| left.0.cmp(right.0)));
+
+        let mut selected = None;
+        for (winner, winner_freq) in candidates {
+            // A polyphone's essay frequency belongs mostly to a different reading,
+            // so it must not out-rank the group's true top character.
+            if char_group_count.get(winner).copied().unwrap_or(0) > 1 {
+                continue;
+            }
+            let winner_weight = chars.get(winner).copied().unwrap_or(f64::NEG_INFINITY);
+            let strongest_competitor = chars
+                .iter()
+                .filter(|(character, _weight)| *character != winner)
+                .max_by(|left, right| {
+                    left.1
+                        .partial_cmp(right.1)
+                        .unwrap()
+                        .then_with(|| left.0.cmp(right.0))
+                });
+            let Some((competitor, competitor_weight)) = strongest_competitor else {
+                continue;
+            };
+            if winner_weight > *competitor_weight {
+                continue;
+            };
+            let has_strong_phrase_evidence = phrase_evidence
+                .get(&(qstring.clone(), winner.clone()))
+                .is_some_and(|(_best_weight, support_count)| {
+                    *support_count >= SINGLE_CHAR_HOMOPHONE_RERANK_PHRASE_EVIDENCE_MIN_SUPPORT
+                });
+            if !has_strong_phrase_evidence
+                && *competitor_weight - winner_weight > SINGLE_CHAR_HOMOPHONE_RERANK_MAX_WEIGHT_GAP
+            {
+                continue;
+            }
+            let Some(competitor_freq) = essay_freq.get(competitor).copied() else {
+                continue;
+            };
+            let required_ratio = if has_strong_phrase_evidence {
+                min_ratio.min(SINGLE_CHAR_HOMOPHONE_RERANK_PHRASE_EVIDENCE_MIN_RATIO)
+            } else {
+                min_ratio
+            };
+            if (winner_freq as f64) < required_ratio * (competitor_freq as f64) {
+                continue;
+            }
+            selected = Some((
+                winner.clone(),
+                round6(*competitor_weight + SINGLE_CHAR_HOMOPHONE_RERANK_MARGIN),
+            ));
+            break;
         }
-        let Some(competitor_freq) = essay_freq.get(competitor).copied() else {
+
+        let Some((winner, weight)) = selected else {
             skipped += 1;
             continue;
         };
-        if (winner_freq as f64) < min_ratio * (competitor_freq as f64) {
-            skipped += 1;
-            continue;
-        }
         records.push(SourceRecord {
             qstring: qstring.clone(),
             phrase: winner.clone(),
-            weight: round6(competitor_weight + SINGLE_CHAR_HOMOPHONE_RERANK_MARGIN),
+            weight,
             source_id: RIME_ESSAY_SOURCE_ID,
             tags: format!("unigram,{RIME_ESSAY_SOURCE_ID},homophone-rerank"),
         });
@@ -548,6 +611,42 @@ pub fn parse_normalized_rime_existing_phrase_reranks(
     }
 
     Ok((dedupe_records(records), seen, skipped))
+}
+
+pub fn phrase_split_rerank_records(
+    existing_records: &[(String, String, f64)],
+    existing_qstring_weights: &HashMap<String, f64>,
+) -> Vec<SourceRecord> {
+    let mut records = Vec::new();
+
+    for (qstring, phrase, current_weight) in existing_records {
+        let phrase_len = phrase.chars().count();
+        if phrase_len < 2 || qstring.chars().count() != phrase_len * 2 {
+            continue;
+        }
+        let Some(best_split) = best_split_weight(qstring, phrase_len, existing_qstring_weights)
+        else {
+            continue;
+        };
+        if best_split + PHRASE_SPLIT_RERANK_MARGIN <= *current_weight {
+            continue;
+        }
+        if best_split - current_weight > PHRASE_SPLIT_RERANK_MAX_GAP {
+            continue;
+        }
+
+        records.push(SourceRecord {
+            qstring: qstring.clone(),
+            phrase: phrase.clone(),
+            weight: round6(
+                (best_split + PHRASE_SPLIT_RERANK_MARGIN).min(PHRASE_SPLIT_RERANK_CEILING),
+            ),
+            source_id: OVERLAY_SOURCE_ID,
+            tags: format!("unigram,{OVERLAY_SOURCE_ID},generated,phrase-split-rerank"),
+        });
+    }
+
+    dedupe_records(records)
 }
 
 pub fn parse_conversion_rules(path: &Path) -> Result<(Vec<ConversionRule>, usize, usize)> {
@@ -1246,7 +1345,10 @@ fn libchewing_weight(score: i64, max_score: i64, syllable_count: usize) -> f64 {
         -0.25 - (2.35 * (1.0 - ratio))
     };
     let segment_bonus = if syllable_count > 1 && base < LIBCHEWING_PHRASE_SEGMENT_BONUS_THRESHOLD {
-        LIBCHEWING_PHRASE_SEGMENT_BONUS
+        let span =
+            LIBCHEWING_PHRASE_SEGMENT_BONUS_THRESHOLD - LIBCHEWING_PHRASE_SEGMENT_BONUS_FULL_AT;
+        let progress = ((LIBCHEWING_PHRASE_SEGMENT_BONUS_THRESHOLD - base) / span).clamp(0.0, 1.0);
+        LIBCHEWING_PHRASE_SEGMENT_BONUS * progress
     } else {
         0.0
     };
@@ -1274,21 +1376,8 @@ fn rime_split_rerank_weight(
     syllable_count: usize,
     existing_qstring_weights: &HashMap<String, f64>,
 ) -> f64 {
-    let mut best_split = f64::NEG_INFINITY;
-    for split_syllable in 1..syllable_count {
-        let split_at = split_syllable * 2;
-        if split_at >= qstring.len() {
-            continue;
-        }
-        let (prefix, suffix) = qstring.split_at(split_at);
-        let Some(prefix_weight) = existing_qstring_weights.get(prefix) else {
-            continue;
-        };
-        let Some(suffix_weight) = existing_qstring_weights.get(suffix) else {
-            continue;
-        };
-        best_split = best_split.max(prefix_weight + suffix_weight);
-    }
+    let best_split = best_split_weight(qstring, syllable_count, existing_qstring_weights)
+        .unwrap_or(f64::NEG_INFINITY);
 
     if best_split.is_finite() && best_split + RIME_SPLIT_RERANK_MARGIN > base_weight {
         if best_split - base_weight > RIME_SPLIT_RERANK_MAX_GAP {
@@ -1305,6 +1394,30 @@ fn rime_split_rerank_weight(
     }
 }
 
+fn best_split_weight(
+    qstring: &str,
+    syllable_count: usize,
+    existing_qstring_weights: &HashMap<String, f64>,
+) -> Option<f64> {
+    let mut best_split = f64::NEG_INFINITY;
+    for split_syllable in 1..syllable_count {
+        let split_at = split_syllable * 2;
+        if split_at >= qstring.len() {
+            continue;
+        }
+        let (prefix, suffix) = qstring.split_at(split_at);
+        let Some(prefix_weight) = existing_qstring_weights.get(prefix) else {
+            continue;
+        };
+        let Some(suffix_weight) = existing_qstring_weights.get(suffix) else {
+            continue;
+        };
+        best_split = best_split.max(prefix_weight + suffix_weight);
+    }
+
+    best_split.is_finite().then_some(best_split)
+}
+
 fn round6(value: f64) -> f64 {
     (value * 1_000_000.0).round() / 1_000_000.0
 }
@@ -1312,14 +1425,14 @@ fn round6(value: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::{
-        calibrate_bigram_boost, joined_phrase_records_from_bigrams, libchewing_character_weight,
-        libchewing_weight, parse_bigram_overlay, parse_conversion_rules, parse_explicit_overlay,
+        calibrate_bigram_boost, joined_phrase_records_from_bigrams, libchewing_weight,
+        parse_bigram_overlay, parse_conversion_rules, parse_explicit_overlay,
         parse_fragment_demotions, parse_rime_essay, parse_rime_existing_phrase_reranks,
         parse_rime_overlap_reranks, parse_single_char_homophone_reranks, parse_variant_demotions,
-        phrase_evidence_character_records, rime_split_rerank_weight, round6, RimeNormalization,
-        LIBCHEWING_PHRASE_SEGMENT_BONUS, LIBCHEWING_PHRASE_SEGMENT_BONUS_THRESHOLD,
-        RIME_OVERLAP_RERANK_MARGIN, RIME_SPLIT_RERANK_MAX_BOOST,
-        SINGLE_CHAR_HOMOPHONE_RERANK_MARGIN,
+        phrase_evidence_character_records, phrase_split_rerank_records, rime_split_rerank_weight,
+        round6, RimeNormalization, LIBCHEWING_PHRASE_SEGMENT_BONUS,
+        LIBCHEWING_PHRASE_SEGMENT_BONUS_THRESHOLD, RIME_OVERLAP_RERANK_MARGIN,
+        RIME_SPLIT_RERANK_MAX_BOOST, SINGLE_CHAR_HOMOPHONE_RERANK_MARGIN,
     };
     use crate::config::{Config, CHIAKI_WEB_OVERLAY_SOURCE_ID};
     use crate::types::ConversionRule;
@@ -1554,7 +1667,7 @@ mod tests {
         // Unlike variant demotions (single-char only), fragment caps are 2+ chars.
         let path = temp_file(
             "fragment-demotions",
-            "# phrase\tmax_weight\ttags\n會比\t-1.80706\tchiakey-fragment-denylist,fragment-demote\n單\t-2.0\tchiakey-fragment-denylist,fragment-demote\n",
+            "# phrase\tmax_weight\ttags\n會比\t-1.80706\tchiaki-fragment-denylist,fragment-demote\n單\t-2.0\tchiaki-fragment-denylist,fragment-demote\n",
         );
 
         let (records, seen, skipped) = parse_fragment_demotions(&path).unwrap();
@@ -1566,45 +1679,20 @@ mod tests {
         assert_eq!(records[0].max_weight, -1.80706);
         assert_eq!(
             records[0].tags,
-            "unigram,chiakey-fragment-denylist,fragment-demote"
+            "unigram,chiaki-fragment-denylist,fragment-demote"
         );
 
         let _ = fs::remove_file(path);
     }
 
     #[test]
-    fn calibrates_known_phrases_above_character_splits() {
-        let max_score = 327_781;
-        let place_name = libchewing_weight(507, max_score, 2);
-        let ordinal = libchewing_character_weight(59_239, max_score);
-        let name = libchewing_character_weight(73_301, max_score);
-        let foundation = libchewing_weight(74, max_score, 2);
-        let machine = libchewing_character_weight(30_641, max_score);
-        let weight = libchewing_weight(1, max_score, 2);
-        let whole = libchewing_character_weight(35_212, max_score);
-        let middle = libchewing_character_weight(14_865, max_score);
-
-        assert!(
-            place_name > ordinal + name,
-            "place-name phrase should outrank the ordinal+name character split"
-        );
-        assert!(
-            foundation > ordinal + machine,
-            "foundation phrase should outrank the ordinal+machine character split"
-        );
-        assert!(
-            weight > whole + middle,
-            "weight phrase should outrank the whole+middle character split"
-        );
-    }
-
-    #[test]
-    fn applies_phrase_segment_bonus_only_to_multi_syllable_rows() {
+    fn applies_smooth_phrase_segment_bonus_only_to_multi_syllable_rows() {
         let max_score = 327_781;
         let single = libchewing_weight(507, max_score, 1);
         let phrase = libchewing_weight(507, max_score, 2);
 
-        assert_eq!(phrase, single + LIBCHEWING_PHRASE_SEGMENT_BONUS);
+        assert!(phrase > single);
+        assert!(phrase < single + LIBCHEWING_PHRASE_SEGMENT_BONUS);
     }
 
     #[test]
@@ -1615,6 +1703,20 @@ mod tests {
 
         assert_eq!(phrase, single);
         assert!(phrase > LIBCHEWING_PHRASE_SEGMENT_BONUS_THRESHOLD);
+    }
+
+    #[test]
+    fn keeps_libchewing_phrase_frequency_order_across_bonus_threshold() {
+        let max_score = 327_781;
+        let publication = libchewing_weight(23_407, max_score, 2);
+        let first_edition = libchewing_weight(7_943, max_score, 2);
+
+        assert!(
+            publication > first_edition,
+            "a lower-frequency phrase should not jump ahead by crossing the segment bonus threshold"
+        );
+        assert_eq!(publication, -0.738365);
+        assert_eq!(first_edition, -0.812776);
     }
 
     #[test]
@@ -1640,6 +1742,64 @@ mod tests {
         assert_eq!(
             records[0].tags,
             "unigram,libchewing-data,character-phrase-evidence"
+        );
+    }
+
+    #[test]
+    fn promotes_existing_phrases_above_best_split_path() {
+        let existing = vec![
+            ("=@~l".to_string(), "不用".to_string(), -0.581775),
+            ("5J".to_string(), "前".to_string(), -1.329531),
+            ("5J".to_string(), "錢".to_string(), -1.329531),
+            ("=@~l5J".to_string(), "不用錢".to_string(), -2.131511),
+            ("R0".to_string(), "機".to_string(), -0.931841),
+            (":1".to_string(), "八".to_string(), -0.95425),
+            ("R0:1".to_string(), "雞巴".to_string(), -1.971742),
+        ];
+        let qstring_weights = HashMap::from([
+            ("=@~l".to_string(), -0.581775),
+            ("5J".to_string(), -1.329531),
+            ("R0".to_string(), -0.931841),
+            (":1".to_string(), -0.95425),
+        ]);
+
+        let records = phrase_split_rerank_records(&existing, &qstring_weights);
+        let free = records
+            .iter()
+            .find(|record| record.phrase == "不用錢")
+            .expect("不用錢 should be raised above 不用+錢");
+        let vulgar = records
+            .iter()
+            .find(|record| record.phrase == "雞巴")
+            .expect("雞巴 should be raised above 機+八");
+
+        assert_eq!(free.weight, -1.901306);
+        assert_eq!(vulgar.weight, -1.876091);
+        assert!(free.weight > -0.581775 + -1.329531);
+        assert!(vulgar.weight > -0.931841 + -0.95425);
+        assert_eq!(
+            free.tags,
+            "unigram,chiaki-modern-overlay,generated,phrase-split-rerank"
+        );
+    }
+
+    #[test]
+    fn keeps_far_weaker_phrases_below_split_path() {
+        let existing = vec![
+            ("?]A_".to_string(), "統計".to_string(), -0.341542),
+            ("C_?]".to_string(), "系統".to_string(), -0.465907),
+            ("?]A_C_?]".to_string(), "統計系統".to_string(), -2.654999),
+        ];
+        let qstring_weights = HashMap::from([
+            ("?]A_".to_string(), -0.341542),
+            ("C_?]".to_string(), -0.465907),
+        ]);
+
+        let records = phrase_split_rerank_records(&existing, &qstring_weights);
+
+        assert!(
+            records.is_empty(),
+            "a phrase far below its split path should not be boosted"
         );
     }
 
@@ -2097,6 +2257,64 @@ mod tests {
             records[0].weight,
             round6(-0.902038 + SINGLE_CHAR_HOMOPHONE_RERANK_MARGIN)
         );
+
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn reranks_weak_character_reading_with_strong_phrase_evidence() {
+        let path = temp_file(
+            "single-char-homophone-rerank-phrase-evidence",
+            "兩\t17606\n量\t12025\n亮\t5238\n輛\t2649\n晾\t1078\n諒\t773\n",
+        );
+        let existing = vec![
+            ("Qk".to_string(), "亮".to_string(), -1.091185),
+            ("Qk".to_string(), "晾".to_string(), -1.091200),
+            ("Qk".to_string(), "輛".to_string(), -1.091200),
+            ("Qk".to_string(), "兩".to_string(), -3.094452),
+            ("Qk".to_string(), "量".to_string(), -3.094452),
+            ("QkQY".to_string(), "量產".to_string(), -0.843159),
+            ("QkRO".to_string(), "量子".to_string(), -1.128131),
+            ("Qk_`".to_string(), "量化".to_string(), -1.076113),
+        ];
+
+        let (records, seen, skipped) =
+            parse_single_char_homophone_reranks(&path, &existing, 2.5).unwrap();
+
+        assert_eq!(seen, 1);
+        assert_eq!(skipped, 0);
+        assert_eq!(records.len(), 1);
+        assert_eq!(records[0].qstring, "Qk");
+        assert_eq!(records[0].phrase, "量");
+        assert_eq!(
+            records[0].weight,
+            round6(-1.091185 + SINGLE_CHAR_HOMOPHONE_RERANK_MARGIN)
+        );
+
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn keeps_polyphone_from_out_ranking_reading_group_top() {
+        // 會 (mostly ㄏㄨㄟˋ) also reads ㄎㄨㄞˋ (會計); its aggregate essay
+        // frequency must not out-rank 快 in the ㄎㄨㄞˋ (3e) group.
+        let path = temp_file(
+            "single-char-homophone-rerank-polyphone",
+            "會\t209833\n快\t48871\n",
+        );
+        let existing = vec![
+            ("3e".to_string(), "快".to_string(), -1.185045),
+            ("3e".to_string(), "會".to_string(), -1.185060),
+            // A second reading group marks 會 as a polyphone.
+            ("=f".to_string(), "會".to_string(), -1.159084),
+        ];
+
+        let (records, seen, skipped) =
+            parse_single_char_homophone_reranks(&path, &existing, 2.5).unwrap();
+
+        assert_eq!(seen, 1);
+        assert_eq!(skipped, 1);
+        assert!(records.is_empty());
 
         let _ = fs::remove_file(path);
     }

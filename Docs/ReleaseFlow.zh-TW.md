@@ -101,6 +101,16 @@ workflow 會做：
 
 `dist/` 是本機與 CI 的 staging 目錄，不 commit 進 git。公開 artifacts 以 GitHub Release 為準。
 
+### Auto Hotwords workflow
+
+`.github/workflows/hotwords.yml` 另外維護 `chiaki-auto-hotwords-overlay`，與 release workflow 分開排程：
+
+- `collect`（每日 04:00 Asia/Taipei）：跑 `scripts/hotwords.mjs collect`，把當日 Google Trends 觀測值存成 GitHub Actions artifact，不 commit 進 repo。
+- `refresh`（每週一 04:30 Asia/Taipei）：下載近期 `collect` artifacts，跑 `scripts/hotwords.mjs refresh` 重新聚合狀態並寫出 `sources/chiaki-auto-hotwords-overlay/{phrases.tsv,state.json}`，本機驗證 `prepare-release` 可正常建置後，開一個 `ci/auto-hotwords` PR 讓維護者審查再合併。
+- 也可用 `workflow_dispatch` 手動指定 `mode`（`all` / `collect` / `refresh`）觸發。
+
+這個 workflow 不會直接 push 到 `main` 或觸發 release；`chiaki-auto-hotwords-overlay` 的變更要等 PR 合併進 `dev`、再依一般流程走到 `main` 才會反映在下一版 release。
+
 ## 更新外部來源
 
 外部來源以 pinned raw snapshot 形式 commit 在 `sources/*/raw/`。一般本機

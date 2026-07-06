@@ -31,7 +31,7 @@ pub struct ReleasePaths {
     pub fragment_denylist_source_dir: PathBuf,
     pub overlay_phrases: PathBuf,
     pub overlay_explicit: PathBuf,
-    pub chiaki_web_overlay_explicit: PathBuf,
+    pub chiaki_web_overlay_unigrams: PathBuf,
     pub chiaki_web_overlay_bigrams: PathBuf,
     pub chiaki_synthetic_unigrams: PathBuf,
     pub chiaki_synthetic_bigrams: PathBuf,
@@ -104,7 +104,7 @@ impl ReleasePaths {
         Self {
             overlay_phrases: overlay_source_dir.join("phrases.tsv"),
             overlay_explicit: overlay_source_dir.join("explicit.tsv"),
-            chiaki_web_overlay_explicit: chiaki_web_overlay_source_dir.join("explicit.tsv"),
+            chiaki_web_overlay_unigrams: chiaki_web_overlay_source_dir.join("unigrams.tsv"),
             chiaki_web_overlay_bigrams: chiaki_web_overlay_source_dir.join("bigrams.tsv"),
             chiaki_synthetic_unigrams: chiaki_synthetic_source_dir.join("unigrams.tsv"),
             chiaki_synthetic_bigrams: chiaki_synthetic_source_dir.join("bigrams.tsv"),

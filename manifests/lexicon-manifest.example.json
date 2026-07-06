@@ -6,9 +6,9 @@
   "database_schema_version": 1,
   "sources": [
     {
-      "id": "chiakey-modern-overlay",
+      "id": "chiaki-modern-overlay",
       "name": "ChiaKey Modern Overlay Seed",
-      "url": "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiakey-modern-overlay",
+      "url": "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiaki-modern-overlay",
       "format": "tsv",
       "license": "TBD",
       "attribution": "ChiaKey Lexicon project seed data",

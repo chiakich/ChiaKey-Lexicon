@@ -2,7 +2,7 @@
 
 ## 來源代號
 
-`chiakey-fragment-denylist`
+`chiaki-fragment-denylist`
 
 ## 資料層
 
@@ -50,8 +50,14 @@ w(lead_char) + w(stolen_word) - 0.30
 
 辭典只作為離線建置工具，並未隨專案散布其文本。
 
-- 辭典文本授權：CC BY-ND 3.0 TW
-- 本清單為專案自行撰寫資料列，可隨專案發布
+- 辭典文本授權：CC BY-ND 3.0 TW（僅作離線比對參考，未隨本清單散布）
+- 本清單為專案自行撰寫資料列
+
+授權：CC BY-NC 4.0（Chiaki.C）
+
+非商業與開源專案可於標示來源為 Chiaki.C 前提下使用；商業用途需另行取得授權。
+
+授權全文見：`sources/chiaki-fragment-denylist/LICENSE`
 
 ## 驗證
 

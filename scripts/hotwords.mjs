@@ -3,7 +3,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const DEFAULT_SOURCE_ID = "chiakey-auto-hotwords-overlay";
+const DEFAULT_SOURCE_ID = "chiaki-auto-hotwords-overlay";
 const DEFAULT_GEO = "TW";
 const DEFAULT_HL = "zh-TW";
 const DEFAULT_RETENTION_DAYS = 30;
@@ -99,7 +99,7 @@ const CHAR_REPLACEMENTS = new Map([
 
 const USAGE = `Usage:
   node scripts/hotwords.mjs collect --output tmp/hotwords-observations/DATE.json [--date YYYY-MM-DD]
-  node scripts/hotwords.mjs refresh --observations-dir tmp/hotwords-observations --state sources/chiakey-auto-hotwords-overlay/state.json --output sources/chiakey-auto-hotwords-overlay/phrases.tsv --summary tmp/hotwords-summary.md [--today YYYY-MM-DD]
+  node scripts/hotwords.mjs refresh --observations-dir tmp/hotwords-observations --state sources/chiaki-auto-hotwords-overlay/state.json --output sources/chiaki-auto-hotwords-overlay/phrases.tsv --summary tmp/hotwords-summary.md [--today YYYY-MM-DD]
 `;
 
 async function main() {

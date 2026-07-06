@@ -59,7 +59,7 @@ pub fn release_metadata(
                 &paths.symbol_overlay_symbols,
                 &paths.symbol_overlay_alternatives,
             ],
-            db::stats_for_source_rows(source_rows, "sources/chiakey-symbols-overlay/"),
+            db::stats_for_source_rows(source_rows, "sources/chiaki-symbols-overlay/"),
         )?,
         release_source_from_inventory(
             PREPOPULATED_SERVICE_SOURCE_ID,
@@ -119,7 +119,7 @@ pub fn release_metadata(
             "ChiaKey Lexicon maintainers",
             &paths.rime_conversion_source_dir,
             &[&paths.rime_conversion_replacements],
-            db::stats_for_source_rows(source_rows, "sources/chiakey-rime-conversion-policy/"),
+            db::stats_for_source_rows(source_rows, "sources/chiaki-rime-conversion-policy/"),
         )?,
         release_source_from_files(
             OVERLAY_SOURCE_ID,
@@ -128,7 +128,7 @@ pub fn release_metadata(
             "ChiaKey Lexicon maintainers",
             &paths.overlay_source_dir,
             &[&paths.overlay_phrases, &paths.overlay_explicit],
-            db::stats_for_source_rows(source_rows, "sources/chiakey-modern-overlay/"),
+            db::stats_for_source_rows(source_rows, "sources/chiaki-modern-overlay/"),
         )?,
         release_source_from_files(
             CHIAKI_WEB_OVERLAY_SOURCE_ID,
@@ -136,7 +136,7 @@ pub fn release_metadata(
             "CC BY-NC 4.0; commercial use requires permission from Chiaki.C",
             "Chiaki.C",
             &paths.chiaki_web_overlay_source_dir,
-            &[&paths.chiaki_web_overlay_explicit, &paths.chiaki_web_overlay_bigrams],
+            &[&paths.chiaki_web_overlay_unigrams, &paths.chiaki_web_overlay_bigrams],
             db::stats_for_source_rows(source_rows, "sources/chiaki-web-overlay/"),
         )?,
         release_source_from_files(
@@ -155,7 +155,7 @@ pub fn release_metadata(
             "ChiaKey Lexicon maintainers",
             &paths.chiakey_auto_hotwords_source_dir,
             &[&paths.chiakey_auto_hotwords_phrases, &paths.chiakey_auto_hotwords_state],
-            db::stats_for_source_rows(source_rows, "sources/chiakey-auto-hotwords-overlay/"),
+            db::stats_for_source_rows(source_rows, "sources/chiaki-auto-hotwords-overlay/"),
         )?,
         release_source_from_files(
             OPENFORMOSA_COMMON_VOICE_SOURCE_ID,
@@ -173,7 +173,7 @@ pub fn release_metadata(
             "ChiaKey Lexicon maintainers",
             &paths.fragment_denylist_source_dir,
             &[&paths.fragment_demotions],
-            db::stats_for_source_rows(source_rows, "sources/chiakey-fragment-denylist/"),
+            db::stats_for_source_rows(source_rows, "sources/chiaki-fragment-denylist/"),
         )?,
     ];
 
@@ -232,7 +232,7 @@ pub fn manifest(
         manifest_source_from_files(
             SYMBOL_OVERLAY_SOURCE_ID,
             SYMBOL_OVERLAY_SOURCE_NAME,
-            "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiakey-symbols-overlay",
+            "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiaki-symbols-overlay",
             "tsv",
             "CC0-1.0",
             "ChiaKey Lexicon maintainers",
@@ -306,7 +306,7 @@ pub fn manifest(
         manifest_source_from_files(
             RIME_CONVERSION_SOURCE_ID,
             RIME_CONVERSION_SOURCE_NAME,
-            "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiakey-rime-conversion-policy",
+            "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiaki-rime-conversion-policy",
             "tsv",
             "CC0-1.0",
             "ChiaKey Lexicon maintainers",
@@ -317,7 +317,7 @@ pub fn manifest(
         manifest_source_from_files(
             OVERLAY_SOURCE_ID,
             OVERLAY_SOURCE_NAME,
-            "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiakey-modern-overlay",
+            "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiaki-modern-overlay",
             "tsv",
             "CC0-1.0",
             "ChiaKey Lexicon maintainers",
@@ -333,7 +333,7 @@ pub fn manifest(
             "CC BY-NC 4.0; commercial use requires permission from Chiaki.C",
             "Chiaki.C",
             &paths.chiaki_web_overlay_source_dir,
-            &[&paths.chiaki_web_overlay_explicit, &paths.chiaki_web_overlay_bigrams],
+            &[&paths.chiaki_web_overlay_unigrams, &paths.chiaki_web_overlay_bigrams],
             305,
         )?,
         manifest_source_from_files(
@@ -350,7 +350,7 @@ pub fn manifest(
         manifest_source_from_files(
             CHIAKEY_AUTO_HOTWORDS_SOURCE_ID,
             CHIAKEY_AUTO_HOTWORDS_SOURCE_NAME,
-            "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiakey-auto-hotwords-overlay",
+            "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiaki-auto-hotwords-overlay",
             "tsv",
             "CC0-1.0",
             "ChiaKey Lexicon maintainers",

@@ -117,8 +117,8 @@ jobs:
           node scripts/hotwords.mjs refresh \
             --today "${today}" \
             --observations-dir tmp/hotwords-observations \
-            --state sources/chiakey-auto-hotwords-overlay/state.json \
-            --output sources/chiakey-auto-hotwords-overlay/phrases.tsv \
+            --state sources/chiaki-auto-hotwords-overlay/state.json \
+            --output sources/chiaki-auto-hotwords-overlay/phrases.tsv \
             --summary tmp/hotwords-summary.md
 
       - name: Verify refreshed release build
@@ -133,5 +133,5 @@ jobs:
           title: "chore(hotwords): refresh auto overlay"
           body-path: tmp/hotwords-summary.md
           add-paths: |
-            sources/chiakey-auto-hotwords-overlay/phrases.tsv
-            sources/chiakey-auto-hotwords-overlay/state.json
+            sources/chiaki-auto-hotwords-overlay/phrases.tsv
+            sources/chiaki-auto-hotwords-overlay/state.json
