@@ -323,16 +323,16 @@ sources/mozc-emoticon-data/source-inventory.sha256
 
 ### chiaki-web-overlay
 
-- 名稱：Chiaki reviewed web corpus overlay
+- 名稱：合成文本覆蓋層
 - 本地來源：
   - `sources/chiaki-web-overlay/unigrams.tsv`
   - `sources/chiaki-web-overlay/bigrams.tsv`
 - 來源材料：經審查的 web-derived 台灣網路用語材料
 - 授權：CC BY-NC 4.0；商用需取得 Chiaki.C 許可
 - 署名：Chiaki.C
-- 再散布決策：納入 ChiaKey 公開 release；其他專案或非 ChiaKey 用途預設應排除此來源，除非自行完成 source review
+- 再散布決策：納入 ChiaKey 公開 release；其他專案用途預設應排除此來源，除非自行完成來源審查
 
-這個來源是窄範圍的 ChiaKey overlay，包含從 web usage material 得出的 reviewed unigram 與 bigram values。repository 只用 release-builder formats 再散布最終 lexicon rows：
+這個來源是窄範圍的 overlay，包含從網路語料分析得出的 unigram 與 bigram。repository 只用 release-builder formats 再散布最終 lexicon rows：
 
 ```text
 qstring<TAB>phrase<TAB>weight<TAB>tags
@@ -349,16 +349,16 @@ sources/chiaki-web-overlay/source-inventory.sha256
 
 ### chiaki-synthetic-overlay
 
-- 名稱：Chiaki.C GPT-5.5 synthetic Taiwan internet usage overlay
+- 名稱：Chiaki.C synthetic Taiwan internet usage overlay
 - 本地來源：
   - `sources/chiaki-synthetic-overlay/unigrams.tsv`
   - `sources/chiaki-synthetic-overlay/bigrams.tsv`
-- 來源材料：GPT-5.5 產生的 synthetic「台灣網路用語」corpus
+- 來源材料：由 GPT-5.5 與 Gemma 4 產生大量的合成語料，指示大語言模型產生虛擬的聊天記錄、文章、社群留言等，並進行詞彙提煉。
 - 授權：CC BY-NC 4.0；商用需取得 Chiaki.C 許可
 - 署名：Chiaki.C
 - 再散布決策：納入公開 source review、open-source project use 與 non-commercial release builds
 
-這個來源包含 Chiaki.C 維護的 synthetic 台灣網路用語 rows。raw synthetic corpus 不在這個 repository 再散布；这里只保留最終 lexicon rows：
+這個來源包含 Chiaki.C 維護的合成台灣語料庫。原始語料不在這個 repository 再散布；這裡只保留最終提煉的詞彙庫：
 
 ```text
 qstring<TAB>phrase<TAB>weight<TAB>tags
@@ -391,7 +391,7 @@ sources/chiaki-synthetic-overlay/source-inventory.sha256
 sources/openformosa-common-voice-25-zh-tw/source-inventory.sha256
 ```
 
-## v1 未納入
+## 未納入
 
 這些來源可作為有用參考，但第一版 release artifacts 不會把它們當作 raw sources 納入：
 
@@ -400,7 +400,7 @@ sources/openformosa-common-voice-25-zh-tw/source-inventory.sha256
 - Commercial CEROD / SQLite extension assets。
 - CC-CEDICT、moedict、Wikimedia、Tatoeba、wordfreq、SUBTLEX-CH、Google Books Ngram、Google Chinese Web 5-gram。
 
-部分繼承自開放 KeyKey Boneyard tree 的 bootstrap files 有 `Yahoo.txt` 或 `SinicaCorpusOverrides.txt` 這類歷史名稱。在 v1 中，這些檔案視為 BSD-style Boneyard bootstrap source 的一部分。repository 不會複製私有 raw Yahoo search logs、Sinica corpus files 或 CEROD binaries。
+部分繼承自開放 KeyKey Boneyard tree 的 bootstrap files 有 `Yahoo.txt` 或 `SinicaCorpusOverrides.txt` 這類歷史名稱。因授權問題，本專案無法獲取、也不會複製私有 raw Yahoo search logs、Sinica corpus files 或 CEROD binaries。
 
 ## 讀音格式
 
@@ -408,13 +408,3 @@ v1 normalized TSV 的第一欄使用目前 KeyKey / Manjusri 內部 `qstring` �
 
 這讓第一版 release 能直接相容目前的 database reader。若 builder contract 之後改變，後續 source-normalization pass 可以再加入 human-readable Bopomofo column。
 
-## 目前風險註記
-
-這個 release 仍是 seed lexicon，但已包含大幅擴充的現代繁中 / 注音層。
-
-預期後續工作：
-
-1. 依實際缺漏加入台灣現代用語。
-2. 依真實打字測試調整跨來源權重映射。
-3. release packaging 變動時重新檢查 LGPL 再散布要求。
-4. 未來公開 release 若要納入 CC BY-SA 或 research-only sources，需先完成審查。
