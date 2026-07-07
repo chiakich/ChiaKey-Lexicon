@@ -54,6 +54,7 @@ pub const CHIAKI_SYNTHETIC_SOURCE_NAME: &str =
 pub const CHIAKEY_AUTO_HOTWORDS_SOURCE_ID: &str = "chiaki-auto-hotwords-overlay";
 pub const CHIAKEY_AUTO_HOTWORDS_SOURCE_NAME: &str =
     "ChiaKey automatically refreshed hotwords overlay";
+pub const GENERATED_CHARACTER_EVIDENCE_SOURCE_ID: &str = "generated-character-phrase-evidence";
 pub const OPENFORMOSA_COMMON_VOICE_SOURCE_ID: &str = "openformosa-common-voice-25-zh-tw";
 pub const OPENFORMOSA_COMMON_VOICE_SOURCE_NAME: &str =
     "OpenFormosa Common Voice 25 zh-TW bigram overlay";

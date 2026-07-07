@@ -14,25 +14,16 @@
 
 ## 檔案與格式
 
-`phrases.tsv`：
-
-```text
-phrase<TAB>weight<TAB>tags
-```
-
-Release script 會根據 bootstrap KeyKey DB 的單字讀音推導每個詞的 reading，並以指定權重插入或替換 unigram。
-
 `explicit.tsv`：
 
 ```text
 qstring<TAB>phrase<TAB>weight<TAB>tags
 ```
 
-當修正必須綁定特定讀音、聲調或 KeyKey 內部 qstring 時，使用 `explicit.tsv`。此表只替換精確的 qstring/phrase 配對。
+所有修正都必須綁定特定讀音、聲調或 KeyKey 內部 qstring，並寫入 `explicit.tsv`。此表只替換精確的 qstring/phrase 配對。
 
 ## Release 匯入規則
 
-- `phrases.tsv`：以推導讀音匯入一般修正。
 - `explicit.tsv`：以明確 qstring 進行精準覆蓋。
 
 ## 上游與授權

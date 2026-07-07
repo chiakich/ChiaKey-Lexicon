@@ -1,4 +1,8 @@
 # qstring	phrase	weight	tags
+Nb0_	測試	-0.05	chiaki-modern-overlay,qa
+rgBZ2_	候選字	-0.05	chiaki-modern-overlay,input-method
+rgBZs?	候選詞	-0.05	chiaki-modern-overlay,input-method
+O]^l	泳鏡	-1.50	chiaki-modern-overlay,input-method,homophone-order
 rq	個	-2.9	chiaki-modern-overlay,manual,neutral-tone,ek7
 }i0_A_Q@	憤世嫉俗	-2.6402	chiaki-modern-overlay,manual,alt-reading,common-mistype
 CWvY|JUl	草菅人命	-2.6402	chiaki-modern-overlay,manual,alt-reading,common-mistype
@@ -32,6 +36,7 @@ o=FJ	痙攣	-2.1	chiaki-modern-overlay,manual,alt-reading,common-mistype
 tfPO	鑰匙	-1.5	chiaki-modern-overlay,manual,alt-reading,colloquial
 8L	藏	-1.6	chiaki-modern-overlay,manual,polyphone,upstream-freq-fix
 XD	斜	-1.25	chiaki-modern-overlay,manual,polyphone,upstream-freq-fix
+L_	不	-0.95	chiaki-modern-overlay,manual,polyphone,upstream-freq-fix
 L_u?Ik	不一樣	-1.25	chiaki-modern-overlay,manual,tone-sandhi,common-phrase
 L_F0Ik	不一樣	-1.25	chiaki-modern-overlay,manual,tone-sandhi,common-phrase
 vHwT	瀏海	-1.25	chiaki-modern-overlay,manual,tw-usage,variant-rerank
@@ -173,3 +178,4 @@ x_KM	罷凌	-1.474582	chiaki-modern-overlay,manual,boneyard-legacy-fix
 }^9>	置中	-2.323812	chiaki-modern-overlay,manual,boneyard-legacy-fix
 }^FM	稚名	-1.93093	chiaki-modern-overlay,manual,boneyard-legacy-fix
 ~OKP	祖瑪	-2.02941	chiaki-modern-overlay,manual,boneyard-legacy-fix
+LPf0	髮箍	-2.297106	chiaki-modern-overlay,manual

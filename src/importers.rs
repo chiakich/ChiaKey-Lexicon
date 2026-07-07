@@ -1,7 +1,7 @@
 use crate::config::{
     Config, CHIAKEY_AUTO_HOTWORDS_SOURCE_ID, CHIAKI_SYNTHETIC_SOURCE_ID,
-    CHIAKI_WEB_OVERLAY_SOURCE_ID, LIBCHEWING_SOURCE_ID, OPENCC_VARIANT_SOURCE_ID,
-    OVERLAY_SOURCE_ID, RIME_ESSAY_SOURCE_ID,
+    CHIAKI_WEB_OVERLAY_SOURCE_ID, GENERATED_CHARACTER_EVIDENCE_SOURCE_ID, LIBCHEWING_SOURCE_ID,
+    OPENCC_VARIANT_SOURCE_ID, OVERLAY_SOURCE_ID, RIME_ESSAY_SOURCE_ID,
 };
 use crate::opencc;
 use crate::phonetics::{phrase_candidate, qstring_for_bpmf_sequence};
@@ -24,6 +24,10 @@ const LIBCHEWING_CHARACTER_PHRASE_EVIDENCE_MIN_SUPPORT: usize = 3;
 const LIBCHEWING_CHARACTER_PHRASE_EVIDENCE_CURRENT_THRESHOLD: f64 = -2.4;
 const LIBCHEWING_CHARACTER_PHRASE_EVIDENCE_PENALTY: f64 = 1.0;
 const LIBCHEWING_CHARACTER_PHRASE_EVIDENCE_MAX_WEIGHT: f64 = -1.35;
+pub const POST_SUPPLEMENT_CHARACTER_PHRASE_EVIDENCE_MIN_PHRASE_WEIGHT: f64 = -1.35;
+const POST_SUPPLEMENT_CHARACTER_PHRASE_EVIDENCE_CURRENT_THRESHOLD: f64 = -2.4;
+const POST_SUPPLEMENT_CHARACTER_PHRASE_EVIDENCE_PENALTY: f64 = 0.5;
+const POST_SUPPLEMENT_CHARACTER_PHRASE_EVIDENCE_MAX_WEIGHT: f64 = -1.55;
 const RIME_OVERLAP_RERANK_MARGIN: f64 = 0.01;
 const RIME_OVERLAP_RERANK_MAX_WEIGHT: f64 = -0.5;
 const RIME_OVERLAP_RERANK_MAX_BOOST: f64 = 0.35;
@@ -688,10 +692,6 @@ pub fn parse_conversion_rules(path: &Path) -> Result<(Vec<ConversionRule>, usize
     Ok((records, seen, skipped))
 }
 
-pub fn parse_overlay(path: &Path, cfg: &Config) -> Result<(Vec<SourceRecord>, usize, usize)> {
-    parse_overlay_records(path, cfg, OVERLAY_SOURCE_ID)
-}
-
 pub fn parse_auto_hotwords_overlay(
     path: &Path,
     cfg: &Config,
@@ -979,6 +979,39 @@ pub fn phrase_evidence_character_records(
                     weight: round6(proposed_weight),
                     source_id: LIBCHEWING_SOURCE_ID,
                     tags: format!("unigram,{LIBCHEWING_SOURCE_ID},character-phrase-evidence"),
+                })
+            },
+        )
+        .collect::<Vec<_>>();
+    dedupe_records(records)
+}
+
+pub fn post_supplement_phrase_evidence_character_records(
+    evidence: &[(String, String, f64, f64, usize)],
+) -> Vec<SourceRecord> {
+    let records = evidence
+        .iter()
+        .filter_map(
+            |(qstring, phrase, current_weight, best_phrase_weight, _support_count)| {
+                if *current_weight > POST_SUPPLEMENT_CHARACTER_PHRASE_EVIDENCE_CURRENT_THRESHOLD {
+                    return None;
+                }
+
+                let proposed_weight = (*best_phrase_weight
+                    - POST_SUPPLEMENT_CHARACTER_PHRASE_EVIDENCE_PENALTY)
+                    .min(POST_SUPPLEMENT_CHARACTER_PHRASE_EVIDENCE_MAX_WEIGHT);
+                if proposed_weight <= *current_weight {
+                    return None;
+                }
+
+                Some(SourceRecord {
+                    qstring: qstring.clone(),
+                    phrase: phrase.clone(),
+                    weight: round6(proposed_weight),
+                    source_id: GENERATED_CHARACTER_EVIDENCE_SOURCE_ID,
+                    tags: format!(
+                        "unigram,{GENERATED_CHARACTER_EVIDENCE_SOURCE_ID},post-supplement,character-phrase-evidence"
+                    ),
                 })
             },
         )
@@ -1429,8 +1462,9 @@ mod tests {
         parse_bigram_overlay, parse_conversion_rules, parse_explicit_overlay,
         parse_fragment_demotions, parse_rime_essay, parse_rime_existing_phrase_reranks,
         parse_rime_overlap_reranks, parse_single_char_homophone_reranks, parse_variant_demotions,
-        phrase_evidence_character_records, phrase_split_rerank_records, rime_split_rerank_weight,
-        round6, RimeNormalization, LIBCHEWING_PHRASE_SEGMENT_BONUS,
+        phrase_evidence_character_records, phrase_split_rerank_records,
+        post_supplement_phrase_evidence_character_records, rime_split_rerank_weight, round6,
+        RimeNormalization, LIBCHEWING_PHRASE_SEGMENT_BONUS,
         LIBCHEWING_PHRASE_SEGMENT_BONUS_THRESHOLD, RIME_OVERLAP_RERANK_MARGIN,
         RIME_SPLIT_RERANK_MAX_BOOST, SINGLE_CHAR_HOMOPHONE_RERANK_MARGIN,
     };
@@ -1743,6 +1777,34 @@ mod tests {
             records[0].tags,
             "unigram,libchewing-data,character-phrase-evidence"
         );
+    }
+
+    #[test]
+    fn post_supplement_phrase_evidence_promotes_single_strong_head_phrase() {
+        let evidence = vec![
+            ("rA".to_string(), "脖".to_string(), -2.465357, -1.071776, 1),
+            ("=_".to_string(), "栃".to_string(), -3.350058, -0.5, 1),
+            ("m0".to_string(), "書".to_string(), -0.929843, -0.5, 6),
+        ];
+
+        let records = post_supplement_phrase_evidence_character_records(&evidence);
+
+        assert_eq!(records.len(), 2);
+        let neck = records
+            .iter()
+            .find(|record| record.phrase == "脖")
+            .expect("脖 should be raised by 脖子");
+        assert_eq!(neck.qstring, "rA");
+        assert_eq!(neck.weight, -1.571776);
+        assert_eq!(
+            neck.tags,
+            "unigram,generated-character-phrase-evidence,post-supplement,character-phrase-evidence"
+        );
+        let tochigi = records
+            .iter()
+            .find(|record| record.phrase == "栃")
+            .expect("栃 should be capped instead of inheriting the whole 栃木 weight");
+        assert_eq!(tochigi.weight, -1.55);
     }
 
     #[test]

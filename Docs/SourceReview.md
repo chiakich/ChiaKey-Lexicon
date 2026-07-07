@@ -44,7 +44,6 @@ manifest 記錄的是該 inventory file 的 SHA-256，而不是單一 upstream a
 
 - 名稱：ChiaKey modern overlay phrases
 - 本地來源：
-  - `sources/chiaki-modern-overlay/phrases.tsv`
   - `sources/chiaki-modern-overlay/explicit.tsv`
 - 授權：CC BY-NC 4.0；商用需取得 Chiaki.C 許可
 - 署名：Chiaki.C
@@ -52,7 +51,7 @@ manifest 記錄的是該 inventory file 的 SHA-256，而不是單一 upstream a
 
 這個來源刻意保持小型且由專案自有維護。它用於實測時發現的明顯 seed lexicon 缺漏，例如不應等未來大型 frequency corpus 才補上的基本輸入法用語。
 
-`phrases.tsv` 讓 release builder 從單字資料推導 readings。`explicit.tsv` 則用於依賴特定 KeyKey qstring 的修正，例如為 neutral-tone `ㄍㄜ˙` / `ek7` 提升 `個`。
+`explicit.tsv` 用於取代特定 qstring 權重修正與加入常見錯讀音，例如為 neutral-tone `ㄍㄜ˙` / `ek7` 提升 `個`。
 
 ## 自 2026.06.3 起納入
 
@@ -407,4 +406,3 @@ sources/openformosa-common-voice-25-zh-tw/source-inventory.sha256
 v1 normalized TSV 的第一欄使用目前 KeyKey / Manjusri 內部 `qstring` 讀音表示法。這是歷史 builder 的 `absolute_order_string` function 產生的 two-byte-per-syllable ordering string，不是字面上的注音文字。
 
 這讓第一版 release 能直接相容目前的 database reader。若 builder contract 之後改變，後續 source-normalization pass 可以再加入 human-readable Bopomofo column。
-

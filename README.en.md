@@ -99,14 +99,13 @@ The release builder integration flow is deterministic:
 5. Batch-normalize Rime essay phrases with OpenCC `t2tw`, then apply the small `chiaki-rime-conversion-policy` override table; the normalized result is shared by Rime rerank and supplemental import passes.
 6. Apply `rime-essay` rerank: cap same-pronunciation boosts, allow limited uplift from Rime evidence for weak existing phrases, apply small single-character homophone reorders where frequency advantage is sufficient, then import only safe supplemental phrases not already in DB.
    - Supplemental `split-rerank` is intentionally conservative: if the Rime base is too far below the best existing split, it stays on the Rime scale; otherwise it only receives a bounded boost. This prevents high-frequency character splits such as `的`+`是` from flattening every candidate in the same qstring group, for example `地市` and `的事`.
-7. Import `chiaki-modern-overlay/phrases.tsv` so project-owned fixes can replace known problematic phrases.
-8. Import `chiaki-modern-overlay/explicit.tsv` for explicit qstring and ranking corrections.
-9. Import `chiaki-web-overlay/explicit.tsv` and `chiaki-synthetic-overlay/unigrams.tsv`.
-10. Generate OpenCC `t2tw` same-qstring variant weight caps for candidates that already have Taiwan-standard counterparts, then apply `chiaki-fragment-denylist` to keep non-lexical fragments below safety thresholds.
-11. Import `chiaki-synthetic-overlay/bigrams.tsv`, then `openformosa-common-voice-25-zh-tw/bigrams.tsv`, then `chiaki-web-overlay/bigrams.tsv` so reviewed web bigrams can override overlapping statistical rows.
-12. Import runtime compatibility data: BPMF punctuations, supplemental symbol list, canned messages, Mozc emoticons, and module CIN tables.
-13. Derive `associated_phrases` from final `unigrams` for runtime phrase suggestions.
-14. Run runtime-required validations and write normalized TSV, release metadata, manifest, and checksums.
+7. Import `chiaki-modern-overlay/explicit.tsv` for project-owned explicit qstring and ranking corrections.
+8. Import `chiaki-web-overlay/explicit.tsv` and `chiaki-synthetic-overlay/unigrams.tsv`.
+9. Generate OpenCC `t2tw` same-qstring variant weight caps for candidates that already have Taiwan-standard counterparts, then apply `chiaki-fragment-denylist` to keep non-lexical fragments below safety thresholds.
+10. Import `chiaki-synthetic-overlay/bigrams.tsv`, then `openformosa-common-voice-25-zh-tw/bigrams.tsv`, then `chiaki-web-overlay/bigrams.tsv` so reviewed web bigrams can override overlapping statistical rows.
+11. Import runtime compatibility data: BPMF punctuations, supplemental symbol list, canned messages, Mozc emoticons, and module CIN tables.
+12. Derive `associated_phrases` from final `unigrams` for runtime phrase suggestions.
+13. Run runtime-required validations and write normalized TSV, release metadata, manifest, and checksums.
 
 After integration, each traceable row carries source path, source kind, checksum, and tags. The app consumes generated `ChiaKeySource.db` and `lexicon-manifest.json`; maintainers can trace row origins through generated `normalized/smart-mandarin.tsv` and metadata after local builds.
 

@@ -127,7 +127,7 @@ pub fn release_metadata(
             "CC0-1.0",
             "ChiaKey Lexicon maintainers",
             &paths.overlay_source_dir,
-            &[&paths.overlay_phrases, &paths.overlay_explicit],
+            &[&paths.overlay_explicit],
             db::stats_for_source_rows(source_rows, "sources/chiaki-modern-overlay/"),
         )?,
         release_source_from_files(
@@ -322,7 +322,7 @@ pub fn manifest(
             "CC0-1.0",
             "ChiaKey Lexicon maintainers",
             &paths.overlay_source_dir,
-            &[&paths.overlay_phrases, &paths.overlay_explicit],
+            &[&paths.overlay_explicit],
             300,
         )?,
         manifest_source_from_files(
