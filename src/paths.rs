@@ -30,6 +30,7 @@ pub struct ReleasePaths {
     pub openformosa_common_voice_source_dir: PathBuf,
     pub fragment_denylist_source_dir: PathBuf,
     pub overlay_explicit: PathBuf,
+    pub overlay_bigrams: PathBuf,
     pub chiaki_web_overlay_unigrams: PathBuf,
     pub chiaki_web_overlay_bigrams: PathBuf,
     pub chiaki_synthetic_unigrams: PathBuf,
@@ -102,6 +103,7 @@ impl ReleasePaths {
 
         Self {
             overlay_explicit: overlay_source_dir.join("explicit.tsv"),
+            overlay_bigrams: overlay_source_dir.join("bigrams.tsv"),
             chiaki_web_overlay_unigrams: chiaki_web_overlay_source_dir.join("unigrams.tsv"),
             chiaki_web_overlay_bigrams: chiaki_web_overlay_source_dir.join("bigrams.tsv"),
             chiaki_synthetic_unigrams: chiaki_synthetic_source_dir.join("unigrams.tsv"),

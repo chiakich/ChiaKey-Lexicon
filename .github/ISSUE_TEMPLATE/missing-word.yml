@@ -1,0 +1,36 @@
+name: 缺詞回報
+description: 回報千秋輸入法綜合詞庫目前缺少的詞，並提供正確注音鍵盤碼。
+title: "缺詞回報："
+labels:
+  - 缺詞回報
+  - automation:missing-word
+body:
+  - type: markdown
+    attributes:
+      value: |
+        請提供缺少的詞，以及對應的注音鍵盤碼。我們會檢查並評估是否要加入詞庫建立補詞 PR。
+  - type: input
+    id: phrase
+    attributes:
+      label: 詞語
+      description: 請輸入要加入的詞。
+      placeholder: 你好
+    validations:
+      required: true
+  - type: input
+    id: keyboard_zhuyin
+    attributes:
+      label: 注音鍵盤碼
+      description: 請切到英文，直接打出該詞注音對應的英文；多音節可直接接在一起，有一聲音節時請用空白分隔。如：
+        - 「你好」的注音鍵盤碼為「s(ㄋ)u(一)3(ˇ)c(ㄏ)l(ㄠ)3(ˇ)」，請直接輸入「su3cl3」。
+      placeholder: su3cl3
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: 補充說明
+      description: 可提供使用情境、例句、來源，或說明為什麼這個詞應該加入。
+      placeholder: 例：該詞常見於尊稱別人的生日。請見： https://www.moedict.tw/%E5%8D%83%E7%A7%8B
+    validations:
+      required: false
