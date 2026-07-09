@@ -9,7 +9,7 @@ const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const EXPLICIT_PATH = path.join(ROOT, "sources/chiaki-modern-overlay/explicit.tsv");
 const NORMALIZED_PATH =
   process.env.NORMALIZED_PATH ?? path.join(ROOT, "normalized/smart-mandarin.tsv");
-const DEFAULT_TAGS = "chiaki-modern-overlay,manual";
+const DEFAULT_TAGS = "chiaki-modern-overlay,auto-pr";
 const SPLIT_MARGIN = 0.01;
 const FALLBACK_WEIGHT = -2.3;
 
