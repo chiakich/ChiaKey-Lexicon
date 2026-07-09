@@ -1,4 +1,4 @@
-name: Bigram report
+name: Add bigram
 
 on:
   issues:
@@ -16,7 +16,7 @@ jobs:
   propose:
     name: Check report and propose PR
     runs-on: ubuntu-latest
-    if: contains(github.event.issue.labels.*.name, 'automation:bigram-report') || startsWith(github.event.issue.title, '長句選字錯誤')
+    if: contains(github.event.issue.labels.*.name, 'Add bigram') || startsWith(github.event.issue.title, '長句選字錯誤')
 
     steps:
       - name: Check out repository
@@ -69,5 +69,4 @@ jobs:
           commit-message: ${{ steps.report.outputs.commit_message }}
           add-paths: sources/chiaki-modern-overlay/bigrams.tsv
           labels: |
-            長句選字錯誤
-            automated-pr
+            Add bigram

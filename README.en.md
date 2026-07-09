@@ -8,8 +8,8 @@ The main input-method repository stay focus on the macOS runtime. This repositor
 
 ## Report Lexicon Issues
 
-- [Missing word report](https://github.com/akira02/ChiaKey-Lexicon/issues/new?template=missing-word.yml): report a standalone word that should exist in the lexicon but is currently missing, for example `泳鏡`.
-- [Long-sentence selection error](https://github.com/akira02/ChiaKey-Lexicon/issues/new?template=long-sentence-selection.yml): report a wrong selection for a two-word sequence, for example expecting `天意難測` but getting `天意南側`.
+- [Missing word report](https://github.com/akira02/ChiaKey-Lexicon/issues/new?template=add-unigram.yml): report a standalone word that should exist in the lexicon but is currently missing, for example `泳鏡`.
+- [Long-sentence selection error](https://github.com/akira02/ChiaKey-Lexicon/issues/new?template=add-bigram.yml): report a wrong selection for a two-word sequence, for example expecting `天意難測` but getting `天意南側`.
 
 ## Why this project exists
 

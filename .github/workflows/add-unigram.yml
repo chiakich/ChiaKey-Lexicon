@@ -1,4 +1,4 @@
-name: Missing word report
+name: Add unigram
 
 on:
   issues:
@@ -16,7 +16,7 @@ jobs:
   propose:
     name: Check report and propose PR
     runs-on: ubuntu-latest
-    if: contains(github.event.issue.labels.*.name, 'automation:missing-word') || startsWith(github.event.issue.title, '缺詞回報')
+    if: contains(github.event.issue.labels.*.name, 'Add unigram') || startsWith(github.event.issue.title, '缺詞回報')
 
     steps:
       - name: Check out repository
@@ -69,5 +69,4 @@ jobs:
           commit-message: ${{ steps.report.outputs.commit_message }}
           add-paths: sources/chiaki-modern-overlay/explicit.tsv
           labels: |
-            缺詞回報
-            automated-pr
+            Add unigram
