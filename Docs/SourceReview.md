@@ -116,7 +116,7 @@ Rime essay phrase 進入 rerank 與 supplemental 匯入前，會先以 OpenCC `t
 3. Rime score 至少為 `40`。
 4. 每個字在目前 database 中都有 primary single-character reading。
 
-在這個補充 pass 中，原本會低於既有 split path 的 entries 會被提升到剛好超過該 split，並以 Rime supplemental range 的上緣為 cap。這讓 `趁現在` 這類完整詞能比 `稱` + `現在` 這種不太可能的字詞切分取得小幅 segmentation advantage，而不需要 per-phrase explicit overrides。
+在這個補充 pass 中，原本會低於既有 split path 的 entries 會被提升到略高於該 split，並依 Rime 原始權重加入很小的 evidence bonus，同時仍以 Rime supplemental range 的上緣為 cap。這讓 `趁現在` 這類完整詞能比 `稱` + `現在` 這種不太可能的字詞切分取得小幅 segmentation advantage，也能避免 `AB + C` / `A + BC` 重疊切分被固定 margin 壓成完全平手，而不需要 per-phrase explicit overrides。
 
 這能避免用推導讀音取代 libchewing 的明確注音資料，同時在讀音能安全推導到足以作為補充層時，加入社群、新聞、科技等現代詞彙。
 

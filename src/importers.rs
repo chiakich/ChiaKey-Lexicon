@@ -38,6 +38,7 @@ const RIME_OVERLAP_RERANK_STRONG_GROUP_THRESHOLD: f64 = -0.75;
 // libchewing's own frequency gap already established more reliably.
 const RIME_OVERLAP_RERANK_MIN_SCORE_RATIO: f64 = 1.15;
 const RIME_SPLIT_RERANK_MARGIN: f64 = 0.01;
+const RIME_SPLIT_RERANK_MAX_EVIDENCE_BONUS: f64 = 0.03;
 const RIME_SPLIT_RERANK_MAX_WEIGHT: f64 = RIME_OVERLAP_RERANK_STRONG_GROUP_THRESHOLD;
 // Kept: protects phrases losing to a [phrase+char] split (e.g. 測試題 vs 測試+提), which the engine length prior can't cover.
 const RIME_SPLIT_RERANK_MAX_BOOST: f64 = 0.35;
@@ -1417,14 +1418,23 @@ fn rime_split_rerank_weight(
             base_weight
         } else {
             round6(
-                (best_split + RIME_SPLIT_RERANK_MARGIN)
-                    .min(base_weight + RIME_SPLIT_RERANK_MAX_BOOST)
-                    .min(RIME_SPLIT_RERANK_MAX_WEIGHT),
+                (best_split
+                    + RIME_SPLIT_RERANK_MARGIN
+                    + rime_split_rerank_evidence_bonus(base_weight))
+                .min(base_weight + RIME_SPLIT_RERANK_MAX_BOOST)
+                .min(RIME_SPLIT_RERANK_MAX_WEIGHT),
             )
         }
     } else {
         base_weight
     }
+}
+
+fn rime_split_rerank_evidence_bonus(base_weight: f64) -> f64 {
+    let rime_floor = rime_weight(0, 1);
+    let rime_ceiling = rime_weight(1, 1);
+    let normalized = ((base_weight - rime_floor) / (rime_ceiling - rime_floor)).clamp(0.0, 1.0);
+    round6(normalized * RIME_SPLIT_RERANK_MAX_EVIDENCE_BONUS)
 }
 
 fn best_split_weight(
@@ -1964,6 +1974,22 @@ mod tests {
     }
 
     #[test]
+    fn uses_rime_evidence_to_break_overlapping_split_ties() {
+        let qstring_weights = HashMap::from([
+            ("FM".to_string(), -0.736109),
+            ("ec".to_string(), -1.482082),
+            ("0_".to_string(), -0.531528),
+        ]);
+
+        let underworld = rime_split_rerank_weight(-2.321057, "FMec", 2, &qstring_weights);
+        let ride_momentum = rime_split_rerank_weight(-2.352670, "ec0_", 2, &qstring_weights);
+
+        assert_eq!(underworld, -2.193938);
+        assert_eq!(ride_momentum, -2.00267);
+        assert!(underworld + -0.531528 > -0.736109 + ride_momentum);
+    }
+
+    #[test]
     fn applies_conversion_rules_to_rime_supplemental_phrases() {
         let path = temp_file("rime-conversion-supplemental", "喫壞\t539\n因爲\t474154\n");
         let cfg = test_config();
@@ -2209,7 +2235,7 @@ mod tests {
         assert_eq!(records.len(), 1);
         assert_eq!(records[0].qstring, "0\\NX");
         assert_eq!(records[0].phrase, "網友");
-        assert_eq!(records[0].weight, -1.850304);
+        assert_eq!(records[0].weight, -1.828599);
         assert_eq!(records[0].tags, "unigram,rime-essay,existing-rerank");
 
         let _ = fs::remove_file(path);
