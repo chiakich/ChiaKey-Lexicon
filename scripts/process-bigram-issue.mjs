@@ -32,6 +32,7 @@ async function main() {
 
   if (!previous || !current || !currentKeyboard) {
     writeComment([
+      "您好！感謝您回報長句選字錯誤！",
       "無法處理這份長句選字錯誤回報，因為 issue 內容缺少必要欄位。",
       "",
       "請使用「長句選字錯誤」issue template，或編輯 issue 補上正確前詞、正確後詞與後詞注音鍵盤碼。",
@@ -54,14 +55,16 @@ async function main() {
   const currentRows = findNormalizedRows(current).filter((row) => row.qstring === currentQstring);
   if (previousRows.length === 0 || currentRows.length === 0) {
     writeComment([
-      "這份回報看起來還不能直接建立 bigram PR，因為 bigram 需要「前詞」與「後詞」都已經存在於詞庫。",
+      "您好！感謝您回報長句選字錯誤！",
+      "這份回報看起來還不能自動處理，因為 bigram 需要「前詞」與「後詞」都已經存在於詞庫。",
       "",
       previousRows.length === 0 ? `- 找不到正確前詞：「${previous}」` : "",
       currentRows.length === 0
         ? `- 找不到正確後詞與指定讀音：「${current}」 / \`${currentQstring}\``
         : "",
       "",
-      "如果缺的是一個不可拆的單詞，請改用「缺詞回報」。如果兩個詞都應該已存在，請補充正確注音或等待維護者手動確認。",
+      "如果詞庫中缺少前詞或後詞，請先使用「缺詞回報」回報該缺詞。",
+      "如果缺的是一個不可拆的單詞，也請改用「缺詞回報」。如果兩個詞都應該已存在，請補充正確注音或等待維護者手動確認。",
     ].filter(Boolean).join("\n"));
     setOutput("should_pr", "false");
     return;
@@ -70,10 +73,11 @@ async function main() {
   const existing = findExistingBigrams(previous, current, currentQstring);
   if (existing.exact.length > 0) {
     writeComment([
-      `「${previous} -> ${current}」已存在於目前 release DB 中，不需要建立 bigram PR。`,
+      "您好！感謝您回報長句選字錯誤！",
+      `經過自動檢查後，發現「${previous} -> ${current}」已存在於目前詞庫中，請至「偏好設定」->「更新」中檢查是否有新版詞庫。`,
       "",
-      `- 正確後詞注音：${currentBpmf}`,
-      `- 正確後詞 qstring：\`${currentQstring}\``,
+      `- 目前正確後詞注音：${currentBpmf}`,
+      `- 目前正確後詞 qstring：\`${currentQstring}\``,
       "",
       "目前找到的 bigram：",
       "",
@@ -92,9 +96,10 @@ async function main() {
   const commitMessage = `feat: add bigram ${previous} -> ${current}`;
 
   writeComment([
-    `已確認「${previous} -> ${current}」尚未存在於目前 release DB 中。`,
+    "您好！感謝您回報長句選字錯誤！",
+    `經過自動檢查後，已確認「${previous} -> ${current}」尚未存在於目前詞庫中。`,
     "",
-    "我已自動產生 bigram 變更，接著會建立 PR 供維護者審查。",
+    "已自動產生 bigram 變更，後續將會由維護者審查。",
     "",
     `- 回報者：@${issueUser}`,
     `- bigram：${previous} -> ${current}`,

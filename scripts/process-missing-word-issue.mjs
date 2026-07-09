@@ -26,7 +26,8 @@ async function main() {
 
   if (!phrase || !keyboard) {
     writeComment([
-      "無法處理這份缺詞回報，因為 issue 內容缺少「詞語」或「注音鍵盤碼」。",
+      "您好！感謝您回報缺詞！",
+      "但目前無法處理這份缺詞回報，因為 issue 內容缺少「詞語」或「注音鍵盤碼」。",
       "",
       "請使用「缺詞回報」issue template，或編輯 issue 補上這兩個欄位。",
     ].join("\n"));
@@ -43,7 +44,8 @@ async function main() {
   if (existingRows.length > 0) {
     const explain = runNodeScript("scripts/explain-weight.mjs", [phrase]);
     writeComment([
-      `「${phrase}」已存在於目前詞庫中，不需要建立補詞 PR。`,
+      "您好！感謝您回報缺詞！",
+      `但「${phrase}」已存在於目前詞庫中，請至「偏好設定」->「更新」中檢查是否有新版詞庫。`,
       "",
       `- 注音：${bpmf}`,
       `- qstring：\`${qstring}\``,
@@ -74,9 +76,10 @@ async function main() {
   const commitMessage = `feat: add missing word ${phrase}`;
 
   writeComment([
-    `已確認「${phrase}」尚未存在於目前 normalized 詞庫中。`,
+    "您好！感謝您回報缺詞！",
+    `經過自動檢查後，已確認「${phrase}」尚未存在於目前詞庫中。`,
     "",
-    "我已自動產生補詞變更，接著會建立 PR 供維護者審查。",
+    "已自動產生補詞變更，後續將會由維護者審查。",
     "",
     `- 回報者：@${issueUser}`,
     `- 注音：${bpmf}`,
