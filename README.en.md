@@ -6,6 +6,11 @@ ChiaKey Lexicon is the lexicon-data repository for ChiaKey.
 
 The main input-method repository stay focus on the macOS runtime. This repository is responsible for evolving lexicon data, source manifests, licensing records, release database artifacts, checksums, and changelog history.
 
+## Report Lexicon Issues
+
+- [Missing word report](https://github.com/akira02/ChiaKey-Lexicon/issues/new?template=missing-word.yml): report a standalone word that should exist in the lexicon but is currently missing, for example `泳鏡`.
+- [Long-sentence selection error](https://github.com/akira02/ChiaKey-Lexicon/issues/new?template=long-sentence-selection.yml): report a wrong selection for a two-word sequence, for example expecting `天意難測` but getting `天意南側`.
+
 ## Why this project exists
 
 There is no shortage of open-source Traditional Chinese / bopomofo lexicons, but almost all of them are "unigram" data — i.e. "word / phrase + frequency":
@@ -102,7 +107,7 @@ The release builder integration flow is deterministic:
 7. Import `chiaki-modern-overlay/explicit.tsv` for project-owned explicit qstring and ranking corrections.
 8. Import `chiaki-web-overlay/explicit.tsv` and `chiaki-synthetic-overlay/unigrams.tsv`.
 9. Generate OpenCC `t2tw` same-qstring variant weight caps for candidates that already have Taiwan-standard counterparts, then apply `chiaki-fragment-denylist` to keep non-lexical fragments below safety thresholds.
-10. Import `chiaki-synthetic-overlay/bigrams.tsv`, then `openformosa-common-voice-25-zh-tw/bigrams.tsv`, then `chiaki-web-overlay/bigrams.tsv` so reviewed web bigrams can override overlapping statistical rows.
+10. Import `chiaki-synthetic-overlay/bigrams.tsv`, then `openformosa-common-voice-25-zh-tw/bigrams.tsv`, then `chiaki-web-overlay/bigrams.tsv` and `chiaki-modern-overlay/bigrams.tsv` so reviewed web and manual correction bigrams can override overlapping statistical rows.
 11. Import runtime compatibility data: BPMF punctuations, supplemental symbol list, canned messages, Mozc emoticons, and module CIN tables.
 12. Derive `associated_phrases` from final `unigrams` for runtime phrase suggestions.
 13. Run runtime-required validations and write normalized TSV, release metadata, manifest, and checksums.

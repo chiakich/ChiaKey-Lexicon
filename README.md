@@ -8,6 +8,11 @@
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/A0A21UAIV9)
 
+## 回報詞庫問題
+
+- [缺詞回報](https://github.com/akira02/ChiaKey-Lexicon/issues/new?template=missing-word.yml)：回報一個應作為單獨詞語、但目前詞庫缺少的詞，例如「泳鏡」。
+- [長句選字錯誤](https://github.com/akira02/ChiaKey-Lexicon/issues/new?template=long-sentence-selection.yml)：回報兩個已存在詞的前後組合在長句中選錯字，例如想輸入「天意難測」卻出成「天意南側」。
+
 ## 為什麼有這個專案
 
 [千秋輸入法（ChiaKey）](https://github.com/chiakich/ChiaKey) 作為「Yahoo奇摩輸入法」的開源後繼者，該輸入法主要需要依賴注音表、單字詞頻表（unigram）、以及二元語法表（bigram）。而繁體中文 / 注音的開源詞庫資源雖然相當豐富，但幾乎都集中在單詞組詞組 + 頻率這一種形式：
@@ -108,7 +113,7 @@ Release builder 的整合流程是具有確定性的：
 7. 匯入 `chiaki-modern-overlay/explicit.tsv`，處理專案自有且需要指定 qstring 或排序的精準修正。
 8. 匯入 `chiaki-web-overlay/unigrams.tsv` 與 `chiaki-synthetic-overlay/unigrams.tsv`。
 9. 由 OpenCC `t2tw` 產生同 qstring variant 權重上限，降低不符合預設繁中期待、且已有台灣標準 counterpart 的候選；再套用 `chiaki-fragment-denylist`，把偷字的非詞彙碎片壓到安全界。
-10. 匯入 `chiaki-synthetic-overlay/bigrams.tsv`、`openformosa-common-voice-25-zh-tw/bigrams.tsv`，再匯入 `chiaki-web-overlay/bigrams.tsv`，讓 reviewed web bigrams 可以覆蓋重疊的統計來源 rows。
+10. 匯入 `chiaki-synthetic-overlay/bigrams.tsv`、`openformosa-common-voice-25-zh-tw/bigrams.tsv`，再匯入 `chiaki-web-overlay/bigrams.tsv` 與 `chiaki-modern-overlay/bigrams.tsv`，讓 reviewed web bigrams 與人工修正 bigrams 可以覆蓋重疊的統計來源 rows。
 11. 補入 runtime compatibility data：BPMF 標點、ChiaKey supplemental symbol list、canned messages、Mozc 顏文字、module CIN tables。
 12. 從最終 `unigrams` 派生 `associated_phrases`，供聯想詞提示使用。
 13. 執行 runtime-required validations，寫出 normalized TSV、release metadata、manifest 與 checksums。
