@@ -29,8 +29,8 @@ pub struct ReleasePaths {
     pub chiakey_auto_hotwords_source_dir: PathBuf,
     pub openformosa_common_voice_source_dir: PathBuf,
     pub fragment_denylist_source_dir: PathBuf,
-    pub overlay_phrases: PathBuf,
     pub overlay_explicit: PathBuf,
+    pub overlay_bigrams: PathBuf,
     pub chiaki_web_overlay_unigrams: PathBuf,
     pub chiaki_web_overlay_bigrams: PathBuf,
     pub chiaki_synthetic_unigrams: PathBuf,
@@ -102,8 +102,8 @@ impl ReleasePaths {
         let metadata_filename = format!("ChiaKeySource-{}.json", cfg.release_version);
 
         Self {
-            overlay_phrases: overlay_source_dir.join("phrases.tsv"),
             overlay_explicit: overlay_source_dir.join("explicit.tsv"),
+            overlay_bigrams: overlay_source_dir.join("bigrams.tsv"),
             chiaki_web_overlay_unigrams: chiaki_web_overlay_source_dir.join("unigrams.tsv"),
             chiaki_web_overlay_bigrams: chiaki_web_overlay_source_dir.join("bigrams.tsv"),
             chiaki_synthetic_unigrams: chiaki_synthetic_source_dir.join("unigrams.tsv"),

@@ -1,0 +1,48 @@
+name: 長句選字錯誤
+description: 回報兩個已存在詞在長句中被錯誤切分或選字的問題。
+title: "長句選字錯誤："
+labels:
+  - Add bigram
+body:
+  - type: markdown
+    attributes:
+      value: |
+        這個表單用來回報 **bigram** 遺漏，也就是「前一個詞 + 後一個詞」這個組合在長句中應該更常見。
+
+        若兩個詞「都是」可獨立輸入的詞，但連在一起時，選到其他同音的詞，請使用這個表單回報。
+        例：想打「天意 難測」，卻出成「天意南側」，這應該補 `天意 -> 難測` 的 bigram。
+
+        如果要回報的是一個不可拆、應作為單一詞的詞語，請改用「缺詞回報」。
+  - type: input
+    id: previous
+    attributes:
+      label: 正確前詞
+      description: bigram 的前一個詞。
+      placeholder: 天意
+    validations:
+      required: true
+  - type: input
+    id: current
+    attributes:
+      label: 正確後詞
+      description: bigram 的後一個詞。
+      placeholder: 難測
+    validations:
+      required: true
+  - type: input
+    id: current_keyboard_zhuyin
+    attributes:
+      label: 正確後詞注音鍵盤碼
+      description: 請填「正確後詞」的注音鍵盤碼；多音節可直接接在一起，有一聲音節時請用空白分隔。
+        例如「你好」的注音在鍵盤上對應的英文為「s(ㄋ)u(一)3(ˇ)c(ㄏ)l(ㄠ)3(ˇ)」，請直接輸入「su3cl3」。
+      placeholder: s06hk4
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: 補充說明
+      description: 可選填完整輸入、目前錯誤輸出、使用情境，或說明這組前後詞為什麼常見。
+      placeholder: 例如：想輸入「天意難測」，目前出現「天意南側」。
+    validations:
+      required: false

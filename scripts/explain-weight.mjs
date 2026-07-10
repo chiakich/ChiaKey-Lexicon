@@ -53,13 +53,6 @@ const RAW_SOURCES = [
     format: (cols) => `freq=${cols[1]}`,
   },
   {
-    label: "chiaki-modern-overlay/phrases.tsv",
-    file: "sources/chiaki-modern-overlay/phrases.tsv",
-    delimiter: "\t",
-    phraseCol: 0,
-    format: (cols) => `weight=${cols[1]} tags=${cols[2]}`,
-  },
-  {
     label: "chiaki-modern-overlay/explicit.tsv",
     file: "sources/chiaki-modern-overlay/explicit.tsv",
     delimiter: "\t",

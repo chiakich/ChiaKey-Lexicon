@@ -85,13 +85,6 @@ pub fn run() -> Result<()> {
         &mut source_keys,
         &mut import_results,
     )?;
-    import_overlay(
-        &mut conn,
-        &cfg,
-        &paths,
-        &mut source_keys,
-        &mut import_results,
-    )?;
     import_explicit_overlay(
         &mut conn,
         &cfg,
@@ -117,6 +110,11 @@ pub fn run() -> Result<()> {
         &mut conn,
         &cfg,
         &paths,
+        &mut source_keys,
+        &mut import_results,
+    )?;
+    import_post_supplement_character_phrase_evidence(
+        &mut conn,
         &mut source_keys,
         &mut import_results,
     )?;
@@ -152,6 +150,7 @@ pub fn run() -> Result<()> {
         &mut source_keys,
         &mut import_results,
     )?;
+    import_chiaki_modern_bigrams(&mut conn, &cfg, &paths, &mut import_results)?;
     import_punctuations(
         &mut conn,
         &cfg,
@@ -228,8 +227,8 @@ fn verify_inputs(
         paths.mozc_emoticon_categorized.clone(),
         paths.mozc_emoticon_tsv.clone(),
         paths.bpmf_ext_cin.clone(),
-        paths.overlay_phrases.clone(),
         paths.overlay_explicit.clone(),
+        paths.overlay_bigrams.clone(),
         paths.chiaki_web_overlay_unigrams.clone(),
         paths.chiaki_web_overlay_bigrams.clone(),
         paths.chiaki_synthetic_unigrams.clone(),
@@ -758,31 +757,6 @@ fn import_rime_existing_phrase_rerank(
     Ok(())
 }
 
-fn import_overlay(
-    conn: &mut Connection,
-    cfg: &Config,
-    paths: &ReleasePaths,
-    source_keys: &mut HashMap<(String, String), SourceRecord>,
-    import_results: &mut Vec<ImportResult>,
-) -> Result<()> {
-    let (records, seen, parse_skipped) = importers::parse_overlay(&paths.overlay_phrases, cfg)?;
-    let (records, infer_skipped) =
-        importers::infer_overlay_qstrings(records, &db::load_primary_character_readings(conn)?);
-    let result = db::apply_records(
-        conn,
-        records,
-        &repo_relative(&cfg.root, &paths.overlay_phrases)?,
-        "overlay",
-        &sha256_file(&paths.overlay_phrases)?,
-        seen,
-        parse_skipped + infer_skipped,
-        true,
-    )?;
-    remember_records(source_keys, &result);
-    import_results.push(result);
-    Ok(())
-}
-
 fn import_opencc_variant_policy(
     conn: &mut Connection,
     cfg: &Config,
@@ -999,6 +973,35 @@ fn import_chiakey_auto_hotwords_overlay(
     Ok(())
 }
 
+fn import_post_supplement_character_phrase_evidence(
+    conn: &mut Connection,
+    source_keys: &mut HashMap<(String, String), SourceRecord>,
+    import_results: &mut Vec<ImportResult>,
+) -> Result<()> {
+    let evidence = db::load_character_phrase_evidence(
+        conn,
+        importers::POST_SUPPLEMENT_CHARACTER_PHRASE_EVIDENCE_MIN_PHRASE_WEIGHT,
+    )?;
+    let seen = evidence.len();
+    let records = importers::post_supplement_phrase_evidence_character_records(&evidence);
+    let skipped = seen.saturating_sub(records.len());
+    let source_path = "generated/post-supplement-character-phrase-evidence";
+    let source_sha256 = sha256_bytes(b"post-supplement character phrase evidence v1");
+    let result = db::apply_records(
+        conn,
+        records,
+        source_path,
+        "post-supplement-character-phrase-evidence",
+        &source_sha256,
+        seen,
+        skipped,
+        false,
+    )?;
+    remember_records(source_keys, &result);
+    import_results.push(result);
+    Ok(())
+}
+
 fn import_chiaki_web_bigrams(
     conn: &mut Connection,
     cfg: &Config,
@@ -1040,6 +1043,26 @@ fn import_chiaki_web_bigrams(
         &repo_relative(&cfg.root, &paths.chiaki_web_overlay_bigrams)?,
         "chiaki-web-bigram-overlay",
         &sha256_file(&paths.chiaki_web_overlay_bigrams)?,
+        seen,
+        skipped,
+    )?;
+    import_results.push(result);
+    Ok(())
+}
+
+fn import_chiaki_modern_bigrams(
+    conn: &mut Connection,
+    cfg: &Config,
+    paths: &ReleasePaths,
+    import_results: &mut Vec<ImportResult>,
+) -> Result<()> {
+    let (records, seen, skipped) = importers::parse_bigram_overlay(&paths.overlay_bigrams, cfg)?;
+    let result = db::apply_bigram_records(
+        conn,
+        &records,
+        &repo_relative(&cfg.root, &paths.overlay_bigrams)?,
+        "chiaki-modern-bigram-overlay",
+        &sha256_file(&paths.overlay_bigrams)?,
         seen,
         skipped,
     )?;

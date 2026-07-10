@@ -10,17 +10,9 @@
 
 ## 用途與定位
 
-此來源提供小型、專案自有的修正列，用於在整合大型公開頻率語料前，先快速修補 seed lexicon 的明顯缺漏與排序問題。
+此來源提供小型、專案自有的修正列，用於快速修補 seed lexicon 的明顯缺漏、排序問題，以及長句走訪時的前後詞選字問題。
 
 ## 檔案與格式
-
-`phrases.tsv`：
-
-```text
-phrase<TAB>weight<TAB>tags
-```
-
-Release script 會根據 bootstrap KeyKey DB 的單字讀音推導每個詞的 reading，並以指定權重插入或替換 unigram。
 
 `explicit.tsv`：
 
@@ -28,12 +20,20 @@ Release script 會根據 bootstrap KeyKey DB 的單字讀音推導每個詞的 r
 qstring<TAB>phrase<TAB>weight<TAB>tags
 ```
 
-當修正必須綁定特定讀音、聲調或 KeyKey 內部 qstring 時，使用 `explicit.tsv`。此表只替換精確的 qstring/phrase 配對。
+所有修正都必須綁定特定讀音、聲調或 KeyKey 內部 qstring，並寫入 `explicit.tsv`。此表只替換精確的 qstring/phrase 配對。
+
+`bigrams.tsv`：
+
+```text
+qstring<TAB>previous<TAB>current<TAB>probability
+```
+
+此表用於修正「長句中兩個已存在詞的組合」選字，例如輸入 `天意難測` 時，若 walker 選成 `天意南側`，應加入 `天意 -> 難測` 的 bigram，而不是把整句當成缺詞。`qstring` 是 `current` 的讀音，`probability` 是 runtime bigram log-probability；人工修正常用接近 `-0.35` 到 `-0.80` 的值，越接近 0 越強。
 
 ## Release 匯入規則
 
-- `phrases.tsv`：以推導讀音匯入一般修正。
 - `explicit.tsv`：以明確 qstring 進行精準覆蓋。
+- `bigrams.tsv`：在統計來源 bigram 之後匯入，用於覆蓋長句選字修正。
 
 ## 上游與授權
 
