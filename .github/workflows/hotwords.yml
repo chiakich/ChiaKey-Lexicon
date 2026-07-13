@@ -83,8 +83,17 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y pkg-config libsqlite3-dev unzip opencc
 
-      - name: Build current normalized lexicon
-        run: cargo run --release -- prepare-release
+      - name: Build baseline lexicon without auto hotwords
+        shell: bash
+        run: |
+          set -euo pipefail
+          overlay="sources/chiaki-auto-hotwords-overlay/phrases.tsv"
+          saved_overlay="$(mktemp)"
+          cp "${overlay}" "${saved_overlay}"
+          restore_overlay() { mv "${saved_overlay}" "${overlay}"; }
+          trap restore_overlay EXIT
+          printf '# phrase\tweight\ttags\n' > "${overlay}"
+          cargo run --release -- prepare-release
 
       - name: Download recent hotword observation artifacts
         env:

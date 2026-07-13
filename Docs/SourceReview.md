@@ -263,10 +263,10 @@ repository 不保存 Google Trends 的原始 CSV、排名表、新聞摘要或�
 
 自動收詞規則刻意保守：
 
-1. 只保留正規化後的純漢字詞。
+1. 只保留正規化後的純漢字詞；weekly refresh 會以 OpenCC `s2tw` 將簡體候選完整轉為繁體，再做比對與聚合。
 2. 排除英數、5 字以上詞、查詢型詞。
-3. 排除本地詞庫已存在的詞。
-4. 排除已可由 top-ranked 既有 segments 打出的詞。
+3. 以不含 auto-hotwords layer 的基準詞庫排除既有詞，避免先前的 hotword winner 遮蔽原始來源。
+4. 排除已可由 top-ranked 既有 segments 打出的詞，及被至少兩個查詢共同指向的既有開頭核心詞（例如 `世足日本`、`世足的名次表` 會收斂至既有的 `世足`）。
 5. 排除無法從既有單字讀音推導 qstring 的詞。
 6. 7 天 window 只作為佐證；單一 `7d` observation 不會自行進入 overlay。
 
