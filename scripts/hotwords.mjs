@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import fs from "node:fs";
+import { execFileSync } from "node:child_process";
 import path from "node:path";
 
 const DEFAULT_SOURCE_ID = "chiaki-auto-hotwords-overlay";
@@ -10,6 +11,8 @@ const DEFAULT_RETENTION_DAYS = 30;
 const DEFAULT_STATE_WINDOW_DAYS = 90;
 const MIN_EMIT_SIGNAL = 3;
 const MAX_SEGMENT_DERIVATION_SURFACE_LENGTH = 8;
+const DEFAULT_OPENCC_BINARY = "opencc";
+const DEFAULT_OPENCC_CONFIG = "s2tw.json";
 
 const WINDOWS = [
   { label: "24h", hours: 24, score: 1 },
@@ -36,66 +39,6 @@ const CORE_CANDIDATE_SUFFIXES = [
 ];
 
 const DERIVED_SEGMENT_STOP_CHARS = new Set(["對", "的", "是", "嗎"]);
-
-const PHRASE_REPLACEMENTS = [
-  ["世界杯", "世界盃"],
-  ["台湾", "台灣"],
-  ["新闻", "新聞"],
-  ["台风", "颱風"],
-];
-
-const CHAR_REPLACEMENTS = new Map([
-  ["国", "國"],
-  ["际", "際"],
-  ["战", "戰"],
-  ["绩", "績"],
-  ["排", "排"],
-  ["湾", "灣"],
-  ["彩", "彩"],
-  ["券", "券"],
-  ["达", "達"],
-  ["电", "電"],
-  ["风", "風"],
-  ["线", "線"],
-  ["台", "台"],
-  ["龙", "龍"],
-  ["韩", "韓"],
-  ["盘", "盤"],
-  ["后", "後"],
-  ["号", "號"],
-  ["潜", "潛"],
-  ["舰", "艦"],
-  ["对", "對"],
-  ["马", "馬"],
-  ["乌", "烏"],
-  ["库", "庫"],
-  ["亚", "亞"],
-  ["万", "萬"],
-  ["废", "廢"],
-  ["学", "學"],
-  ["师", "師"],
-  ["报", "報"],
-  ["华", "華"],
-  ["县", "縣"],
-  ["陈", "陳"],
-  ["凤", "鳳"],
-  ["积", "積"],
-  ["胶", "膠"],
-  ["军", "軍"],
-  ["张", "張"],
-  ["吴", "吳"],
-  ["东", "東"],
-  ["谚", "諺"],
-  ["贤", "賢"],
-  ["绮", "綺"],
-  ["农", "農"],
-  ["贴", "貼"],
-  ["习", "習"],
-  ["视", "視"],
-  ["导", "導"],
-  ["体", "體"],
-  ["矶", "磯"],
-]);
 
 const USAGE = `Usage:
   node scripts/hotwords.mjs collect --output tmp/hotwords-observations/DATE.json [--date YYYY-MM-DD]
@@ -190,9 +133,13 @@ async function refresh(options) {
   const normalizedPath = String(options.normalized || "normalized/smart-mandarin.tsv");
   const today = String(options.today || taipeiDate());
   const sourceId = String(options["source-id"] || DEFAULT_SOURCE_ID);
+  const canonicalize = createOpenCcCanonicalizer({
+    binary: String(options["opencc-binary"] || DEFAULT_OPENCC_BINARY),
+    config: String(options["opencc-config"] || DEFAULT_OPENCC_CONFIG),
+  });
 
-  const observations = loadObservations(observationsDir);
-  const state = loadState(statePath);
+  const observations = canonicalizeObservations(loadObservations(observationsDir), canonicalize);
+  const state = canonicalizeState(loadState(statePath), canonicalize);
   const lexicon = loadLexicon(normalizedPath, sourceId);
   const aggregate = mergeState(state, observations, today, lexicon);
   const result = buildOverlayRows(aggregate, lexicon, today, sourceId);
@@ -493,6 +440,7 @@ function buildOverlayRows(state, lexicon, today, sourceId) {
     too_short_or_long: [],
     query_like: [],
     existing_phrase: [],
+    covered_by_existing_core: [],
     typeable_by_top_segments: [],
     non_han: [],
     missing_character_reading: [],
@@ -504,6 +452,11 @@ function buildOverlayRows(state, lexicon, today, sourceId) {
     const length = Array.from(term).length;
     if (!isHanOnly(term)) {
       filtered.non_han.push(term);
+      continue;
+    }
+    const core = existingRecurringCore(term, state, lexicon);
+    if (core) {
+      filtered.covered_by_existing_core.push(`${term} (${core})`);
       continue;
     }
     if (length < 2 || length > 4) {
@@ -569,6 +522,21 @@ function buildOverlayRows(state, lexicon, today, sourceId) {
     });
   }
   return { rows, filtered, watchlistTerms };
+}
+
+function existingRecurringCore(term, state, lexicon) {
+  const characters = Array.from(term);
+  for (let length = Math.min(4, characters.length - 1); length >= 2; length -= 1) {
+    const core = characters.slice(0, length).join("");
+    if (!lexicon.byPhrase.has(core)) {
+      continue;
+    }
+    const relatedTerms = [...state.keys()].filter((candidate) => candidate !== core && candidate.startsWith(core));
+    if (relatedTerms.length >= 2) {
+      return core;
+    }
+  }
+  return null;
 }
 
 function loadLexicon(file, excludedSourceId) {
@@ -856,14 +824,68 @@ function dedupeByTerm(rows) {
 }
 
 function normalizeTerm(value) {
-  let term = String(value || "").normalize("NFKC").replace(/\s+/g, "").trim();
-  for (const [from, to] of PHRASE_REPLACEMENTS) {
-    term = term.replaceAll(from, to);
+  return String(value || "").normalize("NFKC").replace(/\s+/g, "").trim();
+}
+
+function createOpenCcCanonicalizer({ binary, config }) {
+  return (terms) => {
+    const input = terms.map(normalizeTerm).filter(Boolean);
+    if (input.length === 0) {
+      return [];
+    }
+    let output;
+    try {
+      output = execFileSync(binary, ["-c", config], {
+        encoding: "utf8",
+        input: `${input.join("\n")}\n`,
+        maxBuffer: 16 * 1024 * 1024,
+      });
+    } catch (error) {
+      throw new Error(`OpenCC ${binary} (${config}) is required when refreshing hotwords: ${error.message}`);
+    }
+    const converted = output.split(/\r?\n/).filter((line) => line.length > 0).map(normalizeTerm);
+    if (converted.length !== input.length) {
+      throw new Error(`OpenCC returned ${converted.length} terms for ${input.length} hotword terms`);
+    }
+    return converted.map((term) => term.replaceAll("臺灣", "台灣"));
+  };
+}
+
+function canonicalizeObservations(observations, canonicalize) {
+  const terms = canonicalize(observations.map((observation) => observation.term));
+  return observations.map((observation, index) => ({ ...observation, term: terms[index] }));
+}
+
+function canonicalizeState(state, canonicalize) {
+  const entries = [...state.entries()];
+  const terms = canonicalize(entries.map(([term]) => term));
+  const result = new Map();
+  for (let index = 0; index < entries.length; index += 1) {
+    const [, entry] = entries[index];
+    const term = terms[index];
+    const previous = result.get(term);
+    if (!previous) {
+      result.set(term, {
+        first_seen: entry.first_seen,
+        last_seen: entry.last_seen,
+        seen_dates: new Set(entry.seen_dates),
+        seen_windows: mapSeenWindowsToSets(entry.seen_windows),
+        max_traffic: entry.max_traffic || 0,
+        derived_from: new Set(entry.derived_from),
+      });
+      continue;
+    }
+    previous.first_seen = minDate(previous.first_seen, entry.first_seen);
+    previous.last_seen = maxDate(previous.last_seen, entry.last_seen);
+    for (const date of entry.seen_dates) previous.seen_dates.add(date);
+    for (const [window, dates] of Object.entries(entry.seen_windows)) {
+      previous.seen_windows[window] ||= new Set();
+      for (const date of dates) previous.seen_windows[window].add(date);
+    }
+    previous.max_traffic = Math.max(previous.max_traffic, entry.max_traffic || 0);
+    for (const source of entry.derived_from) previous.derived_from.add(source);
   }
-  term = Array.from(term)
-    .map((character) => CHAR_REPLACEMENTS.get(character) || character)
-    .join("");
-  return term;
+  return result;
 }
 
 function hasAsciiAlnum(value) {

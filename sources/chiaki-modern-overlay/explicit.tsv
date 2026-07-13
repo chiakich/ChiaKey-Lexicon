@@ -38,9 +38,11 @@ tfPO	鑰匙	-1.5	chiaki-modern-overlay,manual,alt-reading,colloquial
 XD	斜	-1.25	chiaki-modern-overlay,manual,polyphone,upstream-freq-fix
 L_	不	-0.95	chiaki-modern-overlay,manual,polyphone,upstream-freq-fix
 b[nq	長的	-1.609047	chiaki-modern-overlay,manual,polyphone
+gg	噢	-2.5	chiaki-modern-overlay,manual,homophone-order,colloquial
 L_u?Ik	不一樣	-1.25	chiaki-modern-overlay,manual,tone-sandhi,common-phrase
 L_F0Ik	不一樣	-1.25	chiaki-modern-overlay,manual,tone-sandhi,common-phrase
 vHwT	瀏海	-1.25	chiaki-modern-overlay,manual,tw-usage,variant-rerank
+O_U3	復刻	-1.05408	chiaki-modern-overlay,manual,upstream-freq-fix,rime-supported,homophone-rerank
 F0m_	一句	-1.2	chiaki-modern-overlay,manual,tone-sandhi,demote-uninflected-reading
 0Jml	連動	-2.040361	chiaki-modern-overlay,manual,boneyard-legacy-fix
 0_?0	豉汁	-2.45423	chiaki-modern-overlay,manual,boneyard-legacy-fix
@@ -180,5 +182,8 @@ x_KM	罷凌	-1.474582	chiaki-modern-overlay,manual,boneyard-legacy-fix
 }^FM	稚名	-1.93093	chiaki-modern-overlay,manual,boneyard-legacy-fix
 ~OKP	祖瑪	-2.02941	chiaki-modern-overlay,manual,boneyard-legacy-fix
 LPf0	髮箍	-2.297106	chiaki-modern-overlay,manual
-T5s?	缺詞	-2.912886	chiaki-modern-overlay,manual
+T5s?	缺詞	-1.75	chiaki-modern-overlay,manual,homophone-order
 0_O@ad	世足賽	-2.1	chiaki-modern-overlay,manual
+VB<i	螺鈿	-1.998589	chiaki-modern-overlay,auto-pr
+o=8G	精髓	-2.236734	chiaki-modern-overlay,auto-pr
+0U]_	載入	-0.962109	chiaki-modern-overlay,auto-pr
