@@ -2,7 +2,7 @@
 
 [English](README.en.md)  
 
-<img width="256" height="256" alt="chiakey-lexicon-icon-macOS-Default-512x512@1x" src="https://github.com/user-attachments/assets/1bc447c3-73ee-405a-82d0-2d503af75f86" />
+<img width="256" height="256" alt="chiakey-lexicon-icon" src="https://github.com/user-attachments/assets/222e1ddb-65b4-419c-88df-1f10b841ef49" />
 
 千秋輸入法綜合詞庫（ChiaKey Lexicon）是[千秋輸入法（ChiaKey）](https://github.com/chiakich/ChiaKey)衍生的台灣用詞詞庫專案。該輸入法專案將專注在輸入法本體，本詞庫則負責持續演進的外部詞庫資料同步、轉換，實驗性的自製語料處理，以及持續定時收集的網路熱門詞。
 
