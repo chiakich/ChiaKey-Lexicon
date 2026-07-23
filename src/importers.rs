@@ -214,9 +214,7 @@ pub fn parse_normalized_rime_essay(
         let characters = phrase.chars().collect::<Vec<_>>();
         let syllable_count = characters.len();
         for (index, character) in characters.iter().enumerate() {
-            if let Some(reading) =
-                essay_char_reading_override(*character, index, syllable_count)
-            {
+            if let Some(reading) = essay_char_reading_override(*character, index, syllable_count) {
                 qstring.push_str(reading);
                 continue;
             }
