@@ -166,6 +166,26 @@ pub fn parse_rime_essay(
     )
 }
 
+// rime-essay assigns each character its single highest-probability reading. For
+// 地 that is the ˙ㄉㄜ (de) neutral tone — an artifact of 的's frequency bleeding
+// into 地 in the seed lexicon — which is both phonetically wrong for place words
+// (地區/地圖/地址…) and collides with 的 on the same qstring `nq`. Non-final 地 is
+// essentially always the place morpheme (ㄉㄧˋ); the adverbial marker that
+// legitimately reads ˙ㄉㄜ (慢慢地/認真地) only appears phrase-final, so we override
+// non-final 地 to ㄉㄧˋ and leave the final position to the primary reading.
+fn essay_char_reading_override(
+    character: char,
+    index: usize,
+    syllable_count: usize,
+) -> Option<&'static str> {
+    const DI_PLACE_QSTRING: &str = ":_"; // ㄉㄧˋ
+    let is_final = index + 1 == syllable_count;
+    if character == '地' && !is_final {
+        return Some(DI_PLACE_QSTRING);
+    }
+    None
+}
+
 pub fn parse_normalized_rime_essay(
     normalized: &NormalizedRimeEssay,
     cfg: &Config,
@@ -191,8 +211,15 @@ pub fn parse_normalized_rime_essay(
 
         let mut qstring = String::new();
         let mut ok = true;
-        let syllable_count = phrase.chars().count();
-        for character in phrase.chars() {
+        let characters = phrase.chars().collect::<Vec<_>>();
+        let syllable_count = characters.len();
+        for (index, character) in characters.iter().enumerate() {
+            if let Some(reading) =
+                essay_char_reading_override(*character, index, syllable_count)
+            {
+                qstring.push_str(reading);
+                continue;
+            }
             let key = character.to_string();
             match char_readings.get(&key) {
                 Some(reading) => qstring.push_str(reading),
@@ -1873,6 +1900,49 @@ mod tests {
             records.is_empty(),
             "a phrase far below its split path should not be boosted"
         );
+    }
+
+    #[test]
+    fn overrides_non_final_di_place_reading_in_rime_essay() {
+        let path = temp_file("rime-di-place", "地圖\t500\n各地\t500\n");
+        let cfg = test_config();
+        // The seed lexicon's primary reading for 地 is the ˙ㄉㄜ (de) artifact `nq`.
+        let char_readings = HashMap::from([
+            ("地".to_string(), "nq".to_string()),
+            ("圖".to_string(), "B@".to_string()),
+            ("各".to_string(), "cb".to_string()),
+        ]);
+        let existing_phrases = HashSet::new();
+        let existing_qstring_weights = HashMap::new();
+        let conversion_rules = Vec::new();
+        let normalization = RimeNormalization::without_opencc(&conversion_rules);
+
+        let (records, _seen, _skipped) = parse_rime_essay(
+            &path,
+            &cfg,
+            &char_readings,
+            &existing_phrases,
+            &existing_qstring_weights,
+            &normalization,
+        )
+        .unwrap();
+
+        // Non-final 地 is forced to ㄉㄧˋ (`:_`), fixing the reading and removing
+        // the collision with 的 (`nq`).
+        let ditu = records
+            .iter()
+            .find(|record| record.phrase == "地圖")
+            .expect("地圖 should be imported");
+        assert_eq!(ditu.qstring, ":_B@");
+
+        // Final 地 keeps the primary reading, where the adverbial marker lives.
+        let gedi = records
+            .iter()
+            .find(|record| record.phrase == "各地")
+            .expect("各地 should be imported");
+        assert_eq!(gedi.qstring, "cbnq");
+
+        let _ = fs::remove_file(path);
     }
 
     #[test]
