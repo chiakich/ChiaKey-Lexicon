@@ -53,7 +53,7 @@ context 的 backoff weight，兩條路徑取較高分者。
 ## 詞長加分（phrase length bonus）
 
 上面「計分流程」只涵蓋單一節點的分數。但整句的最佳路徑是把沿路所有節點的分數
-**相加**（graph walk，見 `../ChiaKey` 的 `Headers/Graph.h`：`Graph::walk` /
+**相加**（graph walk，見 `ChiaKey` 的 `Headers/Graph.h`：`Graph::walk` /
 `walkMemoized`），而每個節點在相加前，還會先被加上一個**詞長加分**：
 
 ```cpp

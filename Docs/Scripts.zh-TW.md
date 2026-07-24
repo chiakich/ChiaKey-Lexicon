@@ -34,7 +34,7 @@ ACTIVE_ROOT=/tmp/ChiaKey-Lexicons SLOT=test-dev scripts/uninstall-dev-lexicon.sh
 | 腳本 | 用途 | 常用指令 |
 | --- | --- | --- |
 | `add-explicit.mjs` | 將指定詞條加入 `chiaki-modern-overlay/explicit.tsv`。預設權重由腳本推算。 | `node scripts/add-explicit.mjs "su3 cl3" 你好 --dry-run` |
-| `add-bigram.mjs` | 將詞組轉換關係加入 bigram overlay。 | `node scripts/add-bigram.mjs 天意 難測 "s06hk4" --dry-run` |
+| `add-bigram.mjs` | 將詞組轉換關係加入 bigram overlay。 | `node scripts/add-bigram.mjs 天意 "tu0 u4" 難測 "s06hk4" --dry-run` |
 | `explain-weight.mjs` | 顯示詞條在正規化結果及各原始來源中的權重／頻率，協助判斷來源與勝出原因。 | `node scripts/explain-weight.mjs 童音 同音` |
 | `process-missing-word-issue.mjs` | GitHub Actions 用：讀取 `ISSUE_BODY` 等環境變數，驗證缺詞回報、寫出回覆及 PR 資料。通常不需在本機直接執行。 | 由 `.github/workflows/add-unigram.yml` 呼叫 |
 | `process-bigram-issue.mjs` | GitHub Actions 用：讀取 issue 環境變數，驗證並建立 bigram 變更資料。通常不需在本機直接執行。 | 由 `.github/workflows/add-bigram.yml` 呼叫 |

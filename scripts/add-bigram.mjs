@@ -10,35 +10,44 @@ const BIGRAM_PATH = path.join(ROOT, "sources/chiaki-modern-overlay/bigrams.tsv")
 const DEFAULT_PROBABILITY = -0.35;
 
 const USAGE = `Usage:
-  node scripts/add-bigram.mjs <previous> <current> <current-keyboard-zhuyin> [probability] [--dry-run] [--force]
+  node scripts/add-bigram.mjs <previous> <previous-keyboard-zhuyin> <current> <current-keyboard-zhuyin> [probability] [--dry-run] [--force]
 
 Examples:
-  node scripts/add-bigram.mjs 天意 難測 "s06hk4" --dry-run
-  node scripts/add-bigram.mjs 天意 難測 "s06hk4" -0.5
+  node scripts/add-bigram.mjs 天意 "tu0 u4" 難測 "s06hk4" --dry-run
+  node scripts/add-bigram.mjs 天意 "tu0 u4" 難測 "s06hk4" -0.5
 
 Notes:
-  A bigram fixes the transition previous -> current. The qstring is derived from current.
+  A bigram fixes the transition previous -> current. The runtime looks up
+  bigrams by qstring = previous's own reading + " " + current's own reading
+  (Graph.h combineBigramQueryString, m_cfgCombineBigramQueryString=false in
+  OVIMSmartMandarin.cpp) -- NOT current's reading alone. Both readings must be
+  supplied.
 `;
 
 function main() {
   const options = parseArgs(process.argv.slice(2));
-  if (!options.previous || !options.current || !options.keyboard) {
+  if (!options.previous || !options.previousKeyboard || !options.current || !options.keyboard) {
     console.error(USAGE);
     process.exit(1);
   }
 
+  const previousReading = currentReading(options.previous, options.previousKeyboard);
   const reading = currentReading(options.current, options.keyboard);
+  const qstring = `${previousReading.qstring} ${reading.qstring}`;
   const probability = options.probability ?? DEFAULT_PROBABILITY;
-  const line = `${reading.qstring}\t${options.previous}\t${options.current}\t${formatProbability(probability)}`;
+  const line = `${qstring}\t${options.previous}\t${options.current}\t${formatProbability(probability)}`;
   const existing = loadRows(BIGRAM_PATH).find(
     (row) =>
-      row.qstring === reading.qstring &&
+      row.qstring === qstring &&
       row.previous === options.previous &&
       row.current === options.current,
   );
 
+  console.log(`previous bpmf: ${previousReading.bpmf}`);
+  console.log(`previous qstring: ${previousReading.qstring}`);
   console.log(`current bpmf: ${reading.bpmf}`);
   console.log(`current qstring: ${reading.qstring}`);
+  console.log(`combined qstring: ${qstring}`);
   console.log(`probability: ${formatProbability(probability)}`);
 
   if (existing && !options.force) {
@@ -80,13 +89,14 @@ function parseArgs(argv) {
   }
 
   options.previous = positional[0];
-  options.current = positional[1];
-  options.keyboard = positional[2];
-  if (positional[3] !== undefined) {
-    options.probability = parseProbability(positional[3]);
+  options.previousKeyboard = positional[1];
+  options.current = positional[2];
+  options.keyboard = positional[3];
+  if (positional[4] !== undefined) {
+    options.probability = parseProbability(positional[4]);
   }
-  if (positional.length > 4) {
-    throw new Error(`unexpected argument: ${positional.slice(4).join(" ")}`);
+  if (positional.length > 5) {
+    throw new Error(`unexpected argument: ${positional.slice(5).join(" ")}`);
   }
   return options;
 }

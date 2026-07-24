@@ -13,6 +13,7 @@ const DB_PATH = process.env.DB_PATH ?? path.join(ROOT, "dist/dev/ChiaKeySource-d
 
 const REQUIRED_FIELDS = {
   previous: ["正確前詞", "Previous word"],
+  previousKeyboard: ["正確前詞注音鍵盤碼", "Previous keyboard Zhuyin"],
   current: ["正確後詞", "Current word"],
   currentKeyboard: ["正確後詞注音鍵盤碼", "Current keyboard Zhuyin"],
   context: ["補充說明", "Context"],
@@ -26,16 +27,17 @@ async function main() {
   const issueUser = process.env.ISSUE_USER ?? "";
   const fields = parseIssueForm(issueBody);
   const previous = readField(fields, REQUIRED_FIELDS.previous);
+  const previousKeyboard = readField(fields, REQUIRED_FIELDS.previousKeyboard);
   const current = readField(fields, REQUIRED_FIELDS.current);
   const currentKeyboard = readField(fields, REQUIRED_FIELDS.currentKeyboard);
   const context = fields.get(REQUIRED_FIELDS.context[0]) ?? "";
 
-  if (!previous || !current || !currentKeyboard) {
+  if (!previous || !previousKeyboard || !current || !currentKeyboard) {
     writeComment([
       "您好！感謝您回報長句選字錯誤！",
       "無法處理這份長句選字錯誤回報，因為 issue 內容缺少必要欄位。",
       "",
-      "請使用「長句選字錯誤」issue template，或編輯 issue 補上正確前詞、正確後詞與後詞注音鍵盤碼。",
+      "請使用「長句選字錯誤」issue template，或編輯 issue 補上正確前詞、前詞注音鍵盤碼、正確後詞與後詞注音鍵盤碼。",
     ].join("\n"));
     setOutput("should_pr", "false");
     return;
@@ -43,22 +45,28 @@ async function main() {
 
   const dryRun = runNodeScript("scripts/add-bigram.mjs", [
     previous,
+    previousKeyboard,
     current,
     currentKeyboard,
     "--dry-run",
   ]);
+  const previousBpmf = matchLine(dryRun, /^previous bpmf:\s*(.+)$/m);
+  const previousQstring = matchLine(dryRun, /^previous qstring:\s*(.+)$/m);
   const currentBpmf = matchLine(dryRun, /^current bpmf:\s*(.+)$/m);
   const currentQstring = matchLine(dryRun, /^current qstring:\s*(.+)$/m);
+  const combinedQstring = matchLine(dryRun, /^combined qstring:\s*(.+)$/m);
   const probability = matchLine(dryRun, /^probability:\s*(.+)$/m);
 
-  const previousRows = findNormalizedRows(previous);
+  const previousRows = findNormalizedRows(previous).filter((row) => row.qstring === previousQstring);
   const currentRows = findNormalizedRows(current).filter((row) => row.qstring === currentQstring);
   if (previousRows.length === 0 || currentRows.length === 0) {
     writeComment([
       "您好！感謝您回報長句選字錯誤！",
       "這份回報看起來還不能自動處理，因為 bigram 需要「前詞」與「後詞」都已經存在於詞庫。",
       "",
-      previousRows.length === 0 ? `- 找不到正確前詞：「${previous}」` : "",
+      previousRows.length === 0
+        ? `- 找不到正確前詞與指定讀音：「${previous}」 / \`${previousQstring}\``
+        : "",
       currentRows.length === 0
         ? `- 找不到正確後詞與指定讀音：「${current}」 / \`${currentQstring}\``
         : "",
@@ -70,14 +78,15 @@ async function main() {
     return;
   }
 
-  const existing = findExistingBigrams(previous, current, currentQstring);
+  const existing = findExistingBigrams(previous, current, combinedQstring);
   if (existing.exact.length > 0) {
     writeComment([
       "您好！感謝您回報長句選字錯誤！",
       `經過自動檢查後，發現「${previous} -> ${current}」已存在於目前詞庫中，請至「偏好設定」->「更新」中檢查是否有新版詞庫。`,
       "",
+      `- 目前正確前詞注音：${previousBpmf}`,
       `- 目前正確後詞注音：${currentBpmf}`,
-      `- 目前正確後詞 qstring：\`${currentQstring}\``,
+      `- 目前 qstring：\`${combinedQstring}\``,
       "",
       "目前找到的 bigram：",
       "",
@@ -90,7 +99,12 @@ async function main() {
     return;
   }
 
-  const addOutput = runNodeScript("scripts/add-bigram.mjs", [previous, current, currentKeyboard]);
+  const addOutput = runNodeScript("scripts/add-bigram.mjs", [
+    previous,
+    previousKeyboard,
+    current,
+    currentKeyboard,
+  ]);
   const row = matchLine(addOutput, /^Appended to .+\n(.+)$/m);
   const prTitle = `Add bigram: ${previous} -> ${current}`;
   const commitMessage = `feat: add bigram ${previous} -> ${current}`;
@@ -103,8 +117,9 @@ async function main() {
     "",
     `- 回報者：@${issueUser}`,
     `- bigram：${previous} -> ${current}`,
+    `- 正確前詞注音：${previousBpmf}`,
     `- 正確後詞注音：${currentBpmf}`,
-    `- 正確後詞 qstring：\`${currentQstring}\``,
+    `- qstring：\`${combinedQstring}\``,
     `- probability：\`${probability}\``,
     `- 新增 row：\`${row}\``,
     contextBlock(context),
@@ -119,14 +134,16 @@ async function main() {
       "由長句選字錯誤 issue 自動產生。",
       "",
       `- bigram：${previous} -> ${current}`,
+      `- 正確前詞注音：${previousBpmf}`,
+      `- 正確前詞鍵盤碼：\`${previousKeyboard}\``,
       `- 正確後詞注音：${currentBpmf}`,
       `- 正確後詞鍵盤碼：\`${currentKeyboard}\``,
-      `- 正確後詞 qstring：\`${currentQstring}\``,
+      `- qstring：\`${combinedQstring}\``,
       `- probability：\`${probability}\``,
       `- 新增 row：\`${row}\``,
       contextBlock(context),
       "",
-      "審查時請確認前後詞切分、後詞讀音與 probability 是否符合預期。",
+      "審查時請確認前後詞切分、前後詞讀音與 probability 是否符合預期。",
     ].join("\n"),
     "utf8",
   );
