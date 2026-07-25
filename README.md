@@ -26,6 +26,41 @@
 
 千秋輸入法綜合詞庫的目標是：嘗試融合成熟的 unigram 詞庫，並在此在之上，疊加各種自製的 bigram 資料（來自網路語料、Mozilla Common Voice 句料與大語言模型合成語料），並以可重現、可追蹤來源的 pipeline 產生輸入法可直接消費的 release DB。
 
+### 合成語料的產生與提煉
+
+台灣現代口語與網路語境的高品質對話語料極度稀缺，這是 bigram 難以重建的主因。本專案的做法不是請模型「造詞」，而是請模型寫出整段擬真文本，再從文本中萃取詞與詞的搭配關係，靠語料規模去覆蓋真實的搭配分布。
+
+#### 體裁條件式生成（genre-conditioned generation）
+
+語料的組成參照中央研究院詞庫小組技術報告 95-02/98-04〈[中央研究院漢語平衡語料庫的內容與說明](https://asbc.iis.sinica.edu.tw/images/98-04.pdf)〉所列的主題與文類分佈。
+這個「平衡語料庫必須涵蓋各種文體」的構想可上溯至 1960 年代的 Brown Corpus（Kučera & Francis, 1967）。生成時以該報告的主題比例（哲學 10%、科學 10%、社會 35%、藝術 5%、生活 20%、文學 20%）與文類、語式分佈作為條件，讓模型分別扮演不同情境產出文本，而非平均取樣。
+
+在此之上另外特化兩組貼近當代台灣語境的資料：
+
+- `synthetic-taiwan-daily-usage`（2,221 筆）：日常生活口語
+- `synthetic-taiwan-internet-usage`（1,328 筆）：網路／社群用語
+
+生成模型使用 GPT-5.5 與 Gemma 4。
+
+#### 提煉與過濾
+
+合成語料的雜訊問題比真實語料嚴重，因此採用多道關卡而非單一頻率門檻：
+
+1. 以既有 unigram 詞庫為錨做交叉驗證：bigram 在匯入前會先依 release unigram table 預先篩選，前詞或後詞任一不存在於正式詞庫即拒收（`scripts/process-bigram-issue.mjs` 對人工回報套用相同規則）。
+2. 人工審核：合成來源的 4,117 筆 unigram 全數帶有 `reviewed` tag，經萃取後逐筆審核才進入 overlay。
+3. 去重取強：匯入時同一 key 只保留機率較高者。
+4. 以 unigram 基準線淘汰弱邊：弱搭配不在萃取階段砍除，而是在匯入校準時自然落到 unigram floor 以下而失效（見下）。
+
+#### 從語料到權重
+
+在合成語料上以既有 unigram 切分文本、統計相鄰詞的共現次數，估計轉移機率 P(current | previous)，取對數作為 raw 權重。`bigrams.tsv` 的格式為 `qstring<TAB>previous<TAB>current<TAB>probability`，並允許句界列（一側留空，以 `!` / `$` 標記）。
+
+匯入時再以 unigram 為錨進行校準（`src/importers.rs`，`calibrate_bigram_boost`）：
+```
+stored = min( unigram(current) + boost + (raw − raw_max_of_source), −0.05 )
+```
+`boost` 預設 1.5，可用環境變數 `SYNTHETIC_BIGRAM_BOOST` 覆寫（設為 0 則 raw 值直通）。`raw − raw_max_of_source` 這一項保留了來源自身的信心排序，同時把整組權重錨定到 unigram 基準上：足夠強的 disambiguation 邊會高於逐字 unigram 路徑而生效，弱邊則落在基準線以下保持 inert。
+
 ## 致謝
 
 本專案建立在許多優秀開源詞庫與社群多年累積之上，謹此致謝：
