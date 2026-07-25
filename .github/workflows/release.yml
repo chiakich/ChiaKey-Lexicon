@@ -425,9 +425,15 @@ jobs:
       # R2 mirror first: the GitHub API's unauthenticated 60/hour limit is per
       # IP, shared by everyone behind one NAT, and installers now poll hourly.
       # GitHub stays as the fallback so a CDN outage or regional block cannot
-      # strand anyone on an old lexicon. Only the latest release is mirrored
-      # (mutable, overwritten every release) -- there is no beta channel and
-      # no reason to keep old versions around here.
+      # strand anyone on an old lexicon.
+      #
+      # Artifacts go to version-scoped keys so they can be immutable. The
+      # manifest is the only mutable object, which makes publishing atomic:
+      # with a shared `latest.db` there is always a window -- widened by the
+      # cache TTL -- where a client pairs one release's manifest with the
+      # other release's bytes and fails the SHA-256 check. Old versions are
+      # left behind on purpose; at R2 storage rates a year of releases costs
+      # a few cents, which is worth more than that failure mode.
       - name: Publish lexicon manifest to R2
         env:
           R2_S3_ENDPOINT: ${{ secrets.R2_S3_ENDPOINT }}
@@ -458,30 +464,34 @@ jobs:
               "${R2_S3_ENDPOINT}/${R2_BUCKET}/${prefix}/${key}"
           }
 
-          r2 PUT "latest.db" \
+          r2 PUT "${VERSION}/${db_name}" \
             --upload-file "${release_dir}/${db_name}" \
             -H "Content-Type: application/octet-stream" \
-            -H "Cache-Control: public, max-age=300"
+            -H "Cache-Control: public, max-age=31536000, immutable"
 
-          r2 PUT "latest.json" \
+          r2 PUT "${VERSION}/${metadata_name}" \
             --upload-file "${release_dir}/${metadata_name}" \
             -H "Content-Type: application/json" \
-            -H "Cache-Control: public, max-age=300"
+            -H "Cache-Control: public, max-age=31536000, immutable"
 
           # Point the mirrored manifest's db/metadata artifacts at their R2
           # copies; the checksum artifact is left pointing at GitHub since
-          # nothing mirrors SHA256SUMS and no installer reads it.
+          # nothing mirrors SHA256SUMS and no installer reads it. Only `url`
+          # is rewritten -- the version-scoped keys keep the release's own
+          # file names, so `filename` already matches.
           jq \
-            --arg db_url "${R2_PUBLIC_BASE_URL}/${prefix}/latest.db" \
-            --arg meta_url "${R2_PUBLIC_BASE_URL}/${prefix}/latest.json" \
-            '(.artifacts[] | select(.kind == "chiakey-source-db")) |= (.url = $db_url | .filename = "latest.db")
-             | (.artifacts[] | select(.kind == "metadata")) |= (.url = $meta_url | .filename = "latest.json")' \
+            --arg db_url "${R2_PUBLIC_BASE_URL}/${prefix}/${VERSION}/${db_name}" \
+            --arg meta_url "${R2_PUBLIC_BASE_URL}/${prefix}/${VERSION}/${metadata_name}" \
+            '(.artifacts[] | select(.kind == "chiakey-source-db")) |= (.url = $db_url)
+             | (.artifacts[] | select(.kind == "metadata")) |= (.url = $meta_url)' \
             "${release_dir}/lexicon-manifest.json" >r2-lexicon-manifest.json
 
+          # Written last, and the only mutable key: until this lands, clients
+          # keep resolving the previous release's immutable artifacts.
           r2 PUT "lexicon-manifest.json" \
             --upload-file r2-lexicon-manifest.json \
             -H "Content-Type: application/json" \
-            -H "Cache-Control: public, max-age=300"
+            -H "Cache-Control: public, max-age=3600"
 
           echo "Published lexicon ${VERSION} manifest to ${R2_PUBLIC_BASE_URL}/${prefix}/lexicon-manifest.json" \
             >>"$GITHUB_STEP_SUMMARY"
