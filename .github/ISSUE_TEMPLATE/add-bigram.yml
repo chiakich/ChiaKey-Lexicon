@@ -22,6 +22,15 @@ body:
     validations:
       required: true
   - type: input
+    id: previous_keyboard_zhuyin
+    attributes:
+      label: 正確前詞注音鍵盤碼
+      description: 請填「正確前詞」的注音鍵盤碼；多音節可直接接在一起，有一聲音節時請用空白分隔。
+        例如「你好」的注音在鍵盤上對應的英文為「s(ㄋ)u(一)3(ˇ)c(ㄏ)l(ㄠ)3(ˇ)」，請直接輸入「su3cl3」。
+      placeholder: tu0 u4
+    validations:
+      required: true
+  - type: input
     id: current
     attributes:
       label: 正確後詞

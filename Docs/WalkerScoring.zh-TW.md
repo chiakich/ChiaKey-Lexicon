@@ -50,6 +50,40 @@ return result;
 這是標準的 Katz back-off，bigram 直接用條件機率，unigram 退避時補上
 context 的 backoff weight，兩條路徑取較高分者。
 
+## 詞長加分（phrase length bonus）
+
+上面「計分流程」只涵蓋單一節點的分數。但整句的最佳路徑是把沿路所有節點的分數
+**相加**（graph walk，見 `ChiaKey` 的 `Headers/Graph.h`：`Graph::walk` /
+`walkMemoized`），而每個節點在相加前，還會先被加上一個**詞長加分**：
+
+```cpp
+// Manjusri/Node.cpp:13-14
+c_phraseLengthBonus = (Score)1.0;  // log10 per extra syllable
+
+// Manjusri/Node.h:392-395，lengthPrior()
+// 單音節或被 override 時回傳 0，否則：
+c_phraseLengthBonus * (音節數 - 1)
+```
+
+這個加分在 `Graph.h:532` 與 `Graph.h:644` 的路徑分數累加中直接生效
+（`ssp.second + node.lengthPrior() + nextPath[0].score`），**不是**候選字清單
+排序才用的裝飾，而是會改變 walker 選中的最佳路徑本身。目前專案沒有呼叫
+`SetPhraseLengthBonus` 覆寫，所以是編譯期寫死的 `1.0`。
+
+**實務影響**：一個 N 字組成的單一詞節點，比起拆成「(N-1) 字詞 + 1 字」兩個
+節點，會多拿到固定 **+1.0** 的加分（`1.0×(N-1)` 對 `1.0×(N-2)+0`），跟 N 的
+長度無關。也就是說，即使某詞的 raw log-prob 權重比拆開路徑的權重總和低了
+不少，只要沒低過這 +1.0 的差距，它在 walker 實際的最佳路徑搜尋中仍然會贏。
+
+比較拆開路徑更多節點（例如整段退化成逐字）時，加分差距會更大：
+`1.0×(N-1)` 對全字元拆分的 `0`，優勢等於 `N-1`。
+
+**校正計分時務必記得**：比較「整詞 vs. 拆開路徑」何者會贏，不能只比較
+`normalized/smart-mandarin.tsv` 裡的 raw weight，必須先各自套用
+`effective = weight + 1.0 × (字數 - 1)` 換算成有效分數再比大小；`explicit.tsv`
+的 reading-demote／`fragment-demotions.tsv` 的降權門檻，也都要用這個有效分數
+反推，而不是直接對 raw weight 打一個固定 margin。
+
 ## 關於詞庫權重驗證
 
 因為是「取 max」而非「取代」或「相加」，所以一筆 bigram 要真正生效，它的 log 機率
@@ -88,3 +122,9 @@ probability 由高到低排序**。詞庫 build 出的同一 `qstring`／同一 
 - 每筆 bigram 的 `current` 應在對應 unigram 表中存在（否則 unigram path 缺基準，
   back-off 比較失真）。
 - 同一 `(previous, current)` 不應有重複或矛盾的多筆 bigram。
+
+### 5. 整詞 vs. 拆詞路徑競爭
+
+- 若要判斷「某個 N 字詞會不會被拆詞路徑（如更短的詞 + 單字）比下去」，
+  必須先依「詞長加分」章節換算成有效分數（`weight + 1.0×(字數-1)`）再比較，
+  否則會低估整詞的實際優勢，得出錯誤的降權門檻。

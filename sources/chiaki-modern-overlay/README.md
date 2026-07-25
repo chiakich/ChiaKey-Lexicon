@@ -28,7 +28,7 @@ qstring<TAB>phrase<TAB>weight<TAB>tags
 qstring<TAB>previous<TAB>current<TAB>probability
 ```
 
-此表用於修正「長句中兩個已存在詞的組合」選字，例如輸入 `天意難測` 時，若 walker 選成 `天意南側`，應加入 `天意 -> 難測` 的 bigram，而不是把整句當成缺詞。`qstring` 是 `current` 的讀音，`probability` 是 runtime bigram log-probability；人工修正常用接近 `-0.35` 到 `-0.80` 的值，越接近 0 越強。
+此表用於修正「長句中兩個已存在詞的組合」選字，例如輸入 `天意難測` 時，若 walker 選成 `天意南側`，應加入 `天意 -> 難測` 的 bigram，而不是把整句當成缺詞。`qstring` 是 `previous` 的讀音 + 空白 + `current` 的讀音，`probability` 是 runtime bigram log-probability；人工修正常用接近 `-0.35` 到 `-0.80` 的值，越接近 0 越強。
 
 ## Release 匯入規則
 

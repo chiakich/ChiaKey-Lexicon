@@ -421,3 +421,67 @@ jobs:
             --target "$GITHUB_SHA" \
             --title "ChiaKey Lexicon ${version}" \
             --notes-file "${release_dir}/RELEASE_NOTES.md"
+
+      # R2 mirror first: the GitHub API's unauthenticated 60/hour limit is per
+      # IP, shared by everyone behind one NAT, and installers now poll hourly.
+      # GitHub stays as the fallback so a CDN outage or regional block cannot
+      # strand anyone on an old lexicon. Only the latest release is mirrored
+      # (mutable, overwritten every release) -- there is no beta channel and
+      # no reason to keep old versions around here.
+      - name: Publish lexicon manifest to R2
+        env:
+          R2_S3_ENDPOINT: ${{ secrets.R2_S3_ENDPOINT }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_PUBLIC_BASE_URL: ${{ vars.R2_PUBLIC_BASE_URL || 'https://cdn.chiaki.ch' }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          set -euo pipefail
+
+          if [[ -z "${R2_S3_ENDPOINT}" || -z "${R2_ACCESS_KEY_ID}" ]]; then
+            echo "R2 secrets not configured; skipping manifest publish."
+            exit 0
+          fi
+
+          prefix="chiakey/lexicon"
+          release_dir="dist/${VERSION}"
+          db_name="ChiaKeySource-${VERSION}.db"
+          metadata_name="ChiaKeySource-${VERSION}.json"
+
+          r2() {
+            local method="$1" key="$2"; shift 2
+            curl --fail --silent --show-error \
+              --aws-sigv4 "aws:amz:auto:s3" \
+              --user "${R2_ACCESS_KEY_ID}:${R2_SECRET_ACCESS_KEY}" \
+              -X "${method}" "$@" \
+              "${R2_S3_ENDPOINT}/${R2_BUCKET}/${prefix}/${key}"
+          }
+
+          r2 PUT "latest.db" \
+            --upload-file "${release_dir}/${db_name}" \
+            -H "Content-Type: application/octet-stream" \
+            -H "Cache-Control: public, max-age=300"
+
+          r2 PUT "latest.json" \
+            --upload-file "${release_dir}/${metadata_name}" \
+            -H "Content-Type: application/json" \
+            -H "Cache-Control: public, max-age=300"
+
+          # Point the mirrored manifest's db/metadata artifacts at their R2
+          # copies; the checksum artifact is left pointing at GitHub since
+          # nothing mirrors SHA256SUMS and no installer reads it.
+          jq \
+            --arg db_url "${R2_PUBLIC_BASE_URL}/${prefix}/latest.db" \
+            --arg meta_url "${R2_PUBLIC_BASE_URL}/${prefix}/latest.json" \
+            '(.artifacts[] | select(.kind == "chiakey-source-db")) |= (.url = $db_url | .filename = "latest.db")
+             | (.artifacts[] | select(.kind == "metadata")) |= (.url = $meta_url | .filename = "latest.json")' \
+            "${release_dir}/lexicon-manifest.json" >r2-lexicon-manifest.json
+
+          r2 PUT "lexicon-manifest.json" \
+            --upload-file r2-lexicon-manifest.json \
+            -H "Content-Type: application/json" \
+            -H "Cache-Control: public, max-age=300"
+
+          echo "Published lexicon ${VERSION} manifest to ${R2_PUBLIC_BASE_URL}/${prefix}/lexicon-manifest.json" \
+            >>"$GITHUB_STEP_SUMMARY"
