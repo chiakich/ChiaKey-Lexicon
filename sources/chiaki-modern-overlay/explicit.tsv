@@ -36,6 +36,7 @@ o=FJ	痙攣	-2.1	chiaki-modern-overlay,manual,alt-reading,common-mistype
 tfPO	鑰匙	-1.5	chiaki-modern-overlay,manual,alt-reading,colloquial
 8L	藏	-1.6	chiaki-modern-overlay,manual,polyphone,upstream-freq-fix
 XD	斜	-1.25	chiaki-modern-overlay,manual,polyphone,upstream-freq-fix
+`l	行	-1.60	chiaki-modern-overlay,manual,polyphone,demote,homophone-order
 L_	不	-0.95	chiaki-modern-overlay,manual,polyphone,upstream-freq-fix
 b[nq	長的	-1.609047	chiaki-modern-overlay,manual,polyphone
 gg	噢	-2.5	chiaki-modern-overlay,manual,homophone-order,colloquial
