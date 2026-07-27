@@ -12,6 +12,10 @@
 
 此來源提供小型、專案自有的修正列，用於快速修補 seed lexicon 的明顯缺漏、排序問題，以及長句走訪時的前後詞選字問題。
 
+`explicit.tsv` 是一般 unigram 校正的最終精準覆蓋層：它在 libchewing、Rime、web、
+synthetic、OpenCC 與單字同音校正之後套用，因此可明確指定某個 qstring 的候選排序。
+其後唯一可再降低 unigram 權重的規則是 `chiaki-fragment-denylist`；片段安全上限優先於一般頻率或排序偏好。
+
 ## 檔案與格式
 
 `explicit.tsv`：
@@ -33,7 +37,12 @@ qstring<TAB>previous<TAB>current<TAB>probability
 ## Release 匯入規則
 
 - `explicit.tsv`：以明確 qstring 進行精準覆蓋。
+- `explicit.tsv` 在所有一般 unigram 來源與排序校正後、fragment denylist 前匯入；它可覆蓋
+  一般候選權重，但不得重新提高被判定為片段的詞組。
 - `bigrams.tsv`：在統計來源 bigram 之後匯入，用於覆蓋長句選字修正。
+
+帶有 `naer-frequency-review` tag 的列是以國教院《通用詞頻表》進行本機審查後的多字同音
+詞組排序調整。原始詞頻表與審查表在授權未確認前只供本機研究，不應隨公開 release 散布。
 
 ## 上游與授權
 

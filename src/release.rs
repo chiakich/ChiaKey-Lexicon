@@ -85,13 +85,6 @@ pub fn run() -> Result<()> {
         &mut source_keys,
         &mut import_results,
     )?;
-    import_explicit_overlay(
-        &mut conn,
-        &cfg,
-        &paths,
-        &mut source_keys,
-        &mut import_results,
-    )?;
     import_chiaki_web_overlay(
         &mut conn,
         &cfg,
@@ -126,6 +119,13 @@ pub fn run() -> Result<()> {
         &mut import_results,
     )?;
     import_single_char_homophone_rerank(
+        &mut conn,
+        &cfg,
+        &paths,
+        &mut source_keys,
+        &mut import_results,
+    )?;
+    import_explicit_overlay(
         &mut conn,
         &cfg,
         &paths,
