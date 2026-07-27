@@ -390,6 +390,21 @@ sources/chiaki-synthetic-overlay/source-inventory.sha256
 sources/openformosa-common-voice-25-zh-tw/source-inventory.sha256
 ```
 
+### tw-ly-transcript
+
+- 名稱：立法院公報詢答語料覆蓋層
+- 本地來源：`sources/tw-ly-transcript/bigrams.tsv`
+- 來源材料：立法院公報第 10、11 屆議程之詢答段落逐字稿
+- 上游 API：<https://ly.govapi.tw/v2/>（g0v 維護，資料源自立法院議事暨公報資訊網）
+- 授權：立法院網站資料開放宣告（無償、非專屬、可再授權，得重製改作，需標示來源）
+- 署名：立法院議事暨公報資訊網／g0v ly.govapi.tw
+- 再散布決策：以萃取並複核後的 runtime bigram rows 納入公開 release
+
+這個來源只貢獻選出的 runtime bigram rows。raw 公報文字不在這個 repository 再散布。
+人工複核紀錄保存於 `sources/tw-ly-transcript/review-decisions.tsv`，供重新產生時沿用。
+
+萃取與過濾方法、語域偏誤分析與品質評估見 `sources/tw-ly-transcript/README.md` 的研究附錄。
+
 ## 未納入
 
 這些來源可作為有用參考，但第一版 release artifacts 不會把它們當作 raw sources 納入：

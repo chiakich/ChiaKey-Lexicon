@@ -5,7 +5,7 @@ import path from "node:path";
 import readline from "node:readline";
 import { fileURLToPath } from "node:url";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const EXPLICIT_PATH = path.join(ROOT, "sources/chiaki-modern-overlay/explicit.tsv");
 const NORMALIZED_PATH =
   process.env.NORMALIZED_PATH ?? path.join(ROOT, "normalized/smart-mandarin.tsv");
@@ -104,11 +104,11 @@ const COMPONENT_VALUES = new Map(COMPONENTS);
 const TONE_KEYS = new Set(["6", "3", "4", "7"]);
 
 const USAGE = `Usage:
-  node scripts/add-explicit.mjs <keyboard-zhuyin> <phrase> [weight] [--tag TAG] [--tags TAGS] [--dry-run]
+  node scripts/lexicon/add-explicit.mjs <keyboard-zhuyin> <phrase> [weight] [--tag TAG] [--tags TAGS] [--dry-run]
 
 Examples:
-  node scripts/add-explicit.mjs "su3 cl3" 你好 --dry-run
-  node scripts/add-explicit.mjs "ek7" 個 -2.9 --tag neutral-tone
+  node scripts/lexicon/add-explicit.mjs "su3 cl3" 你好 --dry-run
+  node scripts/lexicon/add-explicit.mjs "ek7" 個 -2.9 --tag neutral-tone
 
 Notes:
   Use standard Taiwan Zhuyin keyboard keys: su3 = ㄋㄧˇ, cl3 = ㄏㄠˇ.

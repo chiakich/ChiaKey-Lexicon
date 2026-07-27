@@ -81,6 +81,7 @@ Goal: project-maintained lexicon data that directly reflects ChiaKey usage conte
 - `chiaki-web-overlay`: reviewed web-usage unigram and bigram supplements.
 - `chiaki-synthetic-overlay`: synthetic-corpus-derived unigram and bigram supplements.
 - `openformosa-common-voice-25-zh-tw`: selected bigram rows from Common Voice data.
+- `tw-ly-transcript`: reviewed bigram rows extracted from Legislative Yuan gazette Q&A transcripts.
 - `chiaki-auto-hotwords-overlay`: automatically refreshed hotwords overlay (project-output rows only).
 - `chiaki-symbols-overlay`: supplemental `_punctuation_list` symbols and runtime punctuation candidates.
 
@@ -107,7 +108,7 @@ The release builder integration flow is deterministic:
 7. Import `chiaki-modern-overlay/explicit.tsv` for project-owned explicit qstring and ranking corrections.
 8. Import `chiaki-web-overlay/explicit.tsv` and `chiaki-synthetic-overlay/unigrams.tsv`.
 9. Generate OpenCC `t2tw` same-qstring variant weight caps for candidates that already have Taiwan-standard counterparts, then apply `chiaki-fragment-denylist` to keep non-lexical fragments below safety thresholds.
-10. Import `chiaki-synthetic-overlay/bigrams.tsv`, then `openformosa-common-voice-25-zh-tw/bigrams.tsv`, then `chiaki-web-overlay/bigrams.tsv` and `chiaki-modern-overlay/bigrams.tsv` so reviewed web and manual correction bigrams can override overlapping statistical rows.
+10. Import bigram sources in order: `chiaki-synthetic-overlay`, `openformosa-common-voice-25-zh-tw`, `tw-ly-transcript`, `chiaki-web-overlay`, `chiaki-modern-overlay`. Later sources override overlapping rows, so the reviewed web overlay and manual corrections sit above the corpus-statistics sources.
 11. Import runtime compatibility data: BPMF punctuations, supplemental symbol list, canned messages, Mozc emoticons, and module CIN tables.
 12. Derive `associated_phrases` from final `unigrams` for runtime phrase suggestions.
 13. Run runtime-required validations and write normalized TSV, release metadata, manifest, and checksums.

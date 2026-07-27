@@ -540,5 +540,6 @@ O_lI	富含	-1.705225	chiaki-modern-overlay,manual,frequency-review,multichar-ho
 o_N_	序幕	-0.971891	chiaki-modern-overlay,manual,frequency-review,multichar-homophone-rerank
 T0H:	吸菸	-1.125039	chiaki-modern-overlay,manual,frequency-review,multichar-homophone-rerank
 p?\_	時數	-1.328664	chiaki-modern-overlay,manual,frequency-review,multichar-homophone-rerank
-\_	數	-0.90	chiaki-modern-overlay,manual,homophone-order,libchewing-freq-gap
 PAsI	譁然	-1.58	chiaki-modern-overlay,manual,frequency-review,multichar-homophone-rerank
+\_	數	-0.929843	chiaki-modern-overlay,manual,reading-order-fix,homophone-order,libchewing-freq-gap
+|O	數	-1.803275	chiaki-modern-overlay,manual,reading-order-fix,homophone-order,libchewing-freq-gap

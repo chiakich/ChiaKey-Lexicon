@@ -4,7 +4,7 @@
 // for the requested phrase(s) and prints what each one says.
 //
 // Usage:
-//   node scripts/explain-weight.mjs 童音 同音
+//   node scripts/audit/explain-weight.mjs 童音 同音
 //
 // This is a snapshot of the *raw inputs*, not a re-run of the rerank
 // pipeline (importers.rs) — it won't show intermediate rerank math, only
@@ -18,7 +18,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 
 const NORMALIZED_PATH =
   process.env.NORMALIZED_PATH ?? path.join(ROOT, "normalized/smart-mandarin.tsv");
@@ -216,8 +216,8 @@ async function main() {
     .filter(Boolean);
 
   if (words.length === 0) {
-    console.error("Usage: node scripts/explain-weight.mjs <phrase> [phrase2 ...]");
-    console.error("       node scripts/explain-weight.mjs 童音,同音");
+    console.error("Usage: node scripts/audit/explain-weight.mjs <phrase> [phrase2 ...]");
+    console.error("       node scripts/audit/explain-weight.mjs 童音,同音");
     process.exit(1);
   }
 

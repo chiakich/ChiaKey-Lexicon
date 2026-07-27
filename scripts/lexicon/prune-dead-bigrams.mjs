@@ -11,8 +11,8 @@
 // 下界會下降，部分 B 會轉成 D；所以每次大幅改動詞庫後應重跑 audit 再決定。
 //
 // 用法：
-//   node scripts/prune-dead-bigrams.mjs              # 試算，不寫檔
-//   node scripts/prune-dead-bigrams.mjs --apply      # 實際寫回
+//   node scripts/lexicon/prune-dead-bigrams.mjs              # 試算，不寫檔
+//   node scripts/lexicon/prune-dead-bigrams.mjs --apply      # 實際寫回
 
 import { DatabaseSync } from "node:sqlite";
 import { readFileSync, writeFileSync, existsSync, readdirSync } from "node:fs";

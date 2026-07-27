@@ -151,8 +151,9 @@ bigram_logP(current | previous)  >  m_unigramCurrents[0] + backoff(previous)
 **只有 A + B 可以安全剪除。** D 是學習翻轉排序後的救援路徑，用「贏不過該讀音最高分」
 當死權重判準會誤殺整個 D 類。
 
-檢查工具：`scripts/audit-bigram-effectiveness.mjs`（分類並輸出清單）、
-`scripts/prune-dead-bigrams.mjs`（實際剪除）。
+檢查工具：`scripts/audit/audit-bigram-effectiveness.mjs`（分類並輸出清單）、
+`scripts/lexicon/prune-dead-bigrams.mjs`（實際剪除）。操作流程、跨來源共用 key 的處理
+與已知限制見 [BigramPruning.zh-TW.md](BigramPruning.zh-TW.md)。
 
 ### 3. 排序前提
 

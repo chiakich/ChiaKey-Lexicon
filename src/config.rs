@@ -56,6 +56,8 @@ pub const CHIAKEY_AUTO_HOTWORDS_SOURCE_NAME: &str =
     "ChiaKey automatically refreshed hotwords overlay";
 pub const GENERATED_CHARACTER_EVIDENCE_SOURCE_ID: &str = "generated-character-phrase-evidence";
 pub const OPENFORMOSA_COMMON_VOICE_SOURCE_ID: &str = "openformosa-common-voice-25-zh-tw";
+pub const TW_LY_TRANSCRIPT_SOURCE_ID: &str = "tw-ly-transcript";
+pub const TW_LY_TRANSCRIPT_SOURCE_NAME: &str = "Legislative Yuan gazette Q&A transcript overlay";
 pub const OPENFORMOSA_COMMON_VOICE_SOURCE_NAME: &str =
     "OpenFormosa Common Voice 25 zh-TW bigram overlay";
 pub const OPENCC_VARIANT_SOURCE_ID: &str = "opencc-variant-policy";
@@ -129,6 +131,7 @@ pub struct Config {
     // 0 = raw passthrough.
     pub synthetic_bigram_boost: f64,
     pub commonvoice_bigram_boost: f64,
+    pub tw_ly_transcript_bigram_boost: f64,
     // Min rime-essay frequency advantage for a homophone to be promoted to its
     // reading group's top single-char candidate (see single-char homophone rerank).
     pub homophone_rerank_min_ratio: f64,
@@ -162,6 +165,9 @@ pub fn load() -> Result<Config> {
     let commonvoice_bigram_boost = env_or("COMMONVOICE_BIGRAM_BOOST", "1.5")
         .parse()
         .context("parse COMMONVOICE_BIGRAM_BOOST")?;
+    let tw_ly_transcript_bigram_boost = env_or("TW_LY_TRANSCRIPT_BIGRAM_BOOST", "1.5")
+        .parse()
+        .context("parse TW_LY_TRANSCRIPT_BIGRAM_BOOST")?;
     let homophone_rerank_min_ratio = env_or("HOMOPHONE_RERANK_MIN_RATIO", "2.5")
         .parse()
         .context("parse HOMOPHONE_RERANK_MIN_RATIO")?;
@@ -205,6 +211,7 @@ pub fn load() -> Result<Config> {
         opencc_t2tw_config,
         synthetic_bigram_boost,
         commonvoice_bigram_boost,
+        tw_ly_transcript_bigram_boost,
         homophone_rerank_min_ratio,
         dist_dir,
         normalized_path,

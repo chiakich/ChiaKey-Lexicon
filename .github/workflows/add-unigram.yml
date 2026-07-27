@@ -46,7 +46,7 @@ jobs:
           ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_USER: ${{ github.event.issue.user.login }}
           MISSING_WORD_OUT_DIR: ${{ runner.temp }}/missing-word
-        run: node scripts/process-missing-word-issue.mjs
+        run: node scripts/lexicon/process-missing-word-issue.mjs
 
       - name: Comment on issue
         env:

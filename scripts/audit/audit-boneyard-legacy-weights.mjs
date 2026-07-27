@@ -7,10 +7,10 @@
 // never got re-validated against a modern corpus.
 //
 // Usage:
-//   node scripts/audit-boneyard-legacy-weights.mjs [--top 50] [--min-ratio 3]
+//   node scripts/audit/audit-boneyard-legacy-weights.mjs [--top 50] [--min-ratio 3]
 //
 // This is a heuristic screen, not a verdict — every hit still needs a human
-// read before touching chiaki-modern-overlay. See scripts/explain-weight.mjs
+// read before touching chiaki-modern-overlay. See scripts/audit/explain-weight.mjs
 // for a per-phrase deep dive on any candidate this surfaces.
 
 import fs from "node:fs";
@@ -19,7 +19,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const NORMALIZED_PATH =
   process.env.NORMALIZED_PATH ?? path.join(ROOT, "normalized/smart-mandarin.tsv");
 const BONEYARD_DB_PATH = path.join(

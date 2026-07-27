@@ -2,8 +2,8 @@
 # Stop using the locally installed development lexicon.
 #
 # Usage:
-#   scripts/uninstall-dev-lexicon.sh
-#   scripts/uninstall-dev-lexicon.sh --keep-slot
+#   scripts/release/uninstall-dev-lexicon.sh
+#   scripts/release/uninstall-dev-lexicon.sh --keep-slot
 #
 # Env overrides:
 #   ACTIVE_ROOT  default: ~/Library/Application Support/ChiaKey/Lexicons
@@ -20,8 +20,8 @@ KEEP_SLOT=0
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/uninstall-dev-lexicon.sh
-  scripts/uninstall-dev-lexicon.sh --keep-slot
+  scripts/release/uninstall-dev-lexicon.sh
+  scripts/release/uninstall-dev-lexicon.sh --keep-slot
 
 Env overrides:
   ACTIVE_ROOT  default: ~/Library/Application Support/ChiaKey/Lexicons

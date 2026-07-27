@@ -12,8 +12,8 @@
 #       └── $SLOT-backup-<timestamp>/     (previous slot, kept before overwrite)
 #
 # Usage:
-#   scripts/install-dev-lexicon.sh             # build, back up, install, activate
-#   scripts/install-dev-lexicon.sh --no-build  # install the existing dist/dev build
+#   scripts/release/install-dev-lexicon.sh             # build, back up, install, activate
+#   scripts/release/install-dev-lexicon.sh --no-build  # install the existing dist/dev build
 #
 # Env overrides:
 #   ACTIVE_ROOT  default: ~/Library/Application Support/ChiaKey/Lexicons
@@ -21,7 +21,7 @@
 #   RESTART_IME  default: 1
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 ACTIVE_ROOT="${ACTIVE_ROOT:-$HOME/Library/Application Support/ChiaKey/Lexicons}"
 SLOT="${SLOT:-local-dev}"
 DIST_DIR="$REPO_ROOT/dist/dev"

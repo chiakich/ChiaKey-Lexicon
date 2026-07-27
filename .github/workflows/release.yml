@@ -49,7 +49,7 @@ jobs:
           if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
             requested="${{ inputs.version }}"
           fi
-          version="$(bash scripts/compute-release-version.sh "$requested")"
+          version="$(bash scripts/release/compute-release-version.sh "$requested")"
 
           if git rev-parse -q --verify "refs/tags/${version}" >/dev/null; then
             echo "Release tag ${version} already exists." >&2

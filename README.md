@@ -46,7 +46,7 @@
 
 合成語料的雜訊問題比真實語料嚴重，因此採用多道關卡而非單一頻率門檻：
 
-1. 以既有 unigram 詞庫為錨做交叉驗證：bigram 在匯入前會先依 release unigram table 預先篩選，前詞或後詞任一不存在於正式詞庫即拒收（`scripts/process-bigram-issue.mjs` 對人工回報套用相同規則）。
+1. 以既有 unigram 詞庫為錨做交叉驗證：bigram 在匯入前會先依 release unigram table 預先篩選，前詞或後詞任一不存在於正式詞庫即拒收（`scripts/lexicon/process-bigram-issue.mjs` 對人工回報套用相同規則）。
 2. 人工審核：合成來源的 4,117 筆 unigram 全數帶有 `reviewed` tag，經萃取後逐筆審核才進入 overlay。
 3. 去重取強：匯入時同一 key 只保留機率較高者。
 4. 以 unigram 基準線淘汰弱邊：弱搭配不在萃取階段砍除，而是在匯入校準時自然落到 unigram floor 以下而失效（見下）。
@@ -68,6 +68,7 @@ stored = min( unigram(current) + boost + (raw − raw_max_of_source), −0.05 )
 - **新酷音 / libchewing**（`chewing/libchewing-data`）：提供主要的現代繁中 / 注音詞彙與明確讀音基底。
 - **Rime / 中州韻**（`rime/rime-essay`）：提供高品質詞頻與斷詞證據，是候選 rerank 與補充詞的重要依據。
 - **Mozilla Common Voice / OpenFormosa**：bigram 句料的語料來源。
+- **立法院／g0v `ly.govapi.tw`**：公報詢答逐字稿，bigram 的即席口語語料來源。
 - **Mozc**：顏文字預載分類資料。
 
 我們的工作主要是把這些前人的成果，整合成可重現、可追蹤來源的現代輸入法詞庫。各來源的授權、整合決定與風險紀錄詳見 [Docs/SourceReview.md](Docs/SourceReview.md)。
@@ -77,6 +78,7 @@ stored = min( unigram(current) + boost + (raw − raw_max_of_source), −0.05 )
 - 詞庫釋出流程： [Docs/ReleaseFlow.zh-TW.md](Docs/ReleaseFlow.zh-TW.md)
 - 來源審查： [Docs/SourceReview.md](Docs/SourceReview.md)
 - ChiaKey 走訪器實作說明：[Docs/WalkerScoring.zh-TW.md](Docs/WalkerScoring.zh-TW.md)
+- Bigram 可達性稽核與剪枝：[Docs/BigramPruning.zh-TW.md](Docs/BigramPruning.zh-TW.md)
 
 ## 架構
 
@@ -128,6 +130,7 @@ stored = min( unigram(current) + boost + (raw − raw_max_of_source), −0.05 )
 - `chiaki-web-overlay`：網路用語 unigram/bigram 補充。
 - `chiaki-synthetic-overlay`：合成語料提煉的 unigram/bigram 補充。
 - `openformosa-common-voice-25-zh-tw`：從 Common Voice 句料挑選的 bigram rows。
+- `tw-ly-transcript`：從立法院公報詢答逐字稿萃取、經人工複核的 bigram rows。
 
 ### 校正層
 
@@ -151,7 +154,7 @@ Release builder 的整合流程是具有確定性的：
 8. 由 OpenCC `t2tw` 產生同 qstring variant 權重上限，並套用 Rime 單字同音 rerank。
 9. 匯入 `chiaki-modern-overlay/explicit.tsv`，處理專案自有且需要指定 qstring 或排序的精準修正；它覆蓋所有一般 unigram 來源與前述校正。
 10. 最後套用 `chiaki-fragment-denylist`，把偷字的非詞彙碎片壓到安全界；這個安全上限優先於 explicit overlay。
-11. 匯入 `chiaki-synthetic-overlay/bigrams.tsv`、`openformosa-common-voice-25-zh-tw/bigrams.tsv`，再匯入 `chiaki-web-overlay/bigrams.tsv` 與 `chiaki-modern-overlay/bigrams.tsv`，讓 reviewed web bigrams 與人工修正 bigrams 可以覆蓋重疊的統計來源 rows。
+11. 依序匯入 bigram 來源：`chiaki-synthetic-overlay`、`openformosa-common-voice-25-zh-tw`、`tw-ly-transcript`、`chiaki-web-overlay`、`chiaki-modern-overlay`。後匯入者覆蓋前者的重疊 rows，因此人工審查過的 web overlay 與人工修正 overlay 位於語料統計來源之上。
 12. 補入 runtime compatibility data：BPMF 標點、ChiaKey supplemental symbol list、canned messages、Mozc 顏文字、module CIN tables。
 13. 從最終 `unigrams` 派生 `associated_phrases`，供聯想詞提示使用。
 14. 執行 runtime-required validations，寫出 normalized TSV、release metadata、manifest 與 checksums。

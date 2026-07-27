@@ -49,8 +49,8 @@ const PTT_SURNAMES = new Set("王李張劉陳楊黃趙周吳徐孫胡朱高林�
 const PTT_PERSON_FOLLOWERS = ["驚傳", "表示", "憶", "曝", "稱", "遭", "被", "籲", "談", "批", "喊"];
 
 const USAGE = `Usage:
-  node scripts/hotwords.mjs collect --output tmp/hotwords-observations/DATE.json [--date YYYY-MM-DD] [--ptt-input FILE]
-  node scripts/hotwords.mjs refresh --observations-dir tmp/hotwords-observations --state sources/chiaki-auto-hotwords-overlay/state.json --output sources/chiaki-auto-hotwords-overlay/phrases.tsv --summary tmp/hotwords-summary.md [--today YYYY-MM-DD]
+  node scripts/hotwords/hotwords.mjs collect --output tmp/hotwords-observations/DATE.json [--date YYYY-MM-DD] [--ptt-input FILE]
+  node scripts/hotwords/hotwords.mjs refresh --observations-dir tmp/hotwords-observations --state sources/chiaki-auto-hotwords-overlay/state.json --output sources/chiaki-auto-hotwords-overlay/phrases.tsv --summary tmp/hotwords-summary.md [--today YYYY-MM-DD]
 `;
 
 async function main() {

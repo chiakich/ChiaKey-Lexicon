@@ -143,6 +143,7 @@ pub fn run() -> Result<()> {
     )?;
     import_chiaki_synthetic_bigrams(&mut conn, &cfg, &paths, &mut import_results)?;
     import_openformosa_common_voice_bigrams(&mut conn, &cfg, &paths, &mut import_results)?;
+    import_tw_ly_transcript_bigrams(&mut conn, &cfg, &paths, &mut import_results)?;
     import_chiaki_web_bigrams(
         &mut conn,
         &cfg,
@@ -1110,6 +1111,30 @@ fn import_openformosa_common_voice_bigrams(
         &repo_relative(&cfg.root, &paths.openformosa_common_voice_bigrams)?,
         "openformosa-common-voice-bigrams",
         &sha256_file(&paths.openformosa_common_voice_bigrams)?,
+        seen,
+        skipped,
+    )?;
+    import_results.push(result);
+    Ok(())
+}
+
+fn import_tw_ly_transcript_bigrams(
+    conn: &mut Connection,
+    cfg: &Config,
+    paths: &ReleasePaths,
+    import_results: &mut Vec<ImportResult>,
+) -> Result<()> {
+    let (records, seen, skipped) =
+        importers::parse_bigram_overlay(&paths.tw_ly_transcript_bigrams, cfg)?;
+    let unigrams = db::load_best_unigram_weights_by_current(conn)?;
+    let records =
+        importers::calibrate_bigram_boost(records, cfg.tw_ly_transcript_bigram_boost, &unigrams);
+    let result = db::apply_bigram_records(
+        conn,
+        &records,
+        &repo_relative(&cfg.root, &paths.tw_ly_transcript_bigrams)?,
+        "tw-ly-transcript-bigrams",
+        &sha256_file(&paths.tw_ly_transcript_bigrams)?,
         seen,
         skipped,
     )?;

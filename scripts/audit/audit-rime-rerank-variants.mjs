@@ -4,18 +4,18 @@
 // libchewing support or is close enough to deserve a Taiwan-usage review.
 //
 // Usage:
-//   node scripts/audit-rime-rerank-variants.mjs [--top 100] [--max-gap 0.35] [--min-tsi-ratio 1]
+//   node scripts/audit/audit-rime-rerank-variants.mjs [--top 100] [--max-gap 0.35] [--min-tsi-ratio 1]
 //
 // This is a heuristic screen, not an automatic fix. For each hit, inspect both
 // phrases with:
-//   node scripts/explain-weight.mjs <winner> <challenger>
+//   node scripts/audit/explain-weight.mjs <winner> <challenger>
 
 import fs from "node:fs";
 import readline from "node:readline";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const NORMALIZED_PATH =
   process.env.NORMALIZED_PATH ?? path.join(ROOT, "normalized/smart-mandarin.tsv");
 const ESSAY_PATH = path.join(ROOT, "sources/rime-essay/raw/essay.txt");
@@ -47,7 +47,7 @@ function parseArgs(argv) {
     else if (arg === "--include-overlay-winners") opts.includeOverlayWinners = true;
     else if (arg === "--help" || arg === "-h") {
       console.log(`Usage:
-  node scripts/audit-rime-rerank-variants.mjs [--top 100] [--max-gap 0.35] [--min-tsi-ratio 1]
+  node scripts/audit/audit-rime-rerank-variants.mjs [--top 100] [--max-gap 0.35] [--min-tsi-ratio 1]
 
 Options:
   --top N                    Number of rows to print.

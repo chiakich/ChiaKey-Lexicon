@@ -70,7 +70,7 @@ jobs:
           git -C tmp/ptt-web-crawler/source fetch --depth 1 origin 7fe6191b451ebba4c668db1afc23b4ac99f81494
           git -C tmp/ptt-web-crawler/source checkout --detach FETCH_HEAD
           gossiping_output="tmp/ptt-web-crawler/gossiping-last-24h.json"
-          if python scripts/collect-ptt-gossiping.py \
+          if python scripts/hotwords/collect-ptt-gossiping.py \
             --crawler-dir tmp/ptt-web-crawler/source \
             --hours 24 \
             --board Gossiping \
@@ -80,7 +80,7 @@ jobs:
             echo "::warning::PTT Gossiping rejected or reset the GitHub runner connection."
           fi
           cchat_output="tmp/ptt-web-crawler/cchat-last-24h.json"
-          if python scripts/collect-ptt-gossiping.py \
+          if python scripts/hotwords/collect-ptt-gossiping.py \
             --crawler-dir tmp/ptt-web-crawler/source \
             --hours 24 \
             --board C_Chat \
@@ -110,7 +110,7 @@ jobs:
           else
             echo "PTT collection failed or produced no output; continuing with Google Trends only."
           fi
-          node scripts/hotwords.mjs collect \
+          node scripts/hotwords/hotwords.mjs collect \
             --date "${observed_on}" \
             "${ptt_args[@]}" \
             --output "tmp/hotwords-observations/${observed_on}.json"
@@ -185,7 +185,7 @@ jobs:
         run: |
           set -euo pipefail
           today="$(TZ=Asia/Taipei date +%F)"
-          node scripts/hotwords.mjs refresh \
+          node scripts/hotwords/hotwords.mjs refresh \
             --today "${today}" \
             --observations-dir tmp/hotwords-observations \
             --state sources/chiaki-auto-hotwords-overlay/state.json \

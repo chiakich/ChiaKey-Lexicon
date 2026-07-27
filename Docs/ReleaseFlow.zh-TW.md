@@ -52,8 +52,8 @@ BONEYARD_DB=/path/to/KeyKeySource.db cargo run --release -- prepare-release
 要讓本機輸入法載入剛建好的 dev 詞庫，用：
 
 ```sh
-scripts/install-dev-lexicon.sh            # build + 備份 + 安裝 + 切換 active
-scripts/install-dev-lexicon.sh --no-build # 直接安裝現有的 dist/dev build
+scripts/release/install-dev-lexicon.sh            # build + 備份 + 安裝 + 切換 active
+scripts/release/install-dev-lexicon.sh --no-build # 直接安裝現有的 dist/dev build
 ```
 
 腳本會把 `dist/dev/` 的產物改名搬進 active 佈局（輸入法跟著 `active` symlink 載入）：
@@ -91,7 +91,7 @@ GitHub Actions 的 release workflow 觸發條件：
 workflow 會做：
 
 1. 安裝 Rust 與 SQLite 依賴。
-2. 用 `scripts/compute-release-version.sh` 計算 release 版本並注入 builder。
+2. 用 `scripts/release/compute-release-version.sh` 計算 release 版本並注入 builder。
 3. 跑 `cargo test`。
 4. 執行 `cargo run --release -- prepare-release`。
 5. 驗證 `SHA256SUMS`。
@@ -105,8 +105,8 @@ workflow 會做：
 
 `.github/workflows/hotwords.yml` 另外維護 `chiaki-auto-hotwords-overlay`，與 release workflow 分開排程：
 
-- `collect`（每日 04:00 Asia/Taipei）：跑 `scripts/hotwords.mjs collect`，把當日 Google Trends 觀測值存成 GitHub Actions artifact，不 commit 進 repo。
-- `refresh`（每週一 04:30 Asia/Taipei）：下載近期 `collect` artifacts，跑 `scripts/hotwords.mjs refresh` 重新聚合狀態並寫出 `sources/chiaki-auto-hotwords-overlay/{phrases.tsv,state.json}`，本機驗證 `prepare-release` 可正常建置後，開一個 `ci/auto-hotwords` PR 讓維護者審查再合併。
+- `collect`（每日 04:00 Asia/Taipei）：跑 `scripts/hotwords/hotwords.mjs collect`，把當日 Google Trends 觀測值存成 GitHub Actions artifact，不 commit 進 repo。
+- `refresh`（每週一 04:30 Asia/Taipei）：下載近期 `collect` artifacts，跑 `scripts/hotwords/hotwords.mjs refresh` 重新聚合狀態並寫出 `sources/chiaki-auto-hotwords-overlay/{phrases.tsv,state.json}`，本機驗證 `prepare-release` 可正常建置後，開一個 `ci/auto-hotwords` PR 讓維護者審查再合併。
 - 也可用 `workflow_dispatch` 手動指定 `mode`（`all` / `collect` / `refresh`）觸發。
 
 這個 workflow 不會直接 push 到 `main` 或觸發 release；`chiaki-auto-hotwords-overlay` 的變更要等 PR 合併進 `dev`、再依一般流程走到 `main` 才會反映在下一版 release。
