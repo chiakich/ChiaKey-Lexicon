@@ -42,7 +42,7 @@ const CORE_CANDIDATE_SUFFIXES = [
 const DERIVED_SEGMENT_STOP_CHARS = new Set(["對", "的", "是", "嗎"]);
 
 const USAGE = `Usage:
-  node scripts/hotwords.mjs collect --output tmp/hotwords-observations/DATE.json [--date YYYY-MM-DD]
+  node scripts/hotwords.mjs collect --output tmp/hotwords-observations/DATE.json [--date YYYY-MM-DD] [--ptt-input FILE]
   node scripts/hotwords.mjs refresh --observations-dir tmp/hotwords-observations --state sources/chiaki-auto-hotwords-overlay/state.json --output sources/chiaki-auto-hotwords-overlay/phrases.tsv --summary tmp/hotwords-summary.md [--today YYYY-MM-DD]
 `;
 
@@ -88,28 +88,37 @@ async function collect(options) {
   const observations = [];
   const fetchedRows = {};
 
-  for (const window of WINDOWS) {
-    const rows = await fetchGoogleTrends({ geo, hl, windowHours: window.hours });
-    fetchedRows[window.label] = rows.length;
-    observations.push(
-      ...dedupeByTerm(
-        rows
-          .map((row) => ({
-            term: normalizeTerm(row.term),
-            traffic: row.traffic,
-            growth_pct: row.growthPct,
-            started_at: row.startedAt,
-            window_hours: window.hours,
-            window_label: window.label,
-          }))
-          .filter((row) => row.term && isHanOnly(row.term) && !hasAsciiAlnum(row.term)),
-      ),
-    );
+  if (!options["skip-google"]) {
+    for (const window of WINDOWS) {
+      const rows = await fetchGoogleTrends({ geo, hl, windowHours: window.hours });
+      fetchedRows[window.label] = rows.length;
+      observations.push(
+        ...dedupeByTerm(
+          rows
+            .map((row) => ({
+              term: normalizeTerm(row.term),
+              traffic: row.traffic,
+              growth_pct: row.growthPct,
+              started_at: row.startedAt,
+              source: "google-trends",
+              window_hours: window.hours,
+              window_label: window.label,
+            }))
+            .filter((row) => row.term && isHanOnly(row.term) && !hasAsciiAlnum(row.term)),
+        ),
+      );
+    }
+  }
+
+  if (options["ptt-input"]) {
+    const pttObservations = collectPttObservations(String(options["ptt-input"]), observedOn);
+    observations.push(...pttObservations.observations);
+    fetchedRows["ptt-gossiping"] = pttObservations.articleCount;
   }
 
   const payload = {
     schema_version: 2,
-    source: "google-trends-trending",
+    source: "hotwords",
     geo,
     hl,
     windows: WINDOWS.map((window) => ({ label: window.label, hours: window.hours })),
@@ -122,8 +131,45 @@ async function collect(options) {
 
   writeJson(output, payload);
   console.log(
-    `Collected ${observations.length} normalized hotword observations from ${payload.fetched_rows} Trends rows into ${output}`,
+    `Collected ${observations.length} normalized hotword observations from ${payload.fetched_rows} source rows into ${output}`,
   );
+}
+
+function collectPttObservations(file, observedOn) {
+  const payload = JSON.parse(fs.readFileSync(file, "utf8"));
+  const observations = [];
+  const articles = Array.isArray(payload.articles) ? payload.articles : [];
+  for (const article of articles) {
+    const netPush = numberOrNull(article.message_count?.count) || 0;
+    if (netPush < 50 || !article.article_title) {
+      continue;
+    }
+    for (const term of pttTitleCandidates(article.article_title)) {
+      observations.push({
+        term,
+        traffic: netPush,
+        source: "ptt-gossiping",
+        observed_on: observedOn,
+        window_hours: 24,
+        window_label: "24h",
+      });
+    }
+  }
+  return { articleCount: articles.length, observations: dedupeByTerm(observations) };
+}
+
+function pttTitleCandidates(title) {
+  const candidates = new Set();
+  const plainTitle = String(title).replace(/^\s*(?:Re:\s*)?(?:\[[^\]]*\]\s*)+/, "");
+  for (const sequence of plainTitle.matchAll(/[\p{Script=Han}]{2,}/gu)) {
+    const chars = Array.from(sequence[0]);
+    for (let start = 0; start < chars.length; start += 1) {
+      for (let length = 2; length <= 4 && start + length <= chars.length; length += 1) {
+        candidates.add(chars.slice(start, start + length).join(""));
+      }
+    }
+  }
+  return [...candidates];
 }
 
 async function refresh(options) {
@@ -241,8 +287,9 @@ function loadObservations(root) {
         observed_on: observedOn,
         window_hours: windowHours,
         window_label: observation.window_label || windowLabelForHours(windowHours),
-        traffic: numberOrNull(observation.traffic),
-        growth_pct: numberOrNull(observation.growth_pct),
+      traffic: numberOrNull(observation.traffic),
+      growth_pct: numberOrNull(observation.growth_pct),
+      source: observation.source || payload.source || "google-trends",
       });
     }
   }
@@ -268,6 +315,7 @@ function loadState(file) {
       seen_windows: normalizeSeenWindows(value.seen_windows, value.seen_dates),
       max_traffic: numberOrNull(value.max_traffic),
       derived_from: Array.isArray(value.derived_from) ? value.derived_from.map(normalizeTerm).filter(Boolean) : [],
+      sources: Array.isArray(value.sources) && value.sources.length > 0 ? value.sources : ["google-trends"],
     });
   }
   return state;
@@ -283,6 +331,7 @@ function mergeState(state, observations, today, lexicon) {
       seen_windows: mapSeenWindowsToSets(value.seen_windows || {}),
       max_traffic: value.max_traffic || 0,
       derived_from: new Set(value.derived_from || []),
+      sources: new Set(value.sources || []),
     });
   }
 
@@ -422,6 +471,7 @@ function mergeObservation(merged, observation) {
       seen_windows: {},
       max_traffic: 0,
       derived_from: new Set(),
+      sources: new Set(),
     };
   entry.seen_dates.add(observation.observed_on);
   const windowLabel = observation.window_label || windowLabelForHours(observation.window_hours || 24);
@@ -432,6 +482,9 @@ function mergeObservation(merged, observation) {
   entry.max_traffic = Math.max(entry.max_traffic || 0, observation.traffic || 0);
   if (observation.derived_from) {
     entry.derived_from.add(observation.derived_from);
+  }
+  if (observation.source) {
+    entry.sources.add(observation.source);
   }
   merged.set(term, entry);
 }
@@ -505,7 +558,7 @@ function buildOverlayRows(state, lexicon, today, sourceId) {
     const tags = [
       sourceId,
       "auto",
-      "google-trends",
+      `source=${[...entry.sources].sort().join("+") || "google-trends"}`,
       `first_seen=${entry.first_seen}`,
       `last_seen=${entry.last_seen}`,
       `seen_days_30=${seenLast30}`,
@@ -719,6 +772,7 @@ function buildStatePayload(state, today) {
     if (derivedFrom.length > 0) {
       terms[term].derived_from = derivedFrom.slice(0, 10);
     }
+    terms[term].sources = [...(entry.sources || [])].sort();
   }
   return {
     schema_version: 2,
@@ -880,6 +934,7 @@ function evidenceForRow(row) {
     }),
   );
   const details = [
+    tags.source ? `來源 ${tags.source.replaceAll("+", "、")}` : null,
     tags.signal_30 ? `30 天訊號 ${tags.signal_30}` : null,
     tags.seen_days_30 ? `觀測 ${tags.seen_days_30} 天` : null,
     tags.last_seen ? `最近 ${tags.last_seen}` : null,
@@ -998,6 +1053,7 @@ function canonicalizeState(state, canonicalize) {
         seen_windows: mapSeenWindowsToSets(entry.seen_windows),
         max_traffic: entry.max_traffic || 0,
         derived_from: new Set(entry.derived_from),
+        sources: new Set(entry.sources),
       });
       continue;
     }
@@ -1010,6 +1066,7 @@ function canonicalizeState(state, canonicalize) {
     }
     previous.max_traffic = Math.max(previous.max_traffic, entry.max_traffic || 0);
     for (const source of entry.derived_from) previous.derived_from.add(source);
+    for (const source of entry.sources) previous.sources.add(source);
   }
   return result;
 }
