@@ -47,7 +47,7 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Collect PTT Gossiping observations
+      - name: Collect PTT observations
         id: ptt
         shell: bash
         run: |
@@ -58,14 +58,25 @@ jobs:
           git -C tmp/ptt-web-crawler/source remote add origin https://github.com/jwlin/ptt-web-crawler.git
           git -C tmp/ptt-web-crawler/source fetch --depth 1 origin 7fe6191b451ebba4c668db1afc23b4ac99f81494
           git -C tmp/ptt-web-crawler/source checkout --detach FETCH_HEAD
-          ptt_output="tmp/ptt-web-crawler/gossiping-last-24h.json"
+          gossiping_output="tmp/ptt-web-crawler/gossiping-last-24h.json"
           if python scripts/collect-ptt-gossiping.py \
             --crawler-dir tmp/ptt-web-crawler/source \
             --hours 24 \
-            --output "${ptt_output}"; then
-            echo "input=${ptt_output}" >> "$GITHUB_OUTPUT"
+            --board Gossiping \
+            --output "${gossiping_output}"; then
+            echo "gossiping_input=${gossiping_output}" >> "$GITHUB_OUTPUT"
           else
-            echo "::warning::PTT rejected or reset the GitHub runner connection; continuing with Google Trends only."
+            echo "::warning::PTT Gossiping rejected or reset the GitHub runner connection."
+          fi
+          cchat_output="tmp/ptt-web-crawler/cchat-last-24h.json"
+          if python scripts/collect-ptt-gossiping.py \
+            --crawler-dir tmp/ptt-web-crawler/source \
+            --hours 24 \
+            --board C_Chat \
+            --output "${cchat_output}"; then
+            echo "cchat_input=${cchat_output}" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::PTT C_Chat rejected or reset the GitHub runner connection."
           fi
 
       - name: Collect Google Trends and PTT observations
@@ -76,8 +87,15 @@ jobs:
           observed_on="$(TZ=Asia/Taipei date +%F)"
           echo "observed_on=${observed_on}" >> "$GITHUB_OUTPUT"
           ptt_args=()
-          if [[ -n "${{ steps.ptt.outputs.input }}" ]]; then
-            ptt_args=(--ptt-input "${{ steps.ptt.outputs.input }}")
+          ptt_inputs=()
+          if [[ -n "${{ steps.ptt.outputs.gossiping_input }}" ]]; then
+            ptt_inputs+=("${{ steps.ptt.outputs.gossiping_input }}")
+          fi
+          if [[ -n "${{ steps.ptt.outputs.cchat_input }}" ]]; then
+            ptt_inputs+=("${{ steps.ptt.outputs.cchat_input }}")
+          fi
+          if [[ ${#ptt_inputs[@]} -gt 0 ]]; then
+            ptt_args=(--ptt-input "$(IFS=,; echo "${ptt_inputs[*]}")")
           else
             echo "PTT collection failed or produced no output; continuing with Google Trends only."
           fi

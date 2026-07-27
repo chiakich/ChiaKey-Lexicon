@@ -120,15 +120,17 @@ async function collect(options) {
 
   if (options["ptt-input"]) {
     const pttLexicon = loadLexicon(String(options.normalized || "normalized/smart-mandarin.tsv"), DEFAULT_SOURCE_ID);
-    const pttObservations = collectPttObservations(String(options["ptt-input"]), observedOn, pttLexicon);
-    observations.push(...pttObservations.observations);
-    fetchedRows["ptt-gossiping"] = pttObservations.fetchedArticleCount;
-    sourceStats["ptt-gossiping"] = {
-      articles_fetched: pttObservations.fetchedArticleCount,
-      articles_accepted: pttObservations.articleCount,
-      observations: pttObservations.observations.length,
-      articles_skipped: pttObservations.skipped,
-    };
+    for (const file of String(options["ptt-input"]).split(",").filter(Boolean)) {
+      const pttObservations = collectPttObservations(file, observedOn, pttLexicon);
+      observations.push(...pttObservations.observations);
+      fetchedRows[pttObservations.source] = pttObservations.fetchedArticleCount;
+      sourceStats[pttObservations.source] = {
+        articles_fetched: pttObservations.fetchedArticleCount,
+        articles_accepted: pttObservations.articleCount,
+        observations: pttObservations.observations.length,
+        articles_skipped: pttObservations.skipped,
+      };
+    }
   }
 
   const payload = {
@@ -153,6 +155,7 @@ async function collect(options) {
 
 function collectPttObservations(file, observedOn, lexicon) {
   const payload = JSON.parse(fs.readFileSync(file, "utf8"));
+  const source = String(payload.source || "ptt-gossiping");
   const candidates = new Map();
   const articles = Array.isArray(payload.articles) ? payload.articles : [];
   for (const article of articles) {
@@ -168,16 +171,28 @@ function collectPttObservations(file, observedOn, lexicon) {
       candidates.set(candidate.term, value);
     }
   }
+  for (const candidate of Array.isArray(payload.comment_terms) ? payload.comment_terms : []) {
+    const term = normalizeTerm(candidate.term);
+    if (!isPttCommentCandidate(term, candidate, source)) continue;
+    const value = candidates.get(term) || { titleIds: new Set(), maxTraffic: 0, kinds: new Set() };
+    value.maxTraffic = Math.max(value.maxTraffic, numberOrNull(candidate.max_net_push) || 0);
+    value.kinds.add("comment");
+    candidates.set(term, value);
+  }
   const observations = [];
   for (const [term, candidate] of candidates) {
-    const trusted = candidate.kinds.has("quoted") || candidate.kinds.has("person") || candidate.kinds.has("landmark");
+    const trusted =
+      candidate.kinds.has("quoted") ||
+      candidate.kinds.has("person") ||
+      candidate.kinds.has("landmark") ||
+      candidate.kinds.has("comment");
     if (!trusted && candidate.titleIds.size < 2) {
       continue;
     }
     observations.push({
       term,
       traffic: candidate.maxTraffic,
-      source: "ptt-gossiping",
+      source,
       observed_on: observedOn,
       window_hours: 24,
       window_label: "24h",
@@ -187,8 +202,21 @@ function collectPttObservations(file, observedOn, lexicon) {
     articleCount: articles.length,
     fetchedArticleCount: numberOrNull(payload.popular_articles_fetched) || articles.length,
     skipped: payload.articles_skipped || {},
+    source,
     observations: dedupeByTerm(observations),
   };
+}
+
+function isPttCommentCandidate(term, candidate, source) {
+  if (source === "ptt-cchat") {
+    return isPttCandidate(term) && Array.from(term).length >= 3 && Number(candidate.max_article_distinct_pusher_count) >= 2;
+  }
+  return (
+    isPttCandidate(term) &&
+    Array.from(term).length >= 3 &&
+    Number(candidate.article_count) >= 10 &&
+    Number(candidate.push_count) >= 15
+  );
 }
 
 function pttTitleCandidates(title, lexicon) {
