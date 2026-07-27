@@ -42,6 +42,17 @@ jobs:
         with:
           node-version: "24"
 
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install lexicon build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libsqlite3-dev unzip opencc
+
+      - name: Build normalized lexicon for PTT filtering
+        run: cargo run --release -- prepare-release
+
       - name: Install Python for PTT crawler
         uses: actions/setup-python@v5
         with:
