@@ -29,13 +29,16 @@ phrase<TAB>max_weight<TAB>tags
 - 若某片語 unigram 權重高於 `max_weight`，則降到 `max_weight`。
 - 若原本已低於上限，則保持不變。
 
-安全上限採用：
+安全上限必須以 walker 的有效分數反推：
 
 ```text
-w(lead_char) + w(stolen_word) - 0.30
+effective = raw_weight + 1.0 × (syllable_count - 1)
 ```
 
-這是能讓正確 `lead | stolen_word | ...` 剖分勝出的最小降權幅度。
+先比較正確與錯誤剖分的 effective score，再把目標差距（通常 `0.30`）換回
+fragment 的 raw `max_weight`。不能只以 raw weights 相減：若錯誤 fragment 比正確
+剖分少一個節點，它會額外取得 `+1.0` 詞長加分。例如 `畫了` 相對 `化｜了` 須額外
+扣除這 `1.0`，才能避免在 `平面化了` 中偷字。
 
 此策略不影響單字直出能力：同一組字元仍可由字元切分輸出。
 
