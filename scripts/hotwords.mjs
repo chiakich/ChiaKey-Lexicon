@@ -13,6 +13,7 @@ const MIN_EMIT_SIGNAL = 3;
 const MAX_SEGMENT_DERIVATION_SURFACE_LENGTH = 8;
 const DEFAULT_OPENCC_BINARY = "opencc";
 const DEFAULT_OPENCC_CONFIG = "s2tw.json";
+const PR_CHANGE_TABLE_LIMIT = 50;
 
 const WINDOWS = [
   { label: "24h", hours: 24, score: 1 },
@@ -133,6 +134,7 @@ async function refresh(options) {
   const normalizedPath = String(options.normalized || "normalized/smart-mandarin.tsv");
   const today = String(options.today || taipeiDate());
   const sourceId = String(options["source-id"] || DEFAULT_SOURCE_ID);
+  const previousRows = loadOverlayRows(outputPath);
   const canonicalize = createOpenCcCanonicalizer({
     binary: String(options["opencc-binary"] || DEFAULT_OPENCC_BINARY),
     config: String(options["opencc-config"] || DEFAULT_OPENCC_CONFIG),
@@ -152,6 +154,7 @@ async function refresh(options) {
     today,
     observations,
     rows: result.rows,
+    previousRows,
     filtered: result.filtered,
     stateTerms: outputState.size,
     sourceId,
@@ -740,22 +743,37 @@ function filterStateByTerms(state, kept) {
   return filtered;
 }
 
-function buildSummary({ today, observations, rows, filtered, stateTerms, sourceId }) {
+function buildSummary({ today, observations, rows, previousRows, filtered, stateTerms, sourceId }) {
   const lines = [];
+  const changes = compareOverlayRows(previousRows, rows);
   const filteredCounts = Object.entries(filtered)
     .map(([reason, values]) => `${reason}=${values.length}`)
     .join(", ");
 
   lines.push(`# Auto Hotwords Refresh`);
   lines.push("");
-  lines.push(`- Date: ${today}`);
-  lines.push(`- Source layer: ${sourceId}`);
-  lines.push(`- Observations loaded: ${observations.length}`);
-  lines.push(`- State terms retained: ${stateTerms}`);
-  lines.push(`- Overlay rows: ${rows.length}`);
-  lines.push(`- Filtered terms: ${filteredCounts}`);
+  lines.push(`本次有 **${changes.behavioralCount} 項影響輸入排序的變動**：新增 ${changes.added.length}、移除 ${changes.removed.length}、權重調整 ${changes.weightChanged.length}。`);
+  lines.push(`另有 ${changes.metadataChanged.length} 項僅更新觀測資料的詞彙，不影響排序。`);
+  lines.push("");
+
+  appendChangeTable(lines, "新增詞彙", changes.added, (row) => [row.phrase, row.weight, evidenceForRow(row)]);
+  appendChangeTable(lines, "移除詞彙", changes.removed, (row) => [row.phrase, row.weight, removalReason(row.phrase, filtered)]);
+  appendChangeTable(lines, "權重調整", changes.weightChanged, ({ previous, next }) => [
+    next.phrase,
+    `${previous.weight} → ${next.weight}`,
+    evidenceForRow(next),
+  ]);
+
+  lines.push("## 收集摘要");
+  lines.push("");
+  lines.push(`- 日期：${today}`);
+  lines.push(`- 資料層：${sourceId}`);
+  lines.push(`- 載入觀測值：${observations.length}`);
+  lines.push(`- 保留狀態詞：${stateTerms}`);
+  lines.push(`- 覆蓋層詞數：${rows.length}`);
+  lines.push(`- 篩除統計：${filteredCounts}`);
   lines.push(
-    `- Observation windows: ${Object.entries(countObservationsByWindow(observations))
+    `- 觀測視窗：${Object.entries(countObservationsByWindow(observations))
       .map(([label, count]) => `${label}=${count}`)
       .join(", ")}`,
   );
@@ -763,8 +781,10 @@ function buildSummary({ today, observations, rows, filtered, stateTerms, sourceI
 
   appendDetails(
     lines,
-    `Proposed overlay (${rows.length})`,
-    rows.length === 0 ? ["No rows emitted."] : rows.map((row) => `- ${row.phrase} (${row.weight})`),
+    `僅更新觀測資料、排序不變 (${changes.metadataChanged.length})`,
+    changes.metadataChanged.length === 0
+      ? ["沒有。"]
+      : changes.metadataChanged.map(({ previous, next }) => `- ${next.phrase}：${previous.weight}（${evidenceForRow(next)}）`),
   );
 
   for (const [reason, values] of Object.entries(filtered)) {
@@ -775,11 +795,117 @@ function buildSummary({ today, observations, rows, filtered, stateTerms, sourceI
     if (values.length > 80) {
       body.push(`- ... ${values.length - 80} more`);
     }
-    appendDetails(lines, `Filtered: ${reason} (${values.length})`, body.length ? body : ["No terms."]);
+    appendDetails(lines, `已篩除：${reason} (${values.length})`, body.length ? body : ["沒有。"]);
   }
 
   lines.push("");
   return `${lines.join("\n")}\n`;
+}
+
+function loadOverlayRows(file) {
+  if (!fs.existsSync(file)) {
+    return [];
+  }
+  return fs
+    .readFileSync(file, "utf8")
+    .split(/\r?\n/)
+    .filter((line) => line && !line.startsWith("#"))
+    .map((line) => {
+      const [phrase, weight, tags] = line.split("\t");
+      return { phrase, weight, tags: tags || "" };
+    })
+    .filter((row) => row.phrase && row.weight);
+}
+
+function compareOverlayRows(previousRows, nextRows) {
+  const previousByPhrase = new Map(previousRows.map((row) => [row.phrase, row]));
+  const nextByPhrase = new Map(nextRows.map((row) => [row.phrase, row]));
+  const added = nextRows.filter((row) => !previousByPhrase.has(row.phrase));
+  const removed = previousRows.filter((row) => !nextByPhrase.has(row.phrase));
+  const weightChanged = [];
+  const metadataChanged = [];
+
+  for (const next of nextRows) {
+    const previous = previousByPhrase.get(next.phrase);
+    if (!previous) continue;
+    if (previous.weight !== next.weight) {
+      weightChanged.push({ previous, next });
+    } else if (previous.tags !== next.tags) {
+      metadataChanged.push({ previous, next });
+    }
+  }
+
+  const byPhrase = (left, right) => left.phrase.localeCompare(right.phrase);
+  return {
+    added: added.sort(byPhrase),
+    removed: removed.sort(byPhrase),
+    weightChanged: weightChanged.sort((left, right) => byPhrase(left.next, right.next)),
+    metadataChanged: metadataChanged.sort((left, right) => byPhrase(left.next, right.next)),
+    behavioralCount: added.length + removed.length + weightChanged.length,
+  };
+}
+
+function appendChangeTable(lines, title, entries, formatRow) {
+  lines.push(`## ${title} (${entries.length})`);
+  lines.push("");
+  if (entries.length === 0) {
+    lines.push("沒有。\n");
+    return;
+  }
+  lines.push("| 詞彙 | 權重 | 訊號／原因 |");
+  lines.push("| --- | --- | --- |");
+  const visibleEntries = entries.slice(0, PR_CHANGE_TABLE_LIMIT);
+  for (const entry of visibleEntries) {
+    const [phrase, weight, detail] = formatRow(entry);
+    lines.push(`| ${phrase} | ${weight} | ${detail} |`);
+  }
+  lines.push("");
+  if (entries.length > visibleEntries.length) {
+    appendDetails(
+      lines,
+      `${title}其餘 ${entries.length - visibleEntries.length} 項`,
+      entries.slice(PR_CHANGE_TABLE_LIMIT).map((entry) => {
+        const [phrase, weight, detail] = formatRow(entry);
+        return `- ${phrase}｜${weight}｜${detail}`;
+      }),
+    );
+  }
+}
+
+function evidenceForRow(row) {
+  const tags = Object.fromEntries(
+    row.tags.split(",").map((tag) => {
+      const [key, value] = tag.split("=", 2);
+      return [key, value || ""];
+    }),
+  );
+  const details = [
+    tags.signal_30 ? `30 天訊號 ${tags.signal_30}` : null,
+    tags.seen_days_30 ? `觀測 ${tags.seen_days_30} 天` : null,
+    tags.last_seen ? `最近 ${tags.last_seen}` : null,
+    tags.derived_from ? `派生自 ${tags.derived_from.replaceAll("+", "、")}` : null,
+  ].filter(Boolean);
+  return details.join("；") || "無額外訊號";
+}
+
+function removalReason(phrase, filtered) {
+  const reasons = {
+    expired: "超過保留期限",
+    weak_signal: "訊號不足",
+    existing_phrase: "已收錄於基底詞庫",
+    covered_by_existing_core: "既有核心詞已涵蓋",
+    typeable_by_top_segments: "可由高排名片段自然輸入",
+    missing_character_reading: "無法推導讀音",
+    query_like: "查詢型詞",
+    too_short_or_long: "詞長不符合規則",
+    non_han: "非全漢字詞",
+  };
+  for (const [reason, values] of Object.entries(filtered)) {
+    if (values.some((value) => value === phrase || value.startsWith(`${phrase} (`))) {
+      return reasons[reason] || "未通過目前篩選規則";
+    }
+  }
+  return "未通過目前篩選規則";
 }
 
 function appendDetails(lines, summary, body) {
