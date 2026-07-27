@@ -7,8 +7,9 @@ import path from "node:path";
 const DEFAULT_SOURCE_ID = "chiaki-auto-hotwords-overlay";
 const DEFAULT_GEO = "TW";
 const DEFAULT_HL = "zh-TW";
-const DEFAULT_RETENTION_DAYS = 30;
-const DEFAULT_STATE_WINDOW_DAYS = 90;
+const DEFAULT_RETENTION_DAYS = 90;
+const DEFAULT_STATE_WINDOW_DAYS = 180;
+const DEFAULT_STATE_RETENTION_DAYS = 180;
 const MIN_EMIT_SIGNAL = 3;
 const MAX_SEGMENT_DERIVATION_SURFACE_LENGTH = 8;
 const DEFAULT_OPENCC_BINARY = "opencc";
@@ -40,6 +41,12 @@ const CORE_CANDIDATE_SUFFIXES = [
 ];
 
 const DERIVED_SEGMENT_STOP_CHARS = new Set(["對", "的", "是", "嗎"]);
+const PTT_MIN_NET_PUSH = 20;
+const PTT_GENERIC_TERMS = new Set(["公告", "新聞", "問卦", "爆卦", "快訊", "最老", "公開賽", "冠軍", "可能", "現在", "目前", "擬報"]);
+const PTT_BOUNDARY_STOP_CHARS = new Set(["的", "是", "在", "與", "又", "而", "了", "嗎", "呢", "不", "之", "萬"]);
+const PTT_PERSON_NAME_STOP_CHARS = new Set(["要", "會", "在", "的", "不", "很", "一", "這", "那", "又", "沒", "有", "被"]);
+const PTT_SURNAMES = new Set("王李張劉陳楊黃趙周吳徐孫胡朱高林何郭馬羅梁宋鄭謝韓唐馮于董蕭程曹袁鄧許傅沈曾彭呂蘇盧蔣蔡賈丁魏薛葉阮余潘杜戴夏鍾汪田任姜范方石姚廖鄒熊金陸郝孔白崔康毛邱秦江史顧侯邵孟龍萬段雷錢湯尹黎易常武喬賀賴龔文牛".split(""));
+const PTT_PERSON_FOLLOWERS = ["驚傳", "表示", "憶", "曝", "稱", "遭", "被", "籲", "談", "批", "喊"];
 
 const USAGE = `Usage:
   node scripts/hotwords.mjs collect --output tmp/hotwords-observations/DATE.json [--date YYYY-MM-DD] [--ptt-input FILE]
@@ -112,7 +119,8 @@ async function collect(options) {
   }
 
   if (options["ptt-input"]) {
-    const pttObservations = collectPttObservations(String(options["ptt-input"]), observedOn);
+    const pttLexicon = loadLexicon(String(options.normalized || "normalized/smart-mandarin.tsv"), DEFAULT_SOURCE_ID);
+    const pttObservations = collectPttObservations(String(options["ptt-input"]), observedOn, pttLexicon);
     observations.push(...pttObservations.observations);
     fetchedRows["ptt-gossiping"] = pttObservations.fetchedArticleCount;
     sourceStats["ptt-gossiping"] = {
@@ -143,25 +151,37 @@ async function collect(options) {
   );
 }
 
-function collectPttObservations(file, observedOn) {
+function collectPttObservations(file, observedOn, lexicon) {
   const payload = JSON.parse(fs.readFileSync(file, "utf8"));
-  const observations = [];
+  const candidates = new Map();
   const articles = Array.isArray(payload.articles) ? payload.articles : [];
   for (const article of articles) {
     const netPush = numberOrNull(article.message_count?.count) || 0;
-    if (netPush < 50 || !article.article_title) {
+    if (netPush < PTT_MIN_NET_PUSH || !article.article_title) {
       continue;
     }
-    for (const term of pttTitleCandidates(article.article_title)) {
-      observations.push({
-        term,
-        traffic: netPush,
-        source: "ptt-gossiping",
-        observed_on: observedOn,
-        window_hours: 24,
-        window_label: "24h",
-      });
+    for (const candidate of pttTitleCandidates(article.article_title, lexicon)) {
+      const value = candidates.get(candidate.term) || { titleIds: new Set(), maxTraffic: 0, kinds: new Set() };
+      value.titleIds.add(article.article_id);
+      value.maxTraffic = Math.max(value.maxTraffic, netPush);
+      value.kinds.add(candidate.kind);
+      candidates.set(candidate.term, value);
     }
+  }
+  const observations = [];
+  for (const [term, candidate] of candidates) {
+    const trusted = candidate.kinds.has("quoted") || candidate.kinds.has("person") || candidate.kinds.has("landmark");
+    if (!trusted && candidate.titleIds.size < 2) {
+      continue;
+    }
+    observations.push({
+      term,
+      traffic: candidate.maxTraffic,
+      source: "ptt-gossiping",
+      observed_on: observedOn,
+      window_hours: 24,
+      window_label: "24h",
+    });
   }
   return {
     articleCount: articles.length,
@@ -171,18 +191,71 @@ function collectPttObservations(file, observedOn) {
   };
 }
 
-function pttTitleCandidates(title) {
+function pttTitleCandidates(title, lexicon) {
   const candidates = new Set();
-  const plainTitle = String(title).replace(/^\s*(?:Re:\s*)?(?:\[[^\]]*\]\s*)+/, "");
-  for (const sequence of plainTitle.matchAll(/[\p{Script=Han}]{2,}/gu)) {
-    const chars = Array.from(sequence[0]);
-    for (let start = 0; start < chars.length; start += 1) {
-      for (let length = 2; length <= 4 && start + length <= chars.length; length += 1) {
-        candidates.add(chars.slice(start, start + length).join(""));
-      }
+  const plainTitle = String(title).replace(/^\s*(?:Re:\s*)?(?:\[[^\]]*\]\s*)+/i, "");
+  const add = (term, kind) => {
+    const normalized = normalizeTerm(term);
+    if (isPttCandidate(normalized)) candidates.add(`${kind}\0${normalized}`);
+  };
+
+  for (const quoted of plainTitle.matchAll(/[「“]([^」”]+)[」”]/gu)) {
+    for (const sequence of quoted[1].matchAll(/[\p{Script=Han}]+/gu)) {
+      for (const term of pttUnknownRuns(sequence[0], lexicon)) add(term, "quoted");
     }
   }
-  return [...candidates];
+  for (const match of plainTitle.matchAll(/(?:台北|新北|桃園|台中|台南|高雄|基隆|新竹|嘉義|屏東|宜蘭|花蓮|台東)([\p{Script=Han}]{1,3}[橋路站溪山港島])/gu)) {
+    add(match[1], "landmark");
+  }
+  for (const sequence of plainTitle.matchAll(/[\p{Script=Han}]{2,}/gu)) {
+    const people = pttPersonCandidates(sequence[0]);
+    for (const term of pttUnknownRuns(sequence[0], lexicon)) {
+      if (people.some((person) => term.startsWith(person) && term !== person)) continue;
+      add(term, "unknown");
+    }
+    for (const term of people) add(term, "person");
+  }
+  return [...candidates].map((value) => {
+    const [kind, term] = value.split("\0");
+    return { term, kind };
+  });
+}
+
+function pttPersonCandidates(text) {
+  const surnamePattern = [...PTT_SURNAMES].join("");
+  const followerPattern = PTT_PERSON_FOLLOWERS.join("|");
+  const expression = new RegExp(`([${surnamePattern}][\\p{Script=Han}]{1,2}?)(?=${followerPattern})`, "gu");
+  return [...text.matchAll(expression)]
+    .map((match) => match[1])
+    .filter((term) => !PTT_PERSON_NAME_STOP_CHARS.has(Array.from(term)[1]));
+}
+
+function pttUnknownRuns(text, lexicon) {
+  const tokens = tokenize(normalizeTerm(text), lexicon);
+  const candidates = [];
+  let current = "";
+  for (const token of tokens) {
+    if (Array.from(token).length === 1) {
+      current += token;
+    } else if (current) {
+      candidates.push(current);
+      current = "";
+    }
+  }
+  if (current) candidates.push(current);
+  return candidates;
+}
+
+function isPttCandidate(term) {
+  const chars = Array.from(term);
+  return (
+    chars.length >= 2 &&
+    chars.length <= 4 &&
+    isHanOnly(term) &&
+    !PTT_GENERIC_TERMS.has(term) &&
+    !PTT_BOUNDARY_STOP_CHARS.has(chars[0]) &&
+    !PTT_BOUNDARY_STOP_CHARS.has(chars.at(-1))
+  );
 }
 
 async function refresh(options) {
@@ -329,6 +402,7 @@ function loadState(file) {
       max_traffic: numberOrNull(value.max_traffic),
       derived_from: Array.isArray(value.derived_from) ? value.derived_from.map(normalizeTerm).filter(Boolean) : [],
       sources: Array.isArray(value.sources) && value.sources.length > 0 ? value.sources : ["google-trends"],
+      admitted: value.admitted !== false,
     });
   }
   return state;
@@ -345,6 +419,7 @@ function mergeState(state, observations, today, lexicon) {
       max_traffic: value.max_traffic || 0,
       derived_from: new Set(value.derived_from || []),
       sources: new Set(value.sources || []),
+      admitted: Boolean(value.admitted),
     });
   }
 
@@ -358,7 +433,7 @@ function mergeState(state, observations, today, lexicon) {
   for (const [term, entry] of merged.entries()) {
     entry.seen_dates = new Set([...entry.seen_dates].filter((date) => date >= cutoff && date <= today));
     entry.seen_windows = pruneSeenWindows(entry.seen_windows, cutoff, today);
-    if (entry.seen_dates.size === 0 || daysBetween(entry.last_seen, today) > DEFAULT_RETENTION_DAYS) {
+    if (entry.seen_dates.size === 0 || daysBetween(entry.last_seen, today) > DEFAULT_STATE_RETENTION_DAYS) {
       merged.delete(term);
     }
   }
@@ -485,6 +560,7 @@ function mergeObservation(merged, observation) {
       max_traffic: 0,
       derived_from: new Set(),
       sources: new Set(),
+      admitted: false,
     };
   entry.seen_dates.add(observation.observed_on);
   const windowLabel = observation.window_label || windowLabelForHours(observation.window_hours || 24);
@@ -552,19 +628,18 @@ function buildOverlayRows(state, lexicon, today, sourceId) {
 
     const daysSinceSeen = daysBetween(entry.last_seen, today);
     if (daysSinceSeen > DEFAULT_RETENTION_DAYS) {
+      watchlistTerms.add(term);
       filtered.expired.push(term);
       continue;
     }
     const signal = signalFor(entry, today);
-    if (!shouldKeepInState(signal)) {
+    const newlyEligible = shouldEmitSignal(signal);
+    if (!entry.admitted && !newlyEligible) {
       filtered.weak_signal.push(formatWeakSignal(term, signal));
       continue;
     }
     watchlistTerms.add(term);
-    if (!shouldEmitSignal(signal)) {
-      filtered.weak_signal.push(formatWeakSignal(term, signal));
-      continue;
-    }
+    entry.admitted = true;
     const seenLast14 = countSeenSince(entry.seen_dates, addDays(today, -13));
     const seenLast30 = countSeenSince(entry.seen_dates, addDays(today, -29));
     const weight = weightFor({ daysSinceSeen, signal14: signal.score14, signal30: signal.score30 });
@@ -579,6 +654,7 @@ function buildOverlayRows(state, lexicon, today, sourceId) {
       `signal_30=${signal.score30}`,
       `windows_14=${signal.windows14.join("+")}`,
       `max_traffic=${entry.max_traffic || 0}`,
+      `status=${daysSinceSeen > 60 ? "dormant" : daysSinceSeen > 30 ? "cooling" : "active"}`,
     ];
     const derivedFrom = sortedDerivedFrom(entry).slice(0, 3);
     if (derivedFrom.length > 0) {
@@ -753,6 +829,12 @@ function windowsSeenSince(seenWindows, cutoff) {
 }
 
 function weightFor({ daysSinceSeen, signal14, signal30 }) {
+  if (daysSinceSeen > 60) {
+    return "-3.0";
+  }
+  if (daysSinceSeen > 30) {
+    return "-2.8";
+  }
   if (daysSinceSeen > 14) {
     return "-2.6";
   }
@@ -780,6 +862,7 @@ function buildStatePayload(state, today) {
       signal_14: signal.score14,
       signal_30: signal.score30,
       max_traffic: entry.max_traffic || 0,
+      admitted: Boolean(entry.admitted),
     };
     const derivedFrom = sortedDerivedFrom(entry);
     if (derivedFrom.length > 0) {
@@ -792,6 +875,7 @@ function buildStatePayload(state, today) {
     updated_at: new Date().toISOString(),
     updated_on: today,
     retention_days: DEFAULT_RETENTION_DAYS,
+    state_retention_days: DEFAULT_STATE_RETENTION_DAYS,
     terms,
   };
 }
@@ -1067,6 +1151,7 @@ function canonicalizeState(state, canonicalize) {
         max_traffic: entry.max_traffic || 0,
         derived_from: new Set(entry.derived_from),
         sources: new Set(entry.sources),
+        admitted: Boolean(entry.admitted),
       });
       continue;
     }
@@ -1080,6 +1165,7 @@ function canonicalizeState(state, canonicalize) {
     previous.max_traffic = Math.max(previous.max_traffic, entry.max_traffic || 0);
     for (const source of entry.derived_from) previous.derived_from.add(source);
     for (const source of entry.sources) previous.sources.add(source);
+    previous.admitted ||= Boolean(entry.admitted);
   }
   return result;
 }
