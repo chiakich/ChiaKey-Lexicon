@@ -448,7 +448,7 @@ j6uh	飛彈	-0.922353	chiaki-modern-overlay,manual,frequency-review,multichar-ho
 8_Q=	蜜蜂	-0.999799	chiaki-modern-overlay,manual,frequency-review,multichar-homophone-rerank
 TJZ_	援助	-0.911184	chiaki-modern-overlay,manual,frequency-review,multichar-homophone-rerank
 Vexg	備受	-0.985896	chiaki-modern-overlay,manual,frequency-review,multichar-homophone-rerank
-Ci}^	建置	-1.226028	chiaki-modern-overlay,manual,frequency-review,multichar-homophone-rerank
+Ci}^	建置	-0.95	chiaki-modern-overlay,manual,frequency-review,multichar-homophone-rerank
 4L~I	長年	-1.048238	chiaki-modern-overlay,manual,frequency-review,multichar-homophone-rerank
 <ic[	電廠	-0.917886	chiaki-modern-overlay,manual,frequency-review,multichar-homophone-rerank
 S_Db	陸客	-1.340000	chiaki-modern-overlay,manual,frequency-review,multichar-homophone-rerank
@@ -541,3 +541,4 @@ o_N_	序幕	-0.971891	chiaki-modern-overlay,manual,frequency-review,multichar-ho
 T0H:	吸菸	-1.125039	chiaki-modern-overlay,manual,frequency-review,multichar-homophone-rerank
 p?\_	時數	-1.328664	chiaki-modern-overlay,manual,frequency-review,multichar-homophone-rerank
 \_	數	-0.90	chiaki-modern-overlay,manual,homophone-order,libchewing-freq-gap
+PAsI	譁然	-1.58	chiaki-modern-overlay,manual,frequency-review,multichar-homophone-rerank
