@@ -1,6 +1,6 @@
 # 千秋輸入法綜合詞庫
 
-[English](README.en.md)  
+[English](README.en.md)
 
 <img width="256" height="256" alt="chiakey-lexicon-icon" src="https://github.com/user-attachments/assets/222e1ddb-65b4-419c-88df-1f10b841ef49" />
 
@@ -9,6 +9,8 @@
 > 歡迎贊助與支持！您的贊助將支持本詞庫的持續開發、更新與維護。
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/A0A21UAIV9)
+
+聯絡我們：chiakic27@gmail.com
 
 ## 回報詞庫問題
 
@@ -56,9 +58,11 @@
 在合成語料上以既有 unigram 切分文本、統計相鄰詞的共現次數，估計轉移機率 P(current | previous)，取對數作為 raw 權重。`bigrams.tsv` 的格式為 `qstring<TAB>previous<TAB>current<TAB>probability`，並允許句界列（一側留空，以 `!` / `$` 標記）。
 
 匯入時再以 unigram 為錨進行校準（`src/importers.rs`，`calibrate_bigram_boost`）：
+
 ```
 stored = min( unigram(current) + boost + (raw − raw_max_of_source), −0.05 )
 ```
+
 `boost` 預設 1.5，可用環境變數 `SYNTHETIC_BIGRAM_BOOST` 覆寫（設為 0 則 raw 值直通）。`raw − raw_max_of_source` 這一項保留了來源自身的信心排序，同時把整組權重錨定到 unigram 基準上：足夠強的 disambiguation 邊會高於逐字 unigram 路徑而生效，弱邊則落在基準線以下保持 inert。
 
 ## 致謝
