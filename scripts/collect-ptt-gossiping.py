@@ -12,6 +12,8 @@ from zoneinfo import ZoneInfo
 
 import requests
 from bs4 import BeautifulSoup
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 
 PTT_URL = "https://www.ptt.cc"
@@ -28,12 +30,16 @@ def main():
     args = parser.parse_args()
 
     sys.path.insert(0, args.crawler_dir)
-    from PttWebCrawler.crawler import PttWebCrawler
+    from PttWebCrawler import crawler
+    PttWebCrawler = crawler.PttWebCrawler
 
     now = datetime.now(TIMEZONE)
     cutoff = now - timedelta(hours=args.hours)
-    session = requests.Session()
+    session = create_session()
     session.cookies.set("over18", "1", domain="www.ptt.cc")
+    # The upstream crawler calls requests.get directly. Route those requests through
+    # the same session so article requests use the cookie, browser headers and retry policy.
+    crawler.requests.get = session.get
     latest_page = get_latest_page(session)
     candidates = []
     pages_scanned = 0
@@ -84,6 +90,30 @@ def main():
     }
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
     Path(args.output).write_text(json.dumps(output, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def create_session():
+    session = requests.Session()
+    session.headers.update(
+        {
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "zh-TW,zh;q=0.9,en;q=0.8",
+            "User-Agent": (
+                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
+            ),
+        }
+    )
+    retry = Retry(
+        total=3,
+        connect=3,
+        read=3,
+        backoff_factor=1,
+        status_forcelist=(429, 500, 502, 503, 504),
+        allowed_methods=frozenset({"GET"}),
+    )
+    session.mount("https://", HTTPAdapter(max_retries=retry))
+    return session
 
 
 def get_latest_page(session):
