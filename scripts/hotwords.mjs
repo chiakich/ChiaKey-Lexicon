@@ -87,6 +87,7 @@ async function collect(options) {
   const output = options.output || path.join("tmp", "hotwords-observations", `${observedOn}.json`);
   const observations = [];
   const fetchedRows = {};
+  const sourceStats = {};
 
   if (!options["skip-google"]) {
     for (const window of WINDOWS) {
@@ -113,7 +114,13 @@ async function collect(options) {
   if (options["ptt-input"]) {
     const pttObservations = collectPttObservations(String(options["ptt-input"]), observedOn);
     observations.push(...pttObservations.observations);
-    fetchedRows["ptt-gossiping"] = pttObservations.articleCount;
+    fetchedRows["ptt-gossiping"] = pttObservations.fetchedArticleCount;
+    sourceStats["ptt-gossiping"] = {
+      articles_fetched: pttObservations.fetchedArticleCount,
+      articles_accepted: pttObservations.articleCount,
+      observations: pttObservations.observations.length,
+      articles_skipped: pttObservations.skipped,
+    };
   }
 
   const payload = {
@@ -126,6 +133,7 @@ async function collect(options) {
     collected_at: collectedAt,
     fetched_rows_by_window: fetchedRows,
     fetched_rows: Object.values(fetchedRows).reduce((sum, value) => sum + value, 0),
+    source_stats: sourceStats,
     observations,
   };
 
@@ -155,7 +163,12 @@ function collectPttObservations(file, observedOn) {
       });
     }
   }
-  return { articleCount: articles.length, observations: dedupeByTerm(observations) };
+  return {
+    articleCount: articles.length,
+    fetchedArticleCount: numberOrNull(payload.popular_articles_fetched) || articles.length,
+    skipped: payload.articles_skipped || {},
+    observations: dedupeByTerm(observations),
+  };
 }
 
 function pttTitleCandidates(title) {

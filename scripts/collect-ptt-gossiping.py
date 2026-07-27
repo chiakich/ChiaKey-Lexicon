@@ -20,6 +20,7 @@ PTT_URL = "https://www.ptt.cc"
 BOARD = "Gossiping"
 TIMEZONE = ZoneInfo("Asia/Taipei")
 INDEX_PAGE_LIMIT = 100
+PTT_MIN_NET_PUSH = 20
 
 
 def main():
@@ -43,6 +44,7 @@ def main():
     latest_page = get_latest_page(session)
     candidates = []
     pages_scanned = 0
+    skipped = {"missing_date": 0, "outside_window": 0, "missing_title": 0, "net_push_below_threshold": 0}
 
     for page in range(latest_page, max(0, latest_page - INDEX_PAGE_LIMIT), -1):
         pages_scanned += 1
@@ -50,7 +52,7 @@ def main():
         if not entries:
             continue
         for entry in entries:
-            if entry["score"] >= 50:
+            if entry["score"] >= PTT_MIN_NET_PUSH:
                 candidates.append(entry)
         if all(entry["published_date"] < cutoff.date() for entry in entries):
             break
@@ -60,14 +62,17 @@ def main():
         parsed = json.loads(PttWebCrawler.parse(candidate["url"], candidate["article_id"], BOARD))
         published_at = parse_article_date(parsed.get("date"))
         net_push = parsed.get("message_count", {}).get("count", 0)
-        if (
-            not published_at
-            or published_at < cutoff
-            or published_at > now
-            or not isinstance(net_push, int)
-            or net_push < 50
-            or not parsed.get("article_title")
-        ):
+        if not published_at:
+            skipped["missing_date"] += 1
+            continue
+        if published_at < cutoff or published_at > now:
+            skipped["outside_window"] += 1
+            continue
+        if not parsed.get("article_title"):
+            skipped["missing_title"] += 1
+            continue
+        if not isinstance(net_push, int) or net_push < PTT_MIN_NET_PUSH:
+            skipped["net_push_below_threshold"] += 1
             continue
         articles.append(
             {
@@ -86,6 +91,8 @@ def main():
         "cutoff": cutoff.isoformat(),
         "index_pages_scanned": pages_scanned,
         "popular_articles_fetched": len(candidates),
+        "articles_accepted": len(articles),
+        "articles_skipped": skipped,
         "articles": articles,
     }
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
@@ -119,8 +126,14 @@ def create_session():
 def get_latest_page(session):
     response = session.get(f"{PTT_URL}/bbs/{BOARD}/index.html", timeout=10)
     response.raise_for_status()
-    match = re.search(rf'href="/bbs/{BOARD}/index(\d+)\.html">‹', response.text)
-    return int(match.group(1)) + 1 if match else 1
+    page_numbers = []
+    for link in BeautifulSoup(response.text, "html.parser").select("div.btn-group-paging a[href]"):
+        match = re.search(rf"/bbs/{BOARD}/index(\d+)\.html$", link["href"])
+        if match:
+            page_numbers.append(int(match.group(1)))
+    if not page_numbers:
+        raise RuntimeError(f"Unable to determine the latest {BOARD} index page")
+    return max(page_numbers) + 1
 
 
 def get_index_entries(session, page):
