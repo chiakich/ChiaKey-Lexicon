@@ -8,16 +8,18 @@
 
 > 歡迎贊助與支持！您的贊助將支持本詞庫的持續開發、更新與維護。
 
-[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/A0A21UAIV9)  
-(適用台灣以外的贊助方式)
+#### 適用台灣以外的贊助連結：
 
-[綠界贊助連結](https://p.ecpay.com.tw/2A3B186)  
-(僅適用台灣信用卡 / Apple Pay / ATM / 超商代碼)
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/A0A21UAIV9)
+
+#### 僅適用台灣信用卡 / Apple Pay / ATM / 超商代碼：
+
+[綠界贊助連結](https://p.ecpay.com.tw/2A3B186)
 
 ## 回報詞庫問題
 
 - [缺詞回報](https://github.com/akira02/ChiaKey-Lexicon/issues/new?template=add-unigram.yml)：回報一個應作為單獨詞語、但目前詞庫缺少的詞，例如「泳鏡」。
-- [長句選字錯誤](https://github.com/akira02/ChiaKey-Lexicon/issues/new?template=add-bigram.yml)：回報兩個已存在詞的前後組合在長句中選錯字，例如想輸入「天意難測」卻出現「天意南側」。
+- [長句選字錯誤](https://github.com/akira02/ChiaKey-Lexicon/issues/new?template=add-bigram.yml)：回報兩個已存在詞前後組合時，在長句中選錯字。例如想輸入「天意難測」卻出現「天意南側」。
 
 ## 為什麼有這個專案
 
@@ -26,46 +28,33 @@
 - 新酷音（libchewing）的 `tsi.csv` 是「詞組, 頻率, 注音」。
 - Rime 共享的 `essay.txt` 是「詞, 頻率」。
 
-這類資料能告訴你「哪個詞比較常用」，卻難以描述詞與詞之間的接續關係（打完 A 之後，接 C 是否比 B 更合理），要做到這點，需要依賴二元語法表（bigram，或者轉移機率），這恰好是同音歧義與自動選字最吃重的資訊。台灣開源注音生態長期受限於 n-gram 推論詞庫的匱乏，雖然網路上不乏靜態文本，但能精準反映現代台灣本土語境與日常口語的高品質對話語料卻極度稀缺，這導致傳統統計模型容易面臨語境偏差與選字失準；同時，n-gram 權重表依賴龐大且複雜的資料清洗、機率計算與二進位模型（如 .gram 或 .klm）編譯管線，無法像傳統單詞庫（Unigram）那樣透過簡單修改純文字檔來快速新增時事熱詞，難以長期維持一個持續迭代的台灣繁體推論模型。
+這類資料能告訴你「哪個詞比較常用」，卻難以描述詞與詞之間的接續關係（打完 A 之後，接 C 是否比 B 更合理），要做到這點，需要依賴二元語法表（bigram，或稱轉移機率），這恰好是同音歧義與自動選字最吃重的資訊。台灣開源注音生態長期受限於 n-gram 推論詞庫的匱乏，雖然網路上不乏靜態文本，但能精準反映現代台灣本土語境與日常口語的高品質對話語料卻極度稀缺，這導致傳統統計模型容易面臨語境偏差與選字失準；同時，n-gram 權重表依賴龐大且複雜的資料清洗、機率計算與二進位模型（如 .gram 或 .klm）編譯管線，無法像傳統單詞庫（Unigram）那樣透過簡單修改純文字檔來快速新增時事熱詞，難以長期維持一個持續迭代的台灣繁體推論模型。
 
-千秋輸入法綜合詞庫的目標是：嘗試融合成熟的 unigram 詞庫，並在此在之上，疊加各種自製的 bigram 資料（來自網路語料、Mozilla Common Voice 句料與大語言模型合成語料），並以可重現、可追蹤來源的 pipeline 產生輸入法可直接消費的 release DB。
+千秋輸入法綜合詞庫的目標是：嘗試融合成熟的 unigram 詞庫，並在此在之上，疊加各種自製的 bigram 資料（來自網路語料、Mozilla Common Voice 句料或大語言模型合成語料），並以可重現、可追蹤來源的 pipeline 產生輸入法可直接消費的 release DB。
 
 ### bigram 資料怎麼來
 
-最初的做法是請語言模型寫出整段擬真文本，再從文本萃取詞與詞的搭配關係，靠語料規模去覆蓋
-真實的搭配分布。這條路做了兩個版本（`chiaki-synthetic-overlay`，以及後來用本機 Gemma 4
-列舉撞碼詞、請模型補上下文的版本），都在評估工具建立之後被判定失敗。模型推測的搭配
-幾乎全部落在真實用法之外，在 32.6 萬句測試語料裡只命中約 200 次。
+最初的做法是請語言模型寫出整段擬真文本，再從文本萃取詞與詞的搭配關係，靠語料規模去覆蓋真實的搭配分布。這條路做了兩個版本（`chiaki-synthetic-overlay`，以及後來用本機 Gemma 4列舉撞碼詞、請模型補上下文的版本），都在評估工具建立之後被判定失敗。模型推測的搭配幾乎全部落在真實用法之外，在 32.6 萬句測試語料裡只命中約 200 次。
 
-現在的 bigram 主力是 `chiaki-tw-homophone-bigram`，改成直接從真實台灣文本抽取：政府機關
-新聞、立法院公報詢答逐字稿、以及 PTT 語料，合計 3.67 億字。
+現在的 bigram 主力是 `chiaki-tw-homophone-bigram`，改成直接從真實台灣文本抽取：政府機關新聞、立法院公報詢答逐字稿、以及 PTT 語料，合計 3.67 億字。
 
 #### 只收「會改變結果」的配對
 
-這一輪最重要的認知是：bigram 對注音輸入法的唯一作用，是在使用者實際會打出的那個讀音上，
-把落後的同音候選推到前面。如果某個詞在自己的常用讀音上本來就是最高權重候選，walker 已經
-會選它，那筆 bigram 不會改變任何結果，只是體積。
+這一輪最重要的認知是：bigram 對注音輸入法的唯一作用，是在使用者實際會打出的那個讀音上，把落後的同音候選推到前面。如果某個詞在自己的常用讀音上本來就是最高權重候選，walker 已經會選它，那筆 bigram 不會改變任何結果，只是體積。
 
-以這個判準回頭檢視舊的合成語料層，46,822 列中只有 11.6% 落在能改變結果的位置。新的一層
-在產生階段即強制這個條件，230,993 列全部落在撞碼位置。
+以這個判準回頭檢視舊的合成語料層，46,822 列中只有 11.6% 落在能改變結果的位置。新的一層在產生階段即強制這個條件，230,993 列全部落在撞碼位置。
 
 #### 用真實輸入正確率當閘門
 
-本專案建立了一套 held-out 評估：在真實文本上斷詞，逐個相鄰詞對判定「沒有 bigram 時
-walker 會不會選錯」，再量測一個 bigram 層修對幾個位置、又把幾個原本正確的位置搶錯。評估會重播
-release 的 calibration，並依 [Docs/WalkerScoring.zh-TW.md](Docs/WalkerScoring.zh-TW.md)
-的可達性分類只計入恆生效的資料列。
+本專案建立了一套 held-out 評估：在真實文本上斷詞，逐個相鄰詞對判定「沒有 bigram 時 walker 會不會選錯」，再量測一個 bigram 層修對幾個位置、又把幾個原本正確的位置搶錯。評估會重播 release 的 calibration，並依 [Docs/WalkerScoring.zh-TW.md](Docs/WalkerScoring.zh-TW.md) 的可達性分類只計入恆生效的資料列。
 
 測試集分四個語域：政府新聞（書面）、立法院公報（正式口語）、PTT（論壇），以及作者與其朋友的群組對話（成員皆已同意作為 benchmark 使用，該語料僅用於量測，不進入訓練，亦不在本專案散布）。
 
-分語域量測是必要的。僅以公共事務語料訓練的版本，在書面語域淨值 +85,128，看起來很好，但
-在真實訊息語域只有 +65：修對 1,603、搶錯 1,538，幾乎完全抵銷。加入 PTT 語料後訊息語域
-提升約 65 倍。只看單一指標無法發現這件事。
+分語域量測是必要的。僅以公共事務語料訓練的版本，在書面語域淨值 +85,128，看起來很好，但在真實訊息語域只有 +65：修對 1,603、搶錯 1,538，幾乎完全抵銷。加入 PTT 語料後訊息語域提升約 65 倍。只看單一指標無法發現這件事。
 
 #### 從語料到權重
 
-`bigrams.tsv` 的格式是 `qstring<TAB>previous<TAB>current<TAB>probability`，並允許句界列
-（一側留空，以 `!` / `$` 標記）。`probability` 是來源內部的強度序，不是條件機率。
+`bigrams.tsv` 的格式是 `qstring<TAB>previous<TAB>current<TAB>probability`，並允許句界列（一側留空，以 `!` / `$` 標記）。`probability` 是來源內部的強度序，不是條件機率。
 
 匯入時以 unigram 為錨進行校準（`src/importers.rs`，`calibrate_bigram_boost`）：
 
@@ -74,13 +63,9 @@ stored = min( unigram(current) + boost + (raw − raw_max_of_source), −0.05 )
 ```
 
 `boost` 預設 1.5，各來源可用自己的環境變數覆寫（設為 0 則 raw 值直通）。
-`raw − raw_max_of_source` 這一項保留了來源自身的信心排序，同時把整組權重錨定到 unigram
-基準上：足夠強的 disambiguation 邊會高於逐字 unigram 路徑而生效，弱邊則落在基準線以下
-保持 inert。
+`raw − raw_max_of_source` 這一項保留了來源自身的信心排序，同時把整組權重錨定到 unigram 基準上：足夠強的 disambiguation 邊會高於逐字 unigram 路徑而生效，弱邊則落在基準線以下保持 inert。
 
-各層的完整方法、實測數字與已知限制寫在
-[sources/chiaki-tw-homophone-bigram/README.md](sources/chiaki-tw-homophone-bigram/README.md)
-的研究附錄。
+各層的完整方法、實測數字與已知限制寫在 [sources/chiaki-tw-homophone-bigram/README.md](sources/chiaki-tw-homophone-bigram/README.md) 的研究附錄。
 
 ## 致謝
 
