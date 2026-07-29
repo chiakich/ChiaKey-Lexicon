@@ -8,6 +8,17 @@
 
 專案詞庫
 
+## 狀態：bigrams 已停用（2026-07-29）
+
+`bigrams.tsv` 不再匯入 release。以四個語域的 held-out 輸入正確率量測，其在
+`chiaki-tw-homophone-bigram` 之上的邊際貢獻為零至微負；單獨評估亦僅書面 +377、
+口語 −974、訊息 +5。主因是本來源產生時尚未建立「同音撞碼」選材判準，46,822 列中僅
+11.6% 落在 bigram 能改變結果的位置。
+
+`unigrams.tsv`（4,117 列）**仍持續匯入**，未受影響。
+
+檔案保留供追溯，不刪除。停用點：`src/release.rs`（原 `import_chiaki_synthetic_bigrams`）。
+
 ## 用途與定位
 
 此來源收錄由合成語料萃取並審核的 unigram 與 bigram 資料列。

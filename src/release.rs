@@ -141,9 +141,15 @@ pub fn run() -> Result<()> {
         &mut source_keys,
         &mut import_results,
     )?;
-    import_chiaki_synthetic_bigrams(&mut conn, &cfg, &paths, &mut import_results)?;
+    // chiaki-synthetic-overlay bigrams are retired: measured marginal contribution
+    // over chiaki-tw-homophone-bigram is zero to slightly negative across all four
+    // registers. Its unigrams are still imported above and remain in use.
     import_openformosa_common_voice_bigrams(&mut conn, &cfg, &paths, &mut import_results)?;
-    import_tw_ly_transcript_bigrams(&mut conn, &cfg, &paths, &mut import_results)?;
+    // tw-ly-transcript bigrams are retired: after removing its 65 nq-bound 得/部份
+    // rows the layer still adds nothing over chiaki-tw-homophone-bigram (+0.07% on
+    // written, -0.5% on the other three registers). The source directory and its
+    // research notes are kept for provenance.
+    import_chiaki_tw_homophone_bigrams(&mut conn, &cfg, &paths, &mut import_results)?;
     import_chiaki_web_bigrams(
         &mut conn,
         &cfg,
@@ -1071,29 +1077,6 @@ fn import_chiaki_modern_bigrams(
     Ok(())
 }
 
-fn import_chiaki_synthetic_bigrams(
-    conn: &mut Connection,
-    cfg: &Config,
-    paths: &ReleasePaths,
-    import_results: &mut Vec<ImportResult>,
-) -> Result<()> {
-    let (records, seen, skipped) =
-        importers::parse_bigram_overlay(&paths.chiaki_synthetic_bigrams, cfg)?;
-    let unigrams = db::load_best_unigram_weights_by_current(conn)?;
-    let records = importers::calibrate_bigram_boost(records, cfg.synthetic_bigram_boost, &unigrams);
-    let result = db::apply_bigram_records(
-        conn,
-        &records,
-        &repo_relative(&cfg.root, &paths.chiaki_synthetic_bigrams)?,
-        "chiaki-synthetic-bigrams",
-        &sha256_file(&paths.chiaki_synthetic_bigrams)?,
-        seen,
-        skipped,
-    )?;
-    import_results.push(result);
-    Ok(())
-}
-
 fn import_openformosa_common_voice_bigrams(
     conn: &mut Connection,
     cfg: &Config,
@@ -1118,23 +1101,23 @@ fn import_openformosa_common_voice_bigrams(
     Ok(())
 }
 
-fn import_tw_ly_transcript_bigrams(
+fn import_chiaki_tw_homophone_bigrams(
     conn: &mut Connection,
     cfg: &Config,
     paths: &ReleasePaths,
     import_results: &mut Vec<ImportResult>,
 ) -> Result<()> {
     let (records, seen, skipped) =
-        importers::parse_bigram_overlay(&paths.tw_ly_transcript_bigrams, cfg)?;
+        importers::parse_bigram_overlay(&paths.chiaki_tw_homophone_bigrams, cfg)?;
     let unigrams = db::load_best_unigram_weights_by_current(conn)?;
     let records =
-        importers::calibrate_bigram_boost(records, cfg.tw_ly_transcript_bigram_boost, &unigrams);
+        importers::calibrate_bigram_boost(records, cfg.chiaki_tw_homophone_bigram_boost, &unigrams);
     let result = db::apply_bigram_records(
         conn,
         &records,
-        &repo_relative(&cfg.root, &paths.tw_ly_transcript_bigrams)?,
-        "tw-ly-transcript-bigrams",
-        &sha256_file(&paths.tw_ly_transcript_bigrams)?,
+        &repo_relative(&cfg.root, &paths.chiaki_tw_homophone_bigrams)?,
+        "chiaki-tw-homophone-bigrams",
+        &sha256_file(&paths.chiaki_tw_homophone_bigrams)?,
         seen,
         skipped,
     )?;

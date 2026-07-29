@@ -9,6 +9,7 @@ use crate::config::{
     PUNCTUATION_SOURCE_ID, PUNCTUATION_VENDOR_PATH, RIME_CONVERSION_SOURCE_ID,
     RIME_ESSAY_SOURCE_ID, SIMPLEX_EXT_VENDOR_PATH, SYMBOL_OVERLAY_ALTERNATIVES_PATH,
     SYMBOL_OVERLAY_PATH, SYMBOL_OVERLAY_SOURCE_ID, TW_LY_TRANSCRIPT_SOURCE_ID,
+    CHIAKI_TW_HOMOPHONE_SOURCE_ID,
 };
 use std::path::PathBuf;
 
@@ -28,7 +29,10 @@ pub struct ReleasePaths {
     pub chiaki_synthetic_source_dir: PathBuf,
     pub chiakey_auto_hotwords_source_dir: PathBuf,
     pub openformosa_common_voice_source_dir: PathBuf,
+    // retired with the tw-ly-transcript bigram import; kept for provenance
+    #[allow(dead_code)]
     pub tw_ly_transcript_source_dir: PathBuf,
+    pub chiaki_tw_homophone_source_dir: PathBuf,
     pub fragment_denylist_source_dir: PathBuf,
     pub overlay_explicit: PathBuf,
     pub overlay_bigrams: PathBuf,
@@ -39,7 +43,9 @@ pub struct ReleasePaths {
     pub chiakey_auto_hotwords_phrases: PathBuf,
     pub chiakey_auto_hotwords_state: PathBuf,
     pub openformosa_common_voice_bigrams: PathBuf,
+    #[allow(dead_code)]
     pub tw_ly_transcript_bigrams: PathBuf,
+    pub chiaki_tw_homophone_bigrams: PathBuf,
     pub boneyard_inventory: PathBuf,
     pub punctuation_inventory: PathBuf,
     pub punctuation_cin: PathBuf,
@@ -99,6 +105,7 @@ impl ReleasePaths {
             .join("sources")
             .join(OPENFORMOSA_COMMON_VOICE_SOURCE_ID);
         let tw_ly_transcript_source_dir = cfg.root.join("sources").join(TW_LY_TRANSCRIPT_SOURCE_ID);
+        let chiaki_tw_homophone_source_dir = cfg.root.join("sources").join(CHIAKI_TW_HOMOPHONE_SOURCE_ID);
         let fragment_denylist_source_dir =
             cfg.root.join("sources").join(FRAGMENT_DENYLIST_SOURCE_ID);
         let db_filename = format!("ChiaKeySource-{}.db", cfg.release_version);
@@ -116,6 +123,7 @@ impl ReleasePaths {
             openformosa_common_voice_bigrams: openformosa_common_voice_source_dir
                 .join("bigrams.tsv"),
             tw_ly_transcript_bigrams: tw_ly_transcript_source_dir.join("bigrams.tsv"),
+            chiaki_tw_homophone_bigrams: chiaki_tw_homophone_source_dir.join("bigrams.tsv"),
             boneyard_inventory: boneyard_source_dir.join("source-inventory.sha256"),
             punctuation_inventory: punctuation_source_dir.join("source-inventory.sha256"),
             punctuation_cin: cfg.root.join(PUNCTUATION_VENDOR_PATH),
@@ -160,6 +168,7 @@ impl ReleasePaths {
             chiakey_auto_hotwords_source_dir,
             openformosa_common_voice_source_dir,
             tw_ly_transcript_source_dir,
+            chiaki_tw_homophone_source_dir,
             fragment_denylist_source_dir,
             db_filename,
             metadata_filename,

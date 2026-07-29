@@ -9,7 +9,8 @@ use crate::config::{
     PREPOPULATED_SERVICE_SOURCE_ID, PREPOPULATED_SERVICE_SOURCE_NAME, PUNCTUATION_SOURCE_ID,
     PUNCTUATION_SOURCE_NAME, RIME_CONVERSION_SOURCE_ID, RIME_CONVERSION_SOURCE_NAME,
     RIME_ESSAY_SOURCE_ID, RIME_ESSAY_SOURCE_NAME, SYMBOL_OVERLAY_SOURCE_ID,
-    SYMBOL_OVERLAY_SOURCE_NAME, TW_LY_TRANSCRIPT_SOURCE_ID, TW_LY_TRANSCRIPT_SOURCE_NAME,
+    SYMBOL_OVERLAY_SOURCE_NAME,
+    CHIAKI_TW_HOMOPHONE_SOURCE_ID, CHIAKI_TW_HOMOPHONE_SOURCE_NAME,
 };
 use crate::db;
 use crate::files::{file_info, relative_to, sha256_bytes, sha256_file};
@@ -166,14 +167,14 @@ pub fn release_metadata(
             &[&paths.openformosa_common_voice_bigrams],
             db::stats_for_source_rows(source_rows, "sources/openformosa-common-voice-25-zh-tw/"),
         )?,
-        release_source_from_files(
-            TW_LY_TRANSCRIPT_SOURCE_ID,
-            TW_LY_TRANSCRIPT_SOURCE_NAME,
-            "立法院網站資料開放宣告 (Legislative Yuan open data terms)",
-            "立法院議事暨公報資訊網 / g0v ly.govapi.tw",
-            &paths.tw_ly_transcript_source_dir,
-            &[&paths.tw_ly_transcript_bigrams],
-            db::stats_for_source_rows(source_rows, "sources/tw-ly-transcript/"),
+                release_source_from_files(
+            CHIAKI_TW_HOMOPHONE_SOURCE_ID,
+            CHIAKI_TW_HOMOPHONE_SOURCE_NAME,
+            "CC BY-NC 4.0; commercial use requires permission from Chiaki.C",
+            "Chiaki.C",
+            &paths.chiaki_tw_homophone_source_dir,
+            &[&paths.chiaki_tw_homophone_bigrams],
+            db::stats_for_source_rows(source_rows, "sources/chiaki-tw-homophone-bigram/"),
         )?,
         release_source_from_files(
             FRAGMENT_DENYLIST_SOURCE_ID,
@@ -378,16 +379,16 @@ pub fn manifest(
             &[&paths.openformosa_common_voice_bigrams],
             307,
         )?,
-        manifest_source_from_files(
-            TW_LY_TRANSCRIPT_SOURCE_ID,
-            TW_LY_TRANSCRIPT_SOURCE_NAME,
-            "https://ly.govapi.tw/v2/",
+                manifest_source_from_files(
+            CHIAKI_TW_HOMOPHONE_SOURCE_ID,
+            CHIAKI_TW_HOMOPHONE_SOURCE_NAME,
+            "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiaki-tw-homophone-bigram",
             "tsv",
-            "立法院網站資料開放宣告 (Legislative Yuan open data terms)",
-            "立法院議事暨公報資訊網 / g0v ly.govapi.tw",
-            &paths.tw_ly_transcript_source_dir,
-            &[&paths.tw_ly_transcript_bigrams],
-            309,
+            "CC BY-NC 4.0; commercial use requires permission from Chiaki.C",
+            "Chiaki.C",
+            &paths.chiaki_tw_homophone_source_dir,
+            &[&paths.chiaki_tw_homophone_bigrams],
+            310,
         )?,
         manifest_source_from_files(
             FRAGMENT_DENYLIST_SOURCE_ID,

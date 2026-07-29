@@ -2541,6 +2541,7 @@ mod tests {
             synthetic_bigram_boost: 0.0,
             commonvoice_bigram_boost: 0.0,
             tw_ly_transcript_bigram_boost: 0.0,
+            chiaki_tw_homophone_bigram_boost: 0.0,
             homophone_rerank_min_ratio: 5.0,
             dist_dir: PathBuf::new(),
             normalized_path: PathBuf::new(),
