@@ -330,8 +330,24 @@ mod tests {
     #[test]
     fn roundtrips_every_syllable_through_qstring() {
         let syllables = [
-            "ㄅㄚ", "ㄆㄧˊ", "ㄇㄨˇ", "ㄈㄥˋ", "ㄉㄜ˙", "ㄋㄩˇ", "ㄐㄩㄝˊ", "ㄑㄩㄢˊ",
-            "ㄒㄩㄣ", "ㄓㄨㄥ", "ㄔˇ", "ㄕˋ", "ㄖˋ", "ㄗˇ", "ㄘˋ", "ㄙˋ", "ㄦˊ", "ㄚˋ",
+            "ㄅㄚ",
+            "ㄆㄧˊ",
+            "ㄇㄨˇ",
+            "ㄈㄥˋ",
+            "ㄉㄜ˙",
+            "ㄋㄩˇ",
+            "ㄐㄩㄝˊ",
+            "ㄑㄩㄢˊ",
+            "ㄒㄩㄣ",
+            "ㄓㄨㄥ",
+            "ㄔˇ",
+            "ㄕˋ",
+            "ㄖˋ",
+            "ㄗˇ",
+            "ㄘˋ",
+            "ㄙˋ",
+            "ㄦˊ",
+            "ㄚˋ",
         ];
         for syllable in syllables {
             let (qstring, _) = qstring_for_bpmf_sequence(syllable).unwrap();

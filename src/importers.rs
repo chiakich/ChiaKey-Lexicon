@@ -1276,7 +1276,9 @@ pub fn reading_supplement_records(
                 phrase: phrase.clone(),
                 weight,
                 source_id: READING_SUPPLEMENTS_SOURCE_ID,
-                tags: format!("unigram,{READING_SUPPLEMENTS_SOURCE_ID},supplemental-reading,{tags}"),
+                tags: format!(
+                    "unigram,{READING_SUPPLEMENTS_SOURCE_ID},supplemental-reading,{tags}"
+                ),
             });
         }
     }
@@ -1576,10 +1578,10 @@ fn round6(value: f64) -> f64 {
 mod tests {
     use super::{
         calibrate_bigram_boost, joined_phrase_records_from_bigrams, libchewing_weight,
-        parse_bigram_overlay, parse_conversion_rules,
-        parse_explicit_overlay, parse_fragment_demotions, parse_normalized_rime_essay,
-        parse_reading_supplements, parse_rime_essay, parse_rime_existing_phrase_reranks,
-        parse_rime_overlap_reranks, parse_single_char_homophone_reranks, parse_variant_demotions,
+        parse_bigram_overlay, parse_conversion_rules, parse_explicit_overlay,
+        parse_fragment_demotions, parse_normalized_rime_essay, parse_reading_supplements,
+        parse_rime_essay, parse_rime_existing_phrase_reranks, parse_rime_overlap_reranks,
+        parse_single_char_homophone_reranks, parse_variant_demotions,
         phrase_evidence_character_records, phrase_split_rerank_records,
         post_supplement_phrase_evidence_character_records, qstring_for_bpmf_sequence,
         read_normalized_rime_essay, reading_supplement_records, rime_split_rerank_weight, round6,
@@ -2108,7 +2110,6 @@ mod tests {
             "a phrase far below its split path should not be boosted"
         );
     }
-
 
     #[test]
     fn overrides_non_final_di_place_reading_in_rime_essay() {
