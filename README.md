@@ -9,8 +9,9 @@
 > 歡迎贊助與支持！您的贊助將支持本詞庫的持續開發、更新與維護。
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/A0A21UAIV9)
-
-聯絡我們：chiakic27@gmail.com
+(適用台灣以外的贊助方式)
+[綠界贊助連結](https://p.ecpay.com.tw/2A3B186)
+(僅適用台灣信用卡/Apple Pay/ATM/超商代碼)
 
 ## 回報詞庫問題
 
