@@ -30,7 +30,7 @@ unigram、bigram 機率計分，並據此整理出詞庫資料的權重驗證規
 4. **算 unigram path**：取 `m_unigramCurrents[0]`，分數**加上** backoff weight：
    `result = unigram_logP + backoff(previous)`。若此節點完全沒有 unigram，
    則用 `backoff(previous) + c_defaultUNKProbability`。
-   注意 `m_unigramCurrents[0]` 是節點的**當前排頭**，不一定是分數最高者——見
+   注意 `m_unigramCurrents[0]` 是節點的**當前排頭**，不一定是分數最高者，見
    〈使用者學習會改變排頭〉。
 5. **比大小取 max**：若 bigram 存在且 `bigramResult > result`，回傳 bigram；
    否則回傳 unigram path 的結果。
@@ -65,7 +65,7 @@ context 的 backoff weight，兩條路徑取較高分者。（但如第 3 點所
 最前面，**但保留它原本的分數**（改分數的幾行在原始碼中被註解掉）。
 
 所以第 4 點的 unigram path 門檻會在 `[該讀音最低分, 該讀音最高分]` 之間浮動，而且
-是**往下浮動**。一筆 bigram 現在打不過最高分，不代表它沒用——使用者學了較弱的候選
+是**往下浮動**。一筆 bigram 現在打不過最高分，不代表它沒用，使用者學了較弱的候選
 之後門檻降低，它就會生效。
 
 另有 `user_bigram_cache`（`useUserTable` 開啟時自動啟用）：`findBigrams()` 一旦命中

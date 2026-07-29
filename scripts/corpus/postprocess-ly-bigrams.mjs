@@ -11,7 +11,7 @@
 // 機率怎麼給：
 //   stats 檔只含 selected 的列，沒有 redundant／excluded，所以同一 previous 的
 //   count 總和不是真正的邊際分佈，算不出 P(current|previous)。這裡改用 doc_count
-//   做單調映射——doc_count 比 count 穩健（同一篇裡刷 50 次不等於 50 篇都出現）。
+//   做單調映射，doc_count 比 count 穩健（同一篇裡刷 50 次不等於 50 篇都出現）。
 //   輸出值是「來源內部的強度序」，不是條件機率；calibration 只吃相對差距，夠用。
 //
 //   raw = CEIL - SPAN * log(maxDoc / doc) / log(maxDoc / minDoc)
@@ -84,7 +84,7 @@ for (let i = 2; i < process.argv.length; i += 1) {
   }
 }
 
-// 議場專用詞。出現在 previous 或 current 就整列丟棄——一般使用者不會打這些，
+// 議場專用詞。出現在 previous 或 current 就整列丟棄，一般使用者不會打這些，
 // 但它們在這份語料裡是最高頻的搭配，留著會蓋掉正常用法。
 const REGISTER_DENY = [
   "本席", "本院", "大院", "貴委員會", "逕付", "二讀", "三讀", "審查會",

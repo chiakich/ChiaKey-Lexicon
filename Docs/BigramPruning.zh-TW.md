@@ -24,7 +24,7 @@ node scripts/audit/audit-bigram-effectiveness.mjs \
 
 輸出四個區塊：
 
-**backoff 健檢**。統計 `unigrams.backoff` 的分布。若全為 0，會提示 Katz 退避折扣沒有作用——此時 bigram 必須硬贏過該讀音的最高分候選，是生效條件最嚴苛的情況，後續分類即以此為準。
+**backoff 健檢**。統計 `unigrams.backoff` 的分布。若全為 0，會提示 Katz 退避折扣沒有作用，此時 bigram 必須硬贏過該讀音的最高分候選，是生效條件最嚴苛的情況，後續分類即以此為準。
 
 **可達性分類**。每筆 bigram 歸入 A/B/C/D 其中一類，並列出總計與可安全剪除的數量。
 
