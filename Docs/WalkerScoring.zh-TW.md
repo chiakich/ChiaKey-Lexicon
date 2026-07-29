@@ -151,6 +151,34 @@ bigram_logP(current | previous)  >  m_unigramCurrents[0] + backoff(previous)
 **只有 A + B 可以安全剪除。** D 是學習翻轉排序後的救援路徑，用「贏不過該讀音最高分」
 當死權重判準會誤殺整個 D 類。
 
+#### E 不可達（整詞路徑勝出）
+
+上表四類只比較**單一節點內**的 bigram 與 unigram 排頭。跨節點的整詞／拆詞競爭（見下方
+〈整詞 vs. 拆詞路徑競爭〉）會產生第五種死列：該列在自己的節點上恆生效（C 類），但整條
+拆詞路徑走不到那個節點。
+
+判準（可靜態判定，不需執行 walker）：
+
+```
+設該列為 (previous, current)，current 的讀音為 code。
+若存在 X，使 X 與 current 同 code、且 W = previous + X 是詞庫中的詞，且
+
+    eff(W)  >  eff(previous) + min(unigram(current) + boost, -0.05) + 1.0×(len(current)-1)
+
+其中 eff(w) = weight(w) + 1.0×(len(w)-1)，
+
+則整詞路徑必勝，該列永遠不會被讀取。
+```
+
+實測：`chiaki-tw-homophone-bigram` 產生過程中，有 10,641 列符合此形態，其中 83.8% 滿足
+上式；依單一節點判準它們有 44.6% 落在 **C 恆生效**、54.9% 落在 D，現行的 A+B 剪除規則
+完全抓不到。
+
+此類多出現在「標準寫法本身是詞典複合詞、非標準寫法不是」的情形（`電影裡`／`電影裏`、
+`成就`／`成舊`）：語料統計會偏好非標準寫法（標準寫法被斷詞合併，配對計數恆為 0），
+而 walker 又永遠走整詞路徑，於是產生大量恆生效但不可達的列。建議在產生端即以此判準
+過濾，勿留待剪除階段。
+
 檢查工具：`scripts/audit/audit-bigram-effectiveness.mjs`（分類並輸出清單）、
 `scripts/lexicon/prune-dead-bigrams.mjs`（實際剪除）。操作流程、跨來源共用 key 的處理
 與已知限制見 [BigramPruning.zh-TW.md](BigramPruning.zh-TW.md)。

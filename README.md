@@ -29,42 +29,59 @@
 
 千秋輸入法綜合詞庫的目標是：嘗試融合成熟的 unigram 詞庫，並在此在之上，疊加各種自製的 bigram 資料（來自網路語料、Mozilla Common Voice 句料與大語言模型合成語料），並以可重現、可追蹤來源的 pipeline 產生輸入法可直接消費的 release DB。
 
-### 合成語料的產生與提煉
+### bigram 資料怎麼來
 
-台灣現代口語與網路語境的高品質對話語料極度稀缺，這是 bigram 難以重建的主因。本專案的做法不是請模型「造詞」，而是請模型寫出整段擬真文本，再從文本中萃取詞與詞的搭配關係，靠語料規模去覆蓋真實的搭配分布。
+最初的做法是請語言模型寫出整段擬真文本，再從文本萃取詞與詞的搭配關係，靠語料規模去覆蓋
+真實的搭配分布。這條路做了兩個版本（`chiaki-synthetic-overlay`，以及後來用本機 Gemma 4
+列舉撞碼詞、請模型補上下文的版本），都在評估工具建立之後被判定失敗——模型推測的搭配
+幾乎全部落在真實用法之外，在 32.6 萬句測試語料裡只命中約 200 次。
 
-#### 體裁條件式生成（genre-conditioned generation）
+現在的 bigram 主力是 `chiaki-tw-homophone-bigram`，改成直接從真實台灣文本抽取：政府機關
+新聞、立法院公報詢答逐字稿、以及可再散布的 PTT 論壇語料，合計 3.67 億字。
 
-語料的組成參照中央研究院詞庫小組技術報告 95-02/98-04〈[中央研究院漢語平衡語料庫的內容與說明](https://asbc.iis.sinica.edu.tw/images/98-04.pdf)〉所列的主題與文類分佈。
-這個「平衡語料庫必須涵蓋各種文體」的構想可上溯至 1960 年代的 Brown Corpus（Kučera & Francis, 1967）。生成時以該報告的主題比例（哲學 10%、科學 10%、社會 35%、藝術 5%、生活 20%、文學 20%）與文類、語式分佈作為條件，讓模型分別扮演不同情境產出文本，而非平均取樣。
+#### 只收「會改變結果」的配對
 
-在此之上另外特化兩組貼近當代台灣語境的資料：
+這一輪最重要的認知是：bigram 對注音輸入法的唯一作用，是在使用者實際會打出的那個讀音上，
+把落後的同音候選推到前面。如果某個詞在自己的常用讀音上本來就是最高權重候選，walker 已經
+會選它，那筆 bigram 不會改變任何結果，只是體積。
 
-- `synthetic-taiwan-daily-usage`（2,221 筆）：日常生活口語
-- `synthetic-taiwan-internet-usage`（1,328 筆）：網路／社群用語
+以這個判準回頭檢視舊的合成語料層，46,822 列中只有 11.6% 落在能改變結果的位置。新的一層
+在產生階段即強制這個條件，231,028 列全部落在撞碼位置。
 
-生成模型使用 GPT-5.5 與 Gemma 4。
+#### 用真實輸入正確率當閘門
 
-#### 提煉與過濾
+本專案建立了一套 held-out 評估：在真實文本上斷詞，逐個相鄰詞對判定「沒有 bigram 時
+walker 會不會選錯」，再量測一個 bigram 層修對幾個位置、又把幾個原本正確的位置搶錯。評估會重播
+release 的 calibration，並依 [Docs/WalkerScoring.zh-TW.md](Docs/WalkerScoring.zh-TW.md)
+的可達性分類只計入恆生效的資料列。
 
-合成語料的雜訊問題比真實語料嚴重，因此採用多道關卡而非單一頻率門檻：
+測試集分四個語域：政府新聞（書面）、立法院公報（正式口語）、PTT（論壇），以及作者與其
+朋友的 LINE 群組對話（即時訊息；大家皆已同意作為 benchmark 使用，該語料僅用於量測，
+不進入訓練，亦不在本專案散布）。
 
-1. 以既有 unigram 詞庫為錨做交叉驗證：bigram 在匯入前會先依 release unigram table 預先篩選，前詞或後詞任一不存在於正式詞庫即拒收（`scripts/lexicon/process-bigram-issue.mjs` 對人工回報套用相同規則）。
-2. 人工審核：合成來源的 4,117 筆 unigram 全數帶有 `reviewed` tag，經萃取後逐筆審核才進入 overlay。
-3. 去重取強：匯入時同一 key 只保留機率較高者。
-4. 以 unigram 基準線淘汰弱邊：弱搭配不在萃取階段砍除，而是在匯入校準時自然落到 unigram floor 以下而失效（見下）。
+分語域量測是必要的。僅以公共事務語料訓練的版本，在書面語域淨值 +85,128，看起來很好，但
+在真實訊息語域只有 +65——修對 1,603、搶錯 1,538，幾乎完全抵銷。加入 PTT 語料後訊息語域
+提升約 65 倍。只看單一指標無法發現這件事。
 
 #### 從語料到權重
 
-在合成語料上以既有 unigram 切分文本、統計相鄰詞的共現次數，估計轉移機率 P(current | previous)，取對數作為 raw 權重。`bigrams.tsv` 的格式為 `qstring<TAB>previous<TAB>current<TAB>probability`，並允許句界列（一側留空，以 `!` / `$` 標記）。
+`bigrams.tsv` 的格式是 `qstring<TAB>previous<TAB>current<TAB>probability`，並允許句界列
+（一側留空，以 `!` / `$` 標記）。`probability` 是來源內部的強度序，不是條件機率。
 
-匯入時再以 unigram 為錨進行校準（`src/importers.rs`，`calibrate_bigram_boost`）：
+匯入時以 unigram 為錨進行校準（`src/importers.rs`，`calibrate_bigram_boost`）：
 
 ```
 stored = min( unigram(current) + boost + (raw − raw_max_of_source), −0.05 )
 ```
 
-`boost` 預設 1.5，可用環境變數 `SYNTHETIC_BIGRAM_BOOST` 覆寫（設為 0 則 raw 值直通）。`raw − raw_max_of_source` 這一項保留了來源自身的信心排序，同時把整組權重錨定到 unigram 基準上：足夠強的 disambiguation 邊會高於逐字 unigram 路徑而生效，弱邊則落在基準線以下保持 inert。
+`boost` 預設 1.5，各來源可用自己的環境變數覆寫（設為 0 則 raw 值直通）。
+`raw − raw_max_of_source` 這一項保留了來源自身的信心排序，同時把整組權重錨定到 unigram
+基準上：足夠強的 disambiguation 邊會高於逐字 unigram 路徑而生效，弱邊則落在基準線以下
+保持 inert。
+
+各層的完整方法、實測數字與已知限制寫在
+[sources/chiaki-tw-homophone-bigram/README.md](sources/chiaki-tw-homophone-bigram/README.md)
+的研究附錄。
 
 ## 致謝
 
@@ -73,7 +90,9 @@ stored = min( unigram(current) + boost + (raw − raw_max_of_source), −0.05 )
 - **新酷音 / libchewing**（`chewing/libchewing-data`）：提供主要的現代繁中 / 注音詞彙與明確讀音基底。
 - **Rime / 中州韻**（`rime/rime-essay`）：提供高品質詞頻與斷詞證據，是候選 rerank 與補充詞的重要依據。
 - **Mozilla Common Voice / OpenFormosa**：bigram 句料的語料來源。
-- **立法院／g0v `ly.govapi.tw`**：公報詢答逐字稿，bigram 的即席口語語料來源。
+- **立法院議事暨公報資訊網 / g0v `ly.govapi.tw`**：公報詢答逐字稿，bigram 的即席口語語料來源。
+- **行政院、大陸委員會、中央研究院、客家委員會、新北市政府**：依政府資料開放授權條款釋出的新聞發布，bigram 的書面語料來源。
+- **`yuhuanstudio/PTT-pretrain-zhtw`**（Apache-2.0）：PTT 論壇語料，bigram 的日常語域來源。
 - **Mozc**：顏文字預載分類資料。
 
 我們的工作主要是把這些前人的成果，整合成可重現、可追蹤來源的現代輸入法詞庫。各來源的授權、整合決定與風險紀錄詳見 [Docs/SourceReview.md](Docs/SourceReview.md)。
@@ -133,9 +152,10 @@ stored = min( unigram(current) + boost + (raw − raw_max_of_source), −0.05 )
 - `chiaki-auto-hotwords-overlay`：自動刷新 hotwords overlay（僅保留專案輸出 rows）。
 - `chiaki-symbols-overlay`：補 `_punctuation_list` 缺漏符號與 runtime 標點候選。
 - `chiaki-web-overlay`：網路用語 unigram/bigram 補充。
-- `chiaki-synthetic-overlay`：合成語料提煉的 unigram/bigram 補充。
+- `chiaki-tw-homophone-bigram`：從政府新聞、立法院公報與 PTT 語料萃取的 bigram rows，只收「在常用讀音上會輸給同音對手」的配對。目前的 bigram 主力層。
+- `chiaki-synthetic-overlay`：合成語料提煉的 unigram 補充。其 `bigrams.tsv` 已於 2026-07-29 停用（邊際貢獻零至微負），unigram 仍在使用。
 - `openformosa-common-voice-25-zh-tw`：從 Common Voice 句料挑選的 bigram rows。
-- `tw-ly-transcript`：從立法院公報詢答逐字稿萃取、經人工複核的 bigram rows。
+- `tw-ly-transcript`：從立法院公報詢答逐字稿萃取、經人工複核的 bigram rows。已於 2026-07-29 整層停用，資料與研究紀錄保留供追溯。
 
 ### 校正層
 
@@ -159,7 +179,7 @@ Release builder 的整合流程是具有確定性的：
 8. 由 OpenCC `t2tw` 產生同 qstring variant 權重上限，並套用 Rime 單字同音 rerank。
 9. 匯入 `chiaki-modern-overlay/explicit.tsv`，處理專案自有且需要指定 qstring 或排序的精準修正；它覆蓋所有一般 unigram 來源與前述校正。
 10. 最後套用 `chiaki-fragment-denylist`，把偷字的非詞彙碎片壓到安全界；這個安全上限優先於 explicit overlay。
-11. 依序匯入 bigram 來源：`chiaki-synthetic-overlay`、`openformosa-common-voice-25-zh-tw`、`tw-ly-transcript`、`chiaki-web-overlay`、`chiaki-modern-overlay`。後匯入者覆蓋前者的重疊 rows，因此人工審查過的 web overlay 與人工修正 overlay 位於語料統計來源之上。
+11. 依序匯入 bigram 來源：`openformosa-common-voice-25-zh-tw`、`chiaki-tw-homophone-bigram`、`chiaki-web-overlay`、`chiaki-modern-overlay`。後匯入者覆蓋前者的重疊 rows，因此人工審查過的 web overlay 與人工修正 overlay 位於語料統計來源之上。
 12. 補入 runtime compatibility data：BPMF 標點、ChiaKey supplemental symbol list、canned messages、Mozc 顏文字、module CIN tables。
 13. 從最終 `unigrams` 派生 `associated_phrases`，供聯想詞提示使用。
 14. 執行 runtime-required validations，寫出 normalized TSV、release metadata、manifest 與 checksums。
@@ -189,6 +209,9 @@ Rust release tooling 與 repository scripts 使用 MIT License；見 [LICENSE](L
 
 ## 後續工作
 
+- 清理 unigram 層的組合式條目。詞庫含約 6,300 個 rime-essay 衍生的「已知詞＋方位／虛詞」條目（`電影裡`、`適當的` 這類），其中 291 個在自己的讀音上壓過正確候選（`適當的` 壓過 `適當地`、`集中了` 壓過 `擊中了`）。這類條目讓整詞路徑勝出，bigram 層無從介入。清理之後 bigram 層需要重新產生。
+- 剪除 `chiaki-tw-homophone-bigram` 的 B 類（永不勝出）15,358 列，以及新發現的 E 類（整詞路徑勝出）死列，判準見 [Docs/WalkerScoring.zh-TW.md](Docs/WalkerScoring.zh-TW.md)。
+- 補回因 `previous` 多音而整批棄用的 767,923 筆候選，需要讀音消歧。
 - 依實際缺漏加入台灣現代用語。
 - 依真實打字測試調整跨來源權重映射。
 - 若外部詞庫變動時，需重新檢查 LGPL 再散布要求。
