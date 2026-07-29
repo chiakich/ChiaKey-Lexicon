@@ -10,13 +10,22 @@
 
 ## 用途與定位
 
-此來源提供小型、專案自有的修正列，用於快速修補 seed lexicon 的明顯缺漏、排序問題，以及長句走訪時的前後詞選字問題。
+此來源提供專案自有的 unigram 補充、精準覆蓋修正，以及長句走訪時的前後詞選字問題修正。
 
-`explicit.tsv` 是一般 unigram 校正的最終精準覆蓋層：它在 libchewing、Rime、web、
-synthetic、OpenCC 與單字同音校正之後套用，因此可明確指定某個 qstring 的候選排序。
+`unigrams.tsv` 收錄新增詞條與補充讀音；其中保留 `chiaki-synthetic-overlay` tag 的列，
+是已退役的合成語料層留下的來源資訊。`explicit.tsv` 是一般 unigram 校正的最終精準
+覆蓋層：它在 libchewing、Rime、web、OpenCC 與單字同音校正之後套用，因此可明確指定某個 qstring 的候選排序。
 其後唯一可再降低 unigram 權重的規則是 `chiaki-fragment-denylist`；片段安全上限優先於一般頻率或排序偏好。
 
 ## 檔案與格式
+
+`unigrams.tsv`：
+
+```text
+qstring<TAB>phrase<TAB>weight<TAB>tags
+```
+
+用於新增缺詞或補充讀音。GitHub 的缺詞回報流程與 `add-unigram.mjs` 都會追加至此表。
 
 `explicit.tsv`：
 
@@ -24,7 +33,7 @@ synthetic、OpenCC 與單字同音校正之後套用，因此可明確指定某�
 qstring<TAB>phrase<TAB>weight<TAB>tags
 ```
 
-所有修正都必須綁定特定讀音、聲調或 KeyKey 內部 qstring，並寫入 `explicit.tsv`。此表只替換精確的 qstring/phrase 配對。
+所有覆蓋修正都必須綁定特定讀音、聲調或 KeyKey 內部 qstring，並寫入 `explicit.tsv`。此表只替換精確的 qstring/phrase 配對。
 
 `bigrams.tsv`：
 
@@ -36,6 +45,7 @@ qstring<TAB>previous<TAB>current<TAB>probability
 
 ## Release 匯入規則
 
+- `unigrams.tsv`：匯入一般新增詞條與補充讀音。
 - `explicit.tsv`：以明確 qstring 進行精準覆蓋。
 - `explicit.tsv` 在所有一般 unigram 來源與排序校正後、fragment denylist 前匯入；它可覆蓋
   一般候選權重，但不得重新提高被判定為片段的詞組。

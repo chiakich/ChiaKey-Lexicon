@@ -26,7 +26,6 @@ const LIBCHEWING_SOURCE_ID = "libchewing-data";
 const OVERLAY_SOURCE_IDS = new Set([
   "chiaki-modern-overlay",
   "chiaki-web-overlay",
-  "chiaki-synthetic-overlay",
   "chiaki-auto-hotwords-overlay",
 ]);
 

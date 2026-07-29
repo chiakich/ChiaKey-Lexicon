@@ -43,13 +43,13 @@ ACTIVE_ROOT=/tmp/ChiaKey-Lexicons SLOT=test-dev scripts/release/uninstall-dev-le
 
 | 腳本 | 用途 | 常用指令 |
 | --- | --- | --- |
-| `add-explicit.mjs` | 將指定詞條加入 `chiaki-modern-overlay/explicit.tsv`。預設權重由腳本推算。 | `node scripts/lexicon/add-explicit.mjs "su3 cl3" 你好 --dry-run` |
+| `add-unigram.mjs` | 將指定詞條加入 `chiaki-modern-overlay/unigrams.tsv`。預設權重由腳本推算。 | `node scripts/lexicon/add-unigram.mjs "su3 cl3" 你好 --dry-run` |
 | `add-bigram.mjs` | 將詞組轉換關係加入 bigram overlay。 | `node scripts/lexicon/add-bigram.mjs 天意 "tu0 u4" 難測 "s06hk4" --dry-run` |
 | `prune-dead-bigrams.mjs` | 依走訪器可達性剪掉 A（不可達）與 B（永不勝出）的 bigram 列。預設試算，`--apply` 才寫檔。詳見 [BigramPruning.zh-TW.md](BigramPruning.zh-TW.md)。 | `node scripts/lexicon/prune-dead-bigrams.mjs`；確認後加 `--apply` |
 | `process-missing-word-issue.mjs` | GitHub Actions 用：讀取 `ISSUE_BODY` 等環境變數，驗證缺詞回報、寫出回覆及 PR 資料。通常不需在本機直接執行。 | 由 `.github/workflows/add-unigram.yml` 呼叫 |
 | `process-bigram-issue.mjs` | GitHub Actions 用：讀取 issue 環境變數，驗證並建立 bigram 變更資料。通常不需在本機直接執行。 | 由 `.github/workflows/add-bigram.yml` 呼叫 |
 
-`add-explicit.mjs` 可用 `--weight` 指定權重、`--tag` 重複新增 tag、或 `--tags` 指定 tag 字串；`add-bigram.mjs` 可用 `--probability` 指定機率。兩者先使用 `--dry-run` 檢查，遇到重複資料時只有在確認合理後才使用 `--force`。
+`add-unigram.mjs` 可用 `--weight` 指定權重、`--tag` 重複新增 tag、或 `--tags` 指定 tag 字串；`add-bigram.mjs` 可用 `--probability` 指定機率。兩者先使用 `--dry-run` 檢查，遇到重複資料時只有在確認合理後才使用 `--force`。
 
 ## 資料品質稽核
 

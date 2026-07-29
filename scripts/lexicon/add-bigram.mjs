@@ -119,7 +119,7 @@ function parseProbability(value) {
 
 function currentReading(current, keyboard) {
   const output = execFileSync(process.execPath, [
-    "scripts/lexicon/add-explicit.mjs",
+    "scripts/lexicon/add-unigram.mjs",
     keyboard,
     current,
     "--dry-run",

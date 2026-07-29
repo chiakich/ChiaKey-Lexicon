@@ -92,7 +92,7 @@ pub fn run() -> Result<()> {
         &mut source_keys,
         &mut import_results,
     )?;
-    import_chiaki_synthetic_overlay(
+    import_modern_unigrams(
         &mut conn,
         &cfg,
         &paths,
@@ -141,9 +141,6 @@ pub fn run() -> Result<()> {
         &mut source_keys,
         &mut import_results,
     )?;
-    // chiaki-synthetic-overlay bigrams are retired: measured marginal contribution
-    // over chiaki-tw-homophone-bigram is zero to slightly negative across all four
-    // registers. Its unigrams are still imported above and remain in use.
     import_openformosa_common_voice_bigrams(&mut conn, &cfg, &paths, &mut import_results)?;
     // tw-ly-transcript bigrams are retired: after removing its 65 nq-bound 得/部份
     // rows the layer still adds nothing over chiaki-tw-homophone-bigram (+0.07% on
@@ -234,12 +231,11 @@ fn verify_inputs(
         paths.mozc_emoticon_categorized.clone(),
         paths.mozc_emoticon_tsv.clone(),
         paths.bpmf_ext_cin.clone(),
+        paths.overlay_unigrams.clone(),
         paths.overlay_explicit.clone(),
         paths.overlay_bigrams.clone(),
         paths.chiaki_web_overlay_unigrams.clone(),
         paths.chiaki_web_overlay_bigrams.clone(),
-        paths.chiaki_synthetic_unigrams.clone(),
-        paths.chiaki_synthetic_bigrams.clone(),
         paths.chiakey_auto_hotwords_phrases.clone(),
         paths.chiakey_auto_hotwords_state.clone(),
         paths.openformosa_common_voice_bigrams.clone(),
@@ -269,7 +265,6 @@ fn create_output_dirs(cfg: &Config, paths: &ReleasePaths) -> Result<()> {
     fs::create_dir_all(&paths.rime_conversion_source_dir)?;
     fs::create_dir_all(&paths.overlay_source_dir)?;
     fs::create_dir_all(&paths.chiaki_web_overlay_source_dir)?;
-    fs::create_dir_all(&paths.chiaki_synthetic_source_dir)?;
     fs::create_dir_all(&paths.chiakey_auto_hotwords_source_dir)?;
     fs::create_dir_all(&paths.openformosa_common_voice_source_dir)?;
     fs::create_dir_all(&paths.fragment_denylist_source_dir)?;
@@ -930,21 +925,20 @@ fn import_chiaki_web_overlay(
     Ok(())
 }
 
-fn import_chiaki_synthetic_overlay(
+fn import_modern_unigrams(
     conn: &mut Connection,
     cfg: &Config,
     paths: &ReleasePaths,
     source_keys: &mut HashMap<(String, String), SourceRecord>,
     import_results: &mut Vec<ImportResult>,
 ) -> Result<()> {
-    let (records, seen, skipped) =
-        importers::parse_chiaki_synthetic_overlay(&paths.chiaki_synthetic_unigrams, cfg)?;
+    let (records, seen, skipped) = importers::parse_modern_unigrams(&paths.overlay_unigrams, cfg)?;
     let result = db::apply_records(
         conn,
         records,
-        &repo_relative(&cfg.root, &paths.chiaki_synthetic_unigrams)?,
-        "chiaki-synthetic-unigrams",
-        &sha256_file(&paths.chiaki_synthetic_unigrams)?,
+        &repo_relative(&cfg.root, &paths.overlay_unigrams)?,
+        "chiaki-modern-unigrams",
+        &sha256_file(&paths.overlay_unigrams)?,
         seen,
         skipped,
         false,

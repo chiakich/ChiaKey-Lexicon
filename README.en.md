@@ -77,9 +77,8 @@ Goal: provide reviewable and redistributable external vocabulary and reading cov
 
 Goal: project-maintained lexicon data that directly reflects ChiaKey usage context.
 
-- `chiaki-modern-overlay`: project-owned fixes and explicit reading/order adjustments.
 - `chiaki-web-overlay`: reviewed web-usage unigram and bigram supplements.
-- `chiaki-synthetic-overlay`: synthetic-corpus-derived unigram and bigram supplements.
+- `chiaki-modern-overlay`: project-owned unigram supplements, exact overrides, and bigram fixes; retained synthetic rows preserve their provenance tags.
 - `openformosa-common-voice-25-zh-tw`: selected bigram rows from Common Voice data.
 - `tw-ly-transcript`: reviewed bigram rows extracted from Legislative Yuan gazette Q&A transcripts.
 - `chiaki-auto-hotwords-overlay`: automatically refreshed hotwords overlay (project-output rows only).
@@ -105,10 +104,10 @@ The release builder integration flow is deterministic:
 5. Batch-normalize Rime essay phrases with OpenCC `t2tw`, then apply the small `chiaki-rime-conversion-policy` override table; the normalized result is shared by Rime rerank and supplemental import passes.
 6. Apply `rime-essay` rerank: cap same-pronunciation boosts, allow limited uplift from Rime evidence for weak existing phrases, apply small single-character homophone reorders where frequency advantage is sufficient, then import only safe supplemental phrases not already in DB.
    - Supplemental `split-rerank` is intentionally conservative: if the Rime base is too far below the best existing split, it stays on the Rime scale; otherwise it only receives a bounded boost. This prevents high-frequency character splits such as `的`+`是` from flattening every candidate in the same qstring group, for example `地市` and `的事`.
-7. Import `chiaki-modern-overlay/explicit.tsv` for project-owned explicit qstring and ranking corrections.
-8. Import `chiaki-web-overlay/explicit.tsv` and `chiaki-synthetic-overlay/unigrams.tsv`.
+7. Import `chiaki-web-overlay/explicit.tsv` and `chiaki-modern-overlay/unigrams.tsv`.
+8. Import `chiaki-modern-overlay/explicit.tsv` for project-owned explicit qstring and ranking corrections.
 9. Generate OpenCC `t2tw` same-qstring variant weight caps for candidates that already have Taiwan-standard counterparts, then apply `chiaki-fragment-denylist` to keep non-lexical fragments below safety thresholds.
-10. Import bigram sources in order: `chiaki-synthetic-overlay`, `openformosa-common-voice-25-zh-tw`, `tw-ly-transcript`, `chiaki-web-overlay`, `chiaki-modern-overlay`. Later sources override overlapping rows, so the reviewed web overlay and manual corrections sit above the corpus-statistics sources.
+10. Import bigram sources in order: `openformosa-common-voice-25-zh-tw`, `tw-ly-transcript`, `chiaki-web-overlay`, `chiaki-modern-overlay`. Later sources override overlapping rows, so the reviewed web overlay and manual corrections sit above the corpus-statistics sources.
 11. Import runtime compatibility data: BPMF punctuations, supplemental symbol list, canned messages, Mozc emoticons, and module CIN tables.
 12. Derive `associated_phrases` from final `unigrams` for runtime phrase suggestions.
 13. Run runtime-required validations and write normalized TSV, release metadata, manifest, and checksums.

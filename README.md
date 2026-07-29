@@ -147,12 +147,11 @@ stored = min( unigram(current) + boost + (raw − raw_max_of_source), −0.05 )
 
 目標：由專案維護詞庫資料。
 
-- `chiaki-modern-overlay`：專案自有修正詞與 explicit 讀音/排序調整；作為一般 unigram 校正的最終精準覆蓋層。
 - `chiaki-auto-hotwords-overlay`：自動刷新 hotwords overlay（僅保留專案輸出 rows）。
 - `chiaki-symbols-overlay`：補 `_punctuation_list` 缺漏符號與 runtime 標點候選。
 - `chiaki-web-overlay`：網路用語 unigram/bigram 補充。
 - `chiaki-tw-homophone-bigram`：從政府新聞、立法院公報與 PTT 語料萃取的 bigram rows，只收「在常用讀音上會輸給同音對手」的配對。目前的 bigram 主力層。
-- `chiaki-synthetic-overlay`：合成語料提煉的 unigram 補充。其 `bigrams.tsv` 已於 2026-07-29 停用（邊際貢獻零至微負），unigram 仍在使用。
+- `chiaki-modern-overlay`：專案自有 unigram 補充、精準覆蓋與 bigram 修正；其中保留原 `chiaki-synthetic-overlay` 的 provenance tags。
 - `openformosa-common-voice-25-zh-tw`：從 Common Voice 句料挑選的 bigram rows。
 - `tw-ly-transcript`：從立法院公報詢答逐字稿萃取、經人工複核的 bigram rows。已於 2026-07-29 整層停用，資料與研究紀錄保留供追溯。
 
@@ -174,7 +173,7 @@ Release builder 的整合流程是具有確定性的：
 5. 將 Rime essay phrase 批次套用 OpenCC `t2tw`，再讀取 `chiaki-rime-conversion-policy` 套用少量後處理例外；normalized 結果會在 Rime rerank 與 supplemental 匯入之間共用。
 6. 套用 `rime-essay` rerank：同音候選只允許有限幅度提升，既有弱詞可用 Rime 分數與切分證據有限度升權；單字同音群會在 Rime 單字頻率有足夠優勢時小幅重排；接著只加入目前 DB 尚無、且能安全推得注音的補充詞。
    - supplemental phrase 的 `split-rerank` 只作為保守輔助：若 Rime base 與最佳既有切分差距太大，不升權；若可升權，也只允許 bounded boost，避免像 `的`+`是` 這類高頻切分把整個同音 qstring（例如 `地市`、`的事`）拉平成同權重。
-7. 匯入 `chiaki-web-overlay/unigrams.tsv`、`chiaki-synthetic-overlay/unigrams.tsv` 與 auto-hotwords，並以 phrase evidence 補強單字讀音。
+7. 匯入 `chiaki-web-overlay/unigrams.tsv`、`chiaki-modern-overlay/unigrams.tsv` 與 auto-hotwords，並以 phrase evidence 補強單字讀音。
 8. 由 OpenCC `t2tw` 產生同 qstring variant 權重上限，並套用 Rime 單字同音 rerank。
 9. 匯入 `chiaki-modern-overlay/explicit.tsv`，處理專案自有且需要指定 qstring 或排序的精準修正；它覆蓋所有一般 unigram 來源與前述校正。
 10. 最後套用 `chiaki-fragment-denylist`，把偷字的非詞彙碎片壓到安全界；這個安全上限優先於 explicit overlay。

@@ -42,7 +42,7 @@ qstring<TAB>previous<TAB>current<TAB>probability
 
 | 停用來源 | 停用範圍 | 依據 |
 | --- | --- | --- |
-| `chiaki-synthetic-overlay` | 只停 `bigrams.tsv` | 邊際貢獻零至微負；它的 `unigrams.tsv` 仍持續匯入 |
+| 原 `chiaki-synthetic-overlay` | 已退役並併入 modern overlay | bigram 邊際貢獻零至微負；unigram 保留於 `chiaki-modern-overlay/unigrams.tsv` |
 | `tw-ly-transcript` | 整層 | 修掉 65 筆 nq 綁定列之後，邊際貢獻仍是 +0.07%／−0.6%／−0.5%／−0.5% |
 
 `chiaki-web-overlay` 予以保留：邊際貢獻雖為 −0.4%，但它是人工審查層且最後匯入，其判斷

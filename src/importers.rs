@@ -1,7 +1,7 @@
 use crate::config::{
-    Config, CHIAKEY_AUTO_HOTWORDS_SOURCE_ID, CHIAKI_SYNTHETIC_SOURCE_ID,
-    CHIAKI_WEB_OVERLAY_SOURCE_ID, GENERATED_CHARACTER_EVIDENCE_SOURCE_ID, LIBCHEWING_SOURCE_ID,
-    OPENCC_VARIANT_SOURCE_ID, OVERLAY_SOURCE_ID, RIME_ESSAY_SOURCE_ID,
+    Config, CHIAKEY_AUTO_HOTWORDS_SOURCE_ID, CHIAKI_WEB_OVERLAY_SOURCE_ID,
+    GENERATED_CHARACTER_EVIDENCE_SOURCE_ID, LIBCHEWING_SOURCE_ID, OPENCC_VARIANT_SOURCE_ID,
+    OVERLAY_SOURCE_ID, RIME_ESSAY_SOURCE_ID,
 };
 use crate::opencc;
 use crate::phonetics::{phrase_candidate, qstring_for_bpmf_sequence};
@@ -780,11 +780,11 @@ pub fn parse_chiaki_web_overlay(
     parse_explicit_records(path, cfg, CHIAKI_WEB_OVERLAY_SOURCE_ID)
 }
 
-pub fn parse_chiaki_synthetic_overlay(
+pub fn parse_modern_unigrams(
     path: &Path,
     cfg: &Config,
 ) -> Result<(Vec<SourceRecord>, usize, usize)> {
-    parse_explicit_records(path, cfg, CHIAKI_SYNTHETIC_SOURCE_ID)
+    parse_explicit_records(path, cfg, OVERLAY_SOURCE_ID)
 }
 
 // Log-prob ceiling for calibrated bigrams; keeps a boosted edge from exceeding ~prob 1.

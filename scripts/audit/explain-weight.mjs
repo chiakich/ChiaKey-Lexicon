@@ -67,8 +67,8 @@ const RAW_SOURCES = [
     format: (cols) => `qstring=${cols[0]} weight=${cols[2]} tags=${cols[3]}`,
   },
   {
-    label: "chiaki-synthetic-overlay/unigrams.tsv",
-    file: "sources/chiaki-synthetic-overlay/unigrams.tsv",
+    label: "chiaki-modern-overlay/unigrams.tsv",
+    file: "sources/chiaki-modern-overlay/unigrams.tsv",
     delimiter: "\t",
     phraseCol: 1,
     format: (cols) => `qstring=${cols[0]} weight=${cols[2]} tags=${cols[3]}`,

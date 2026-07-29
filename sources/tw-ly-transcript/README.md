@@ -217,7 +217,7 @@ raw = CEIL - SPAN × log(maxDoc / doc) / log(maxDoc / minDoc)
 | -------------------------- | -------------- |
 | `tw-ly-transcript`         | 73.0%          |
 | `chiaki-web-overlay`       | 71%            |
-| `chiaki-synthetic-overlay` | 58%            |
+| 原 `chiaki-synthetic-overlay` | 58%            |
 
 ### 限制
 

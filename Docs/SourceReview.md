@@ -44,6 +44,7 @@ manifest 記錄的是該 inventory file 的 SHA-256，而不是單一 upstream a
 
 - 名稱：ChiaKey modern overlay phrases
 - 本地來源：
+  - `sources/chiaki-modern-overlay/unigrams.tsv`
   - `sources/chiaki-modern-overlay/explicit.tsv`
 - 授權：CC BY-NC 4.0；商用需取得 Chiaki.C 許可
 - 署名：Chiaki.C
@@ -51,7 +52,7 @@ manifest 記錄的是該 inventory file 的 SHA-256，而不是單一 upstream a
 
 這個來源刻意保持小型且由專案自有維護。它用於實測時發現的明顯 seed lexicon 缺漏，例如不應等未來大型 frequency corpus 才補上的基本輸入法用語。
 
-`explicit.tsv` 用於取代特定 qstring 權重修正與加入常見錯讀音，例如為 neutral-tone `ㄍㄜ˙` / `ek7` 提升 `個`。
+`unigrams.tsv` 用於新增缺詞與補充讀音；`explicit.tsv` 用於取代特定 qstring 權重修正，例如為 neutral-tone `ㄍㄜ˙` / `ek7` 提升 `個`。
 
 ## 自 2026.06.3 起納入
 
@@ -344,32 +345,6 @@ release builder 會在 `chiaki-modern-overlay` 之後匯入 unigram rows，並�
 
 ```text
 sources/chiaki-web-overlay/source-inventory.sha256
-```
-
-### chiaki-synthetic-overlay
-
-- 名稱：Chiaki.C synthetic Taiwan internet usage overlay
-- 本地來源：
-  - `sources/chiaki-synthetic-overlay/unigrams.tsv`
-  - `sources/chiaki-synthetic-overlay/bigrams.tsv`
-- 來源材料：由 GPT-5.5 與 Gemma 4 產生大量的合成語料，指示大語言模型產生虛擬的聊天記錄、文章、社群留言等，並進行詞彙提煉。
-- 授權：CC BY-NC 4.0；商用需取得 Chiaki.C 許可
-- 署名：Chiaki.C
-- 再散布決策：納入公開 source review、open-source project use 與 non-commercial release builds
-
-這個來源包含 Chiaki.C 維護的合成台灣語料庫。原始語料不在這個 repository 再散布；這裡只保留最終提煉的詞彙庫：
-
-```text
-qstring<TAB>phrase<TAB>weight<TAB>tags
-qstring<TAB>previous<TAB>current<TAB>probability
-```
-
-bigram file 會先依 release unigram table 做預先篩選，並可包含使用 `!` / `$` qstring markers 的 sentence-boundary rows。
-
-產生的 source inventory 存放於：
-
-```text
-sources/chiaki-synthetic-overlay/source-inventory.sha256
 ```
 
 ### openformosa-common-voice-25-zh-tw

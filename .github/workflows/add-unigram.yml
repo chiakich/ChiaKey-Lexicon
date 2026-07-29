@@ -67,6 +67,6 @@ jobs:
           title: ${{ steps.report.outputs.pr_title }}
           body-path: ${{ runner.temp }}/missing-word/pr-body.md
           commit-message: ${{ steps.report.outputs.commit_message }}
-          add-paths: sources/chiaki-modern-overlay/explicit.tsv
+          add-paths: sources/chiaki-modern-overlay/unigrams.tsv
           labels: |
             Add unigram

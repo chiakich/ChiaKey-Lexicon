@@ -48,9 +48,6 @@ pub const OVERLAY_SOURCE_ID: &str = "chiaki-modern-overlay";
 pub const OVERLAY_SOURCE_NAME: &str = "ChiaKey modern overlay phrases";
 pub const CHIAKI_WEB_OVERLAY_SOURCE_ID: &str = "chiaki-web-overlay";
 pub const CHIAKI_WEB_OVERLAY_SOURCE_NAME: &str = "Chiaki reviewed web corpus overlay";
-pub const CHIAKI_SYNTHETIC_SOURCE_ID: &str = "chiaki-synthetic-overlay";
-pub const CHIAKI_SYNTHETIC_SOURCE_NAME: &str =
-    "Chiaki.C GPT-5.5 synthetic Taiwan internet usage overlay";
 pub const CHIAKEY_AUTO_HOTWORDS_SOURCE_ID: &str = "chiaki-auto-hotwords-overlay";
 pub const CHIAKEY_AUTO_HOTWORDS_SOURCE_NAME: &str =
     "ChiaKey automatically refreshed hotwords overlay";

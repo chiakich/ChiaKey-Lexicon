@@ -35,7 +35,7 @@ async function main() {
     return;
   }
 
-  const dryRun = runNodeScript("scripts/lexicon/add-explicit.mjs", [keyboard, phrase, "--dry-run"]);
+  const dryRun = runNodeScript("scripts/lexicon/add-unigram.mjs", [keyboard, phrase, "--dry-run"]);
   const qstring = matchLine(dryRun, /^qstring:\s*(.+)$/m);
   const bpmf = matchLine(dryRun, /^bpmf:\s*(.+)$/m);
   const weight = matchLine(dryRun, /^weight:\s*(.+)$/m);
@@ -70,7 +70,7 @@ async function main() {
     return;
   }
 
-  const addOutput = runNodeScript("scripts/lexicon/add-explicit.mjs", [keyboard, phrase]);
+  const addOutput = runNodeScript("scripts/lexicon/add-unigram.mjs", [keyboard, phrase]);
   const row = matchLine(addOutput, /^Appended to .+\n(.+)$/m);
   const prTitle = `Add missing word: ${phrase}`;
   const commitMessage = `feat: add missing word ${phrase}`;
