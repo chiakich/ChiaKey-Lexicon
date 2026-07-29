@@ -10,7 +10,7 @@
 
 [![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/A0A21UAIV9)  
 (適用台灣以外的贊助方式)
-  
+
 [綠界贊助連結](https://p.ecpay.com.tw/2A3B186)  
 (僅適用台灣信用卡 / Apple Pay / ATM / 超商代碼)
 
@@ -93,6 +93,7 @@ stored = min( unigram(current) + boost + (raw − raw_max_of_source), −0.05 )
 - **行政院、大陸委員會、中央研究院、客家委員會、新北市政府**：依政府資料開放授權條款釋出的新聞發布，bigram 的書面語料來源。
 - **`yuhuanstudio/PTT-pretrain-zhtw`**（Apache-2.0）：PTT 論壇語料，bigram 的日常語域來源。
 - **Mozc**：顏文字預載分類資料。
+- **教育部《重編國語辭典修訂本》／`g0v/moedict-data`**：`chiaki-modern-overlay/reading-supplements.tsv` 破音字讀音補充的資料來源，依教育部「創用CC－姓名標示－禁止改作 3.0 台灣」授權條款重製讀音；姓名標示：中華民國教育部（終身教育司）。
 
 我們的工作主要是把這些前人的成果，整合成可重現、可追蹤來源的現代輸入法詞庫。各來源的授權、整合決定與風險紀錄詳見 [Docs/SourceReview.md](Docs/SourceReview.md)。
 

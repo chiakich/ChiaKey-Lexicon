@@ -132,6 +132,13 @@ pub fn run() -> Result<()> {
         &mut source_keys,
         &mut import_results,
     )?;
+    import_reading_supplements(
+        &mut conn,
+        &cfg,
+        &paths,
+        &mut source_keys,
+        &mut import_results,
+    )?;
     // Retired: superseded by the engine length prior (Node::c_phraseLengthBonus).
     // import_phrase_split_rerank(&mut conn, &mut source_keys, &mut import_results)?;
     import_fragment_demotions(
@@ -234,6 +241,7 @@ fn verify_inputs(
         paths.overlay_unigrams.clone(),
         paths.overlay_explicit.clone(),
         paths.overlay_bigrams.clone(),
+        paths.overlay_reading_supplements.clone(),
         paths.chiaki_web_overlay_unigrams.clone(),
         paths.chiaki_web_overlay_bigrams.clone(),
         paths.chiakey_auto_hotwords_phrases.clone(),
@@ -892,6 +900,39 @@ fn import_explicit_overlay(
         &repo_relative(&cfg.root, &paths.overlay_explicit)?,
         "overlay-explicit-qstring",
         &sha256_file(&paths.overlay_explicit)?,
+        seen,
+        skipped,
+        false,
+    )?;
+    remember_records(source_keys, &result);
+    import_results.push(result);
+    Ok(())
+}
+
+fn import_reading_supplements(
+    conn: &mut Connection,
+    cfg: &Config,
+    paths: &ReleasePaths,
+    source_keys: &mut HashMap<(String, String), SourceRecord>,
+    import_results: &mut Vec<ImportResult>,
+) -> Result<()> {
+    let (readings, _seen, _skipped) =
+        importers::parse_reading_supplements(&paths.overlay_reading_supplements)?;
+    let existing_exact_keys = db::load_existing_exact_keys(conn)?;
+    let existing_phrase_weights = db::load_best_unigram_weights_by_current(conn)?;
+    let existing_qstring_weights = db::load_best_qstring_weights(conn)?;
+    let (records, seen, skipped) = importers::reading_supplement_records(
+        &readings,
+        &existing_exact_keys,
+        &existing_phrase_weights,
+        &existing_qstring_weights,
+    );
+    let result = db::apply_records(
+        conn,
+        records,
+        &repo_relative(&cfg.root, &paths.overlay_reading_supplements)?,
+        "chiaki-modern-overlay-reading-supplements",
+        &sha256_file(&paths.overlay_reading_supplements)?,
         seen,
         skipped,
         false,

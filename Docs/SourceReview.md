@@ -46,13 +46,23 @@ manifest 記錄的是該 inventory file 的 SHA-256，而不是單一 upstream a
 - 本地來源：
   - `sources/chiaki-modern-overlay/unigrams.tsv`
   - `sources/chiaki-modern-overlay/explicit.tsv`
-- 授權：CC BY-NC 4.0；商用需取得 Chiaki.C 許可
+  - `sources/chiaki-modern-overlay/reading-supplements.tsv`
+- 授權：CC BY-NC 4.0；商用需取得 Chiaki.C 許可（`reading-supplements.tsv` 例外，見下）
 - 署名：Chiaki.C
 - 再散布決策：納入公開 release
 
 這個來源刻意保持小型且由專案自有維護。它用於實測時發現的明顯 seed lexicon 缺漏，例如不應等未來大型 frequency corpus 才補上的基本輸入法用語。
 
 `unigrams.tsv` 用於新增缺詞與補充讀音；`explicit.tsv` 用於取代特定 qstring 權重修正，例如為 neutral-tone `ㄍㄜ˙` / `ek7` 提升 `個`。
+
+`reading-supplements.tsv` 補既有詞缺漏的破音字讀音，是通用機制（不限來源），目前內容全部重製自教育部《重編國語辭典修訂本》（透過 `g0v/moedict-data` 查閱、比對後產生）。這部分適用教育部自己的授權，不是 Chiaki.C 的 CC BY-NC 4.0：
+
+- 授權：創用CC－姓名標示－禁止改作 3.0 台灣（<https://ti-wb.github.io/creativecommon-tw/index.html>）
+- 署名：教育部（終身教育司）
+- 條款要點：允許重製、散布（含商業性利用），不得改作
+- 再散布決策：納入公開 release——僅重製讀音本身（詞、qstring），未改作，屬授權允許範圍；moedict-data 本身不 vendor、release 時也不讀取，見下方「未納入」一節
+
+詳細格式、產生流程與匯入規則見 [sources/chiaki-modern-overlay/README.md](../sources/chiaki-modern-overlay/README.md)。
 
 ## 自 2026.06.3 起納入
 
@@ -387,7 +397,8 @@ sources/openformosa-common-voice-25-zh-tw/source-inventory.sha256
 - 歷史資料包中的 Yahoo search terms。
 - Sinica Corpus raw material。
 - Commercial CEROD / SQLite extension assets。
-- CC-CEDICT、moedict、Wikimedia、Tatoeba、wordfreq、SUBTLEX-CH、Google Books Ngram、Google Chinese Web 5-gram。
+- CC-CEDICT、Wikimedia、Tatoeba、wordfreq、SUBTLEX-CH、Google Books Ngram、Google Chinese Web 5-gram。
+- moedict-data（`g0v/moedict-data`）本身不 vendor、release 也不讀取，但自 `chiaki-modern-overlay/reading-supplements.tsv` 起，其收錄的教育部《重編國語辭典修訂本》讀音資料依教育部自己的「創用CC－姓名標示－禁止改作 3.0 台灣」授權條款被重製進該表，詳見上方 `chiaki-modern-overlay` 條目。
 
 部分繼承自開放 KeyKey Boneyard tree 的 bootstrap files 有 `Yahoo.txt` 或 `SinicaCorpusOverrides.txt` 這類歷史名稱。因授權問題，本專案無法獲取、也不會複製私有 raw Yahoo search logs、Sinica corpus files 或 CEROD binaries。
 

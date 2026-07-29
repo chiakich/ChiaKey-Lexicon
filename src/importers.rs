@@ -53,6 +53,10 @@ const SINGLE_CHAR_HOMOPHONE_RERANK_PHRASE_EVIDENCE_MIN_RATIO: f64 = 2.0;
 const SINGLE_CHAR_HOMOPHONE_RERANK_PHRASE_EVIDENCE_MIN_SUPPORT: usize = 3;
 const SINGLE_CHAR_HOMOPHONE_RERANK_PHRASE_EVIDENCE_MIN_WEIGHT: f64 = -1.35;
 const OPENCC_VARIANT_DEMOTION_MARGIN: f64 = 0.01;
+// A reading-supplements alternate reading whose qstring is already occupied
+// by a different, already-established phrase must stay strictly below that
+// phrase's weight — it should be reachable by cycling, never win by default.
+const READING_SUPPLEMENT_CONFLICT_MARGIN: f64 = 0.01;
 
 #[derive(Clone, Copy)]
 struct RimeScore {
@@ -1201,6 +1205,84 @@ pub fn parse_fragment_demotions(path: &Path) -> Result<(Vec<VariantDemotionRecor
     Ok((records, seen, skipped))
 }
 
+/// Parses `sources/chiaki-modern-overlay/reading-supplements.tsv` — see
+/// sources/chiaki-modern-overlay/README.md for format and rationale.
+pub fn parse_reading_supplements(
+    path: &Path,
+) -> Result<(HashMap<String, Vec<(String, String)>>, usize, usize)> {
+    if !path.exists() {
+        return Ok((HashMap::new(), 0, 0));
+    }
+    let content = std::fs::read_to_string(path)
+        .with_context(|| format!("failed to read {}", path.display()))?;
+    let mut readings: HashMap<String, Vec<(String, String)>> = HashMap::new();
+    let mut seen = 0;
+    let mut skipped = 0;
+    for line in content.lines() {
+        let line = line.trim();
+        if line.is_empty() || line.starts_with('#') {
+            continue;
+        }
+        seen += 1;
+        let parts = line.splitn(3, '\t').collect::<Vec<_>>();
+        if parts.len() < 3 || parts[0].is_empty() || parts[1].is_empty() {
+            skipped += 1;
+            continue;
+        }
+        let qstring = parts[0].to_string();
+        let phrase = parts[1].to_string();
+        let tags = parts[2].to_string();
+        let entry = readings.entry(phrase).or_default();
+        if !entry.iter().any(|(existing, _)| *existing == qstring) {
+            entry.push((qstring, tags));
+        }
+    }
+    Ok((readings, seen, skipped))
+}
+
+pub const READING_SUPPLEMENTS_SOURCE_ID: &str = "reading-supplements";
+
+/// Applies `reading-supplements.tsv` on top of an already fully-merged
+/// lexicon (run after `explicit.tsv`) — see
+/// sources/chiaki-modern-overlay/README.md for the weight/conflict rules.
+pub fn reading_supplement_records(
+    readings: &HashMap<String, Vec<(String, String)>>,
+    existing_exact_keys: &HashSet<(String, String)>,
+    existing_phrase_weights: &HashMap<String, f64>,
+    existing_qstring_weights: &HashMap<String, f64>,
+) -> (Vec<SourceRecord>, usize, usize) {
+    let mut records = Vec::new();
+    let mut seen = 0;
+    let mut skipped = 0;
+    for (phrase, entries) in readings {
+        let Some(&phrase_weight) = existing_phrase_weights.get(phrase) else {
+            skipped += entries.len();
+            continue;
+        };
+        for (qstring, tags) in entries {
+            seen += 1;
+            if existing_exact_keys.contains(&(qstring.clone(), phrase.clone())) {
+                skipped += 1;
+                continue;
+            }
+            let weight = match existing_qstring_weights.get(qstring) {
+                Some(existing) => {
+                    round6((existing - READING_SUPPLEMENT_CONFLICT_MARGIN).min(phrase_weight))
+                }
+                None => phrase_weight,
+            };
+            records.push(SourceRecord {
+                qstring: qstring.clone(),
+                phrase: phrase.clone(),
+                weight,
+                source_id: READING_SUPPLEMENTS_SOURCE_ID,
+                tags: format!("unigram,{READING_SUPPLEMENTS_SOURCE_ID},supplemental-reading,{tags}"),
+            });
+        }
+    }
+    (dedupe_records(records), seen, skipped)
+}
+
 pub fn infer_overlay_qstrings(
     records: Vec<SourceRecord>,
     char_readings: &HashMap<String, String>,
@@ -1494,11 +1576,13 @@ fn round6(value: f64) -> f64 {
 mod tests {
     use super::{
         calibrate_bigram_boost, joined_phrase_records_from_bigrams, libchewing_weight,
-        parse_bigram_overlay, parse_conversion_rules, parse_explicit_overlay,
-        parse_fragment_demotions, parse_rime_essay, parse_rime_existing_phrase_reranks,
+        parse_bigram_overlay, parse_conversion_rules,
+        parse_explicit_overlay, parse_fragment_demotions, parse_normalized_rime_essay,
+        parse_reading_supplements, parse_rime_essay, parse_rime_existing_phrase_reranks,
         parse_rime_overlap_reranks, parse_single_char_homophone_reranks, parse_variant_demotions,
         phrase_evidence_character_records, phrase_split_rerank_records,
-        post_supplement_phrase_evidence_character_records, rime_split_rerank_weight, round6,
+        post_supplement_phrase_evidence_character_records, qstring_for_bpmf_sequence,
+        read_normalized_rime_essay, reading_supplement_records, rime_split_rerank_weight, round6,
         RimeNormalization, LIBCHEWING_PHRASE_SEGMENT_BONUS,
         LIBCHEWING_PHRASE_SEGMENT_BONUS_THRESHOLD, RIME_OVERLAP_RERANK_MARGIN,
         RIME_SPLIT_RERANK_MAX_BOOST, SINGLE_CHAR_HOMOPHONE_RERANK_MARGIN,
@@ -1528,6 +1612,131 @@ mod tests {
         assert_eq!(records[0].tags, "unigram,manual,neutral-tone");
 
         let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn parses_reading_supplements_rows_with_multiple_readings_per_phrase() {
+        let (formal_qstring, _) = qstring_for_bpmf_sequence("ㄕㄟˊ ㄖㄣˊ").unwrap();
+        let (colloquial_qstring, _) = qstring_for_bpmf_sequence("ㄕㄟˋ ㄖㄣˊ").unwrap();
+        let path = temp_file(
+            "reading-supplements",
+            &format!(
+                "{formal_qstring}\t誰人\tmoedict-reviewed\n{colloquial_qstring}\t誰人\tmoedict-reviewed\n"
+            ),
+        );
+
+        let (readings, seen, skipped) = parse_reading_supplements(&path).unwrap();
+
+        assert_eq!(seen, 2);
+        assert_eq!(skipped, 0);
+        let mut found = readings.get("誰人").cloned().unwrap();
+        found.sort();
+        let mut expected = vec![
+            (formal_qstring, "moedict-reviewed".to_string()),
+            (colloquial_qstring, "moedict-reviewed".to_string()),
+        ];
+        expected.sort();
+        assert_eq!(found, expected);
+
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn adds_every_reading_supplement_when_no_conflict() {
+        let (formal_qstring, _) = qstring_for_bpmf_sequence("ㄕㄟˊ ㄖㄣˊ").unwrap();
+        let (colloquial_qstring, _) = qstring_for_bpmf_sequence("ㄕㄟˋ ㄖㄣˊ").unwrap();
+        let readings = HashMap::from([(
+            "誰人".to_string(),
+            vec![
+                (formal_qstring.clone(), "moedict-reviewed".to_string()),
+                (colloquial_qstring.clone(), "moedict-reviewed".to_string()),
+            ],
+        )]);
+        let existing_exact_keys = HashSet::new();
+        let existing_phrase_weights = HashMap::from([("誰人".to_string(), -1.2)]);
+        let existing_qstring_weights = HashMap::new();
+
+        let (records, seen, skipped) = reading_supplement_records(
+            &readings,
+            &existing_exact_keys,
+            &existing_phrase_weights,
+            &existing_qstring_weights,
+        );
+
+        assert_eq!(seen, 2);
+        assert_eq!(skipped, 0);
+        let mut found = records
+            .iter()
+            .map(|record| (record.qstring.clone(), record.weight))
+            .collect::<Vec<_>>();
+        found.sort_by(|a, b| a.0.cmp(&b.0));
+        let mut expected = vec![(formal_qstring, -1.2), (colloquial_qstring, -1.2)];
+        expected.sort_by(|a, b| a.0.cmp(&b.0));
+        assert_eq!(
+            found, expected,
+            "both readings should be typeable at the phrase's own weight when neither collides",
+        );
+        assert!(records[0].tags.contains("moedict-reviewed"));
+    }
+
+    #[test]
+    fn caps_reading_supplement_below_conflicting_phrase_when_qstrings_collide() {
+        let (qstring, _) = qstring_for_bpmf_sequence("ㄇㄠˋ ㄈㄢˋ").unwrap();
+        let readings = HashMap::from([(
+            "冒犯".to_string(),
+            vec![(qstring.clone(), "moedict-reviewed".to_string())],
+        )]);
+        let existing_exact_keys = HashSet::new();
+        let existing_phrase_weights = HashMap::from([("冒犯".to_string(), -0.5)]);
+        // A different phrase already legitimately owns this exact reading.
+        let existing_qstring_weights = HashMap::from([(qstring.clone(), -0.9)]);
+
+        let (records, _seen, _skipped) = reading_supplement_records(
+            &readings,
+            &existing_exact_keys,
+            &existing_phrase_weights,
+            &existing_qstring_weights,
+        );
+
+        let maofan = records
+            .iter()
+            .find(|record| record.phrase == "冒犯")
+            .expect("冒犯 should be added");
+        assert_eq!(maofan.qstring, qstring);
+        assert!(
+            maofan.weight < -0.9,
+            "must stay strictly below the conflicting phrase's weight, got {}",
+            maofan.weight
+        );
+    }
+
+    #[test]
+    fn skips_reading_supplement_already_present_and_phrases_missing_from_lexicon() {
+        let (qstring, _) = qstring_for_bpmf_sequence("ㄐㄧㄠˋ ㄒㄩㄝˊ").unwrap();
+        let readings = HashMap::from([
+            (
+                "教學".to_string(),
+                vec![(qstring.clone(), "moedict-reviewed".to_string())],
+            ),
+            (
+                "不存在詞".to_string(),
+                vec![(qstring.clone(), "moedict-reviewed".to_string())],
+            ),
+        ]);
+        // 教學 already has this exact reading from another source.
+        let existing_exact_keys = HashSet::from([(qstring.clone(), "教學".to_string())]);
+        let existing_phrase_weights = HashMap::from([("教學".to_string(), -0.7)]);
+        let existing_qstring_weights = HashMap::new();
+
+        let (records, _seen, skipped) = reading_supplement_records(
+            &readings,
+            &existing_exact_keys,
+            &existing_phrase_weights,
+            &existing_qstring_weights,
+        );
+
+        assert!(records.is_empty());
+        assert_eq!(skipped, 2);
     }
 
     #[test]
@@ -1899,6 +2108,7 @@ mod tests {
             "a phrase far below its split path should not be boosted"
         );
     }
+
 
     #[test]
     fn overrides_non_final_di_place_reading_in_rime_essay() {
