@@ -642,11 +642,15 @@ fn write_outputs(
             excluded_joined_unigram += 1;
         }
 
+        // Single-character pairs are no longer excluded: that guard dated from when
+        // bigrams were weak enough that a mis-picked single-char reading could hijack
+        // a position. Reading selection and the variant demotion policy now cover it,
+        // and held-out measurement shows the pairs carry substantial benefit. The
+        // stats column is kept so the effect stays observable.
         let is_eligible = count.count >= args.min_count
             && count.doc_count >= args.min_doc_count
             && (!is_redundant || args.include_redundant)
             && !has_excluded_particle
-            && !is_single_char_pair
             && !has_joined_unigram;
         let within_top_n = args.top_n.map(|limit| emitted < limit).unwrap_or(true);
         let should_emit = is_eligible && within_top_n;
