@@ -101,16 +101,50 @@ function readCsv(file) {
 }
 
 // Field names differ per publisher; the pipeline only needs title + body.
+// snapshotRecords is what the shipping run saw, so drift is visible on re-download.
 const GOVNEWS = [
-  { file: "sources/taiwan-gov-news-ey/raw/news.json", kind: "json", title: "標題", body: "內容" },
+  { file: "sources/taiwan-gov-news-ey/raw/news.json", kind: "json", title: "標題", body: "內容", snapshotRecords: 500 },
   { file: "sources/taiwan-gov-news-mac/raw/news.csv", kind: "csv", title: "標題", body: "內文" },
-  { file: "sources/taiwan-gov-news-sinica/raw/news.json", kind: "json", title: "標題", body: "網頁內容" },
-  { file: "sources/taiwan-gov-news-hakka/raw/news.json", kind: "json", title: "name", body: "description" },
+  { file: "sources/taiwan-gov-news-sinica/raw/news.json", kind: "json", title: "標題", body: "網頁內容", snapshotRecords: 1095 },
+  { file: "sources/taiwan-gov-news-hakka/raw/news.json", kind: "json", title: "name", body: "description", snapshotRecords: 1853 },
 ];
-const NTPC = { file: "sources/taiwan-gov-news-ntpc/raw/news.csv", kind: "csv", title: "Subject_", body: "Content" };
+const NTPC = {
+  file: "sources/taiwan-gov-news-ntpc/raw/news.csv",
+  kind: "csv",
+  title: "Subject_",
+  body: "Content",
+  snapshotRecords: 44372,
+};
 
+// None of the gov-news files ship with the repo and the exact dataset endpoints
+// were never recorded, so a re-download can easily be the wrong export. Fail loudly
+// on a schema mismatch instead of silently emitting a truncated corpus, and report
+// how far the record count drifted from the shipping snapshot.
 function articleLines(spec) {
-  const records = spec.kind === "json" ? readJson(path.join(ROOT, spec.file)) : readCsv(path.join(ROOT, spec.file));
+  const file = path.join(ROOT, spec.file);
+  if (!fs.existsSync(file)) {
+    throw new Error(
+      `missing ${spec.file}\n  this corpus is not in the repo — see README.md "政府新聞：需自行下載"`,
+    );
+  }
+  const records = spec.kind === "json" ? readJson(file) : readCsv(file);
+  if (!Array.isArray(records) || records.length === 0) {
+    throw new Error(`${spec.file}: expected a non-empty array of records`);
+  }
+  for (const field of [spec.title, spec.body]) {
+    if (!(field in records[0])) {
+      throw new Error(
+        `${spec.file}: missing required field ${field}\n  found: ${Object.keys(records[0]).join(", ")}`,
+      );
+    }
+  }
+  if (spec.snapshotRecords && records.length !== spec.snapshotRecords) {
+    const drift = (((records.length - spec.snapshotRecords) / spec.snapshotRecords) * 100).toFixed(1);
+    console.warn(
+      `  note: ${spec.file} has ${records.length} records, shipping snapshot had ${spec.snapshotRecords} (${drift}%)`,
+    );
+  }
+
   const lines = [];
   for (const record of records) {
     lines.push(...sentences(record[spec.title]));

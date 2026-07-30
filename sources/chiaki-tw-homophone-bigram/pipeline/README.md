@@ -22,14 +22,32 @@ cd sources/chiaki-tw-homophone-bigram/pipeline && cargo build --release
 ## 語料來源
 
 出貨版用了 4,696,824 句 / 367,050,071 字，組成見 [../README.md](../README.md) 的語料表。
-**語料本身不隨 repo 散布**（體積與授權），來源如下：
+**沒有任何語料在 repo 裡**——`.gitignore:15` 排除整個 `sources/taiwan-gov-news-*/`，那些目錄
+只存在於原作者的工作機上。跑這條管線前必須自己備齊：
 
 | 語料 | 取得方式 | 授權 |
 | --- | --- | --- |
-| 政府新聞（行政院／大陸委員會／中央研究院／客家委員會） | 已在本 repo：`sources/taiwan-gov-news-{ey,mac,sinica,hakka}/raw/` | 見各來源 |
-| 新北市政府新聞 | 已在本 repo：`sources/taiwan-gov-news-ntpc/raw/news.csv` | 同上 |
-| 立法院公報詢答 | `scripts/corpus/build-ly-corpus.sh`（抓取→萃取，可中斷續傳，全量數小時） | 政府資料開放 |
-| PTT 論壇 | HuggingFace `yuhuanstudio/PTT-pretrain-zhtw`（`ppt_pretrain.json`，約 849MB） | Apache-2.0 |
+| 立法院公報詢答 | `scripts/corpus/build-ly-corpus.sh`（repo 內，抓取→萃取，可中斷續傳，全量數小時） | 政府資料開放 |
+| PTT 論壇 | HuggingFace `yuhuanstudio/PTT-pretrain-zhtw` 的 `ppt_pretrain.json`（約 849MB） | Apache-2.0 |
+| 政府新聞（4 個機關）＋新北市政府新聞 | **需自行下載，repo 內沒有腳本**，見下 | 政府資料開放授權條款 |
+
+### 政府新聞：需自行下載
+
+當初是手動取得的，repo 裡沒有 fetch 腳本（`fetch-modern-sources` 只處理 libchewing、
+rime-essay、mozc-emoticon）。**確切的 dataset ID 或 API endpoint 沒有被記錄下來**，以下是
+從出貨語料本身反查出的出處與規格。請從各機關的開放資料或新聞發布頁取得，放到對應路徑，
+再用 `build-corpora.mjs` 的 schema 檢查確認格式相符。
+
+| 路徑 | 機關 | 格式 | 必要欄位 | 出貨快照 |
+| --- | --- | --- | --- | --- |
+| `sources/taiwan-gov-news-ey/raw/news.json` | 行政院 | JSON array | `標題`、`內容`、`上版日期` | 500 筆，民國 114-10-03～115-06-23 |
+| `sources/taiwan-gov-news-mac/raw/news.csv` | 大陸委員會 | CSV（BOM） | `發布日期`、`標題`、`內文` | 起自 2016-05-20 |
+| `sources/taiwan-gov-news-sinica/raw/news.json` | 中央研究院 | JSON array | `標題`、`網頁內容`、`發布日期`、`來源網址` | 1,095 筆，2005-01-26～2026-06-23，來源 `https://www.sinica.edu.tw/News_Content/…` |
+| `sources/taiwan-gov-news-hakka/raw/news.json` | 客家委員會 | JSON array（BOM） | `name`、`description`、`Date`、`sourceWebSite` | 1,853 筆，2017-01～2026-05，來源 `https://www.hakka.gov.tw/chhakka/app…` |
+| `sources/taiwan-gov-news-ntpc/raw/news.csv` | 新北市政府 | CSV（BOM，21 欄） | `Subject_`、`Content`（`From_` 為 `NTPC`） | 44,372 筆，起自 2017-06 |
+
+行政院那份只有 500 筆、且只涵蓋最近 8 個月，看得出來是「最新 N 筆」的抓法而非全量；換一個
+時間點下載會拿到不同內容，這是重產無法逐位元相同的原因之一。
 
 實驗過但**未進入出貨版**的語料（`lianghsun/tw-ptt-keyboard-warrior-chat`、Dcard、C4
 中文子集）不在管線內，僅出現在研究附錄的失敗路線記錄。
