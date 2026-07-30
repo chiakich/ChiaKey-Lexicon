@@ -863,6 +863,7 @@ fn emit(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
     let mut input = None;
     let mut out_path = None;
     let mut all_readings = false;
+    let mut all_cur_readings = false;
     let mut rival_evidence = None;
     let mut iter = args.iter();
     while let Some(arg) = iter.next() {
@@ -875,6 +876,8 @@ fn emit(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
             "--rival-evidence" => rival_evidence = iter.next().cloned(),
             // a polyphonic previous is not wrong, it just needs one row per reading
             "--all-prev-readings" => all_readings = true,
+            // opt-in, measured as a regression — see contested_codes
+            "--all-cur-readings" => all_cur_readings = true,
             other => return Err(format!("unexpected emit argument: {other}").into()),
         }
     }
@@ -950,7 +953,11 @@ fn emit(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
         // each gets its own row. The corpus cannot tell readings apart — it only shows
         // characters — so the same doc_count backs every reading of this pair; which
         // reading a row applies to is decided by the code the user types.
-        let cur_codes = contested_codes(&index, cur);
+        let cur_codes = if all_cur_readings {
+            contested_codes(&index, cur)
+        } else {
+            contested_code(&index, cur).into_iter().collect()
+        };
         if cur_codes.is_empty() {
             not_contested += 1;
             continue;
@@ -1055,14 +1062,31 @@ fn primary_code(index: &CodeIndex, phrase: &str) -> Option<(String, f64)> {
     best
 }
 
-// Every reading where `phrase` loses at its own code is a separate collision a
-// bigram can fix, so return all of them rather than only the usual reading.
+// The collision a bigram can fix: `phrase` loses at its own usual reading. This is
+// the shipping behaviour; see contested_codes for why covering every reading was
+// measured and rejected.
+fn contested_code(index: &CodeIndex, phrase: &str) -> Option<String> {
+    let (code, own) = primary_code(index, phrase)?;
+    let (code_best, count) = *index.code_best.get(&code)?;
+    if count > 1 && own < code_best {
+        Some(code)
+    } else {
+        None
+    }
+}
+
+// Every reading where `phrase` loses at its own code, not just the usual one.
+// Opt-in via `--all-cur-readings`, and measured to be a large regression — kept so
+// the experiment is repeatable, not because it should be on.
 //
-// A row fires only at the node its cur_code encodes, so binding rows to a word's
-// secondary readings costs nothing while those readings go untyped, and each
-// contested reading is a collision the user can actually reach: 粘 loses to 沾/詹
-// at ㄓㄢ (`A:`) and to 年 at ㄋㄧㄢˊ (`~I`). Keeping one reading also decided which
-// by file order whenever two tied, as 粘's two -1.806039 rows do.
+// Why it fails: a row bound to a secondary reading fires at that reading's node,
+// where some *other*, often far commoner word is the head — 粘 at ㄋㄧㄢˊ (`~I`)
+// sits under 年 (-0.64 vs -1.81). The corpus cannot say which reading was meant for
+// a given occurrence, so the same doc_count backs every reading, and the evidence
+// check waves through a row whose support actually came from the ㄓㄢ reading. The
+// result is rows that steal positions from common words instead of staying inert:
+// held-out `broken_by_overlay` roughly tripled across all three registers while
+// `fixed_by_overlay` did not move.
 fn contested_codes(index: &CodeIndex, phrase: &str) -> Vec<String> {
     let Some(codes) = index.phrase_codes.get(phrase) else {
         return Vec::new();
@@ -1125,6 +1149,20 @@ mod tests {
     // 粘's real numbers: both readings weigh -1.806039, and it loses at both — to
     // 沾/詹 at ㄓㄢ and to 年 at ㄋㄧㄢˊ. primary_code can only name one of them, and
     // on that exact tie it names whichever came first in the file.
+    // The shipping default keeps only the usual reading; --all-cur-readings widens
+    // it. Both are covered because the wide form stays available as an experiment.
+    #[test]
+    fn contested_code_keeps_only_the_usual_reading() {
+        let index = index_from(&[
+            ("A:", "粘", -1.806039),
+            ("A:", "沾", -1.481233),
+            ("~I", "粘", -1.806039),
+            ("~I", "年", -0.639652),
+        ]);
+        let picked = contested_code(&index, "粘").unwrap();
+        assert!(picked == "A:" || picked == "~I", "picked {picked}");
+    }
+
     #[test]
     fn contested_codes_returns_every_losing_reading() {
         let index = index_from(&[

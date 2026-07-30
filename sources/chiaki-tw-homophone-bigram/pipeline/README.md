@@ -23,7 +23,7 @@ cd sources/chiaki-tw-homophone-bigram/pipeline && cargo build --release
 | --- | --- |
 | 政府新聞 | 行政院、大陸委員會、中央研究院、客家委員會的新聞發布，依政府資料開放授權條款 |
 | 新北市政府新聞 | 新北市政府開放資料的新聞稿匯出 |
-| 立法院公報詢答 | `scripts/corpus/build-ly-corpus.sh`（repo 內，可中斷續傳，全量數小時） |
+| 立法院公報詢答 | `scripts/corpus/build-ly-corpus.sh` |
 | PTT 論壇 | HuggingFace `yuhuanstudio/PTT-pretrain-zhtw` 的 `ppt_pretrain.json`，Apache-2.0 |
 
 新聞語料請自行下載後放到以下路徑，`build-corpora.mjs` 會檢查欄位是否相符：
@@ -35,10 +35,6 @@ cd sources/chiaki-tw-homophone-bigram/pipeline && cargo build --release
 | `sources/taiwan-gov-news-sinica/raw/news.json` | JSON array | `標題`、`網頁內容` |
 | `sources/taiwan-gov-news-hakka/raw/news.json` | JSON array | `name`、`description` |
 | `sources/taiwan-gov-news-ntpc/raw/news.csv` | CSV | `Subject_`、`Content` |
-
-評估用的 LINE 群組語料不在這裡，也不會加入 repo——那是真實私人對話，群組成員同意的範圍是
-基準測試使用，不含散布。它只用於量測、從不參與訓練，而且凍結半已經用過一次，後續演算法改動
-需要新的凍結資料。
 
 ## 跑法
 
@@ -83,18 +79,10 @@ awk -F'\t' 'NR>1 && $4>=3 && NF==4' data/pairs-all.tsv > data/pairs-eligible.tsv
 可能是原本要靠 bigram 救的位置已經自己對了。`--boost` 預設 1.5，對齊 release 的
 `CHIAKI_TW_HOMOPHONE_BIGRAM_BOOST`。
 
-匯入由 release 流程處理（`src/release.rs` 的 `import_chiaki_tw_homophone_bigrams`），權重會被
-`calibrate_bigram_boost` 重新錨定到 `(current, cur_code)` 的 unigram。
+匯入由 release 流程處理（`src/release.rs` 的 `import_chiaki_tw_homophone_bigrams`），權重會被 `calibrate_bigram_boost` 重新錨定到 `(current, cur_code)` 的 unigram。
 
 ## 幾件要知道的事
 
-- **重產不會得到一樣的 230,993 列**，因為詞庫已經變了（撞碼判定與斷詞都跟著變），這也正是重產
-  的目的。`evaluate` 的數字要重新量，不要沿用 [../README.md](../README.md) 附錄裡的數值。
-- **當初 `extract` 的完整配對表沒有留下來**，重產要從步驟 2 開始跑。
-- 如果是從頭下載語料，`build-corpora.mjs` 是事後重建的，跟當初的前處理不完全一致
-  （govnews 差 0.07%，ntpc 還沒對上），新聞來源本身也會隨時間變動。手上已有那七個
-  `.txt` 的話就直接用，不需要這一步。
-- `--all-prev-readings` 沒有用在出貨版。767,923 筆因 `previous` 讀音歧義被棄用的候選可以靠它
-  救回，但還沒量測過。
-- repo 根目錄的 `src/bigram.rs`（`build-bigram-stats`）是另一個較舊的實作，缺步驟 7 與步驟 10，
-  沒有產生過出貨資料，不要誤改那一份。
+- **重產不會得到一樣的 230,993 列**，因為詞庫已經變了（撞碼判定與斷詞都跟著變），這也正是重產的目的。`evaluate` 的數字要重新量，不要沿用 [../README.md](../README.md) 附錄裡的數值。
+- `--all-prev-readings` 沒有用在出貨版。767,923 筆因 `previous` 讀音歧義被棄用的候選可以靠它救回，但還沒量測過。
+- repo 根目錄的 `src/bigram.rs`（`build-bigram-stats`）是另一個較舊的實作，缺步驟 7 與步驟 10，沒有產生過出貨資料，不要誤改那一份。
