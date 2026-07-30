@@ -816,6 +816,29 @@ pub fn load_best_unigram_weights_by_current(conn: &Connection) -> Result<HashMap
         .map_err(Into::into)
 }
 
+// Bigram calibration anchors a row to the unigram the walker compares it against,
+// which lives at the row's own reading — not at the phrase's best reading. Keying
+// by text alone would anchor every reading of a polyphonic `current` to its
+// strongest one and over-boost the rest.
+pub fn load_best_unigram_weights_by_current_and_qstring(
+    conn: &Connection,
+) -> Result<HashMap<(String, String), f64>> {
+    let mut stmt = conn.prepare(
+        "SELECT current, qstring, MAX(probability)
+         FROM unigrams
+         WHERE current <> ''
+         GROUP BY current, qstring",
+    )?;
+    let rows = stmt.query_map([], |row| {
+        Ok((
+            (row.get::<_, String>(0)?, row.get::<_, String>(1)?),
+            row.get::<_, f64>(2)?,
+        ))
+    })?;
+    rows.collect::<std::result::Result<HashMap<_, _>, _>>()
+        .map_err(Into::into)
+}
+
 pub fn load_character_phrase_evidence(
     conn: &Connection,
     min_phrase_weight: f64,

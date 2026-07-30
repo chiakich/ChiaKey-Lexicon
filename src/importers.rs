@@ -849,14 +849,19 @@ pub fn parse_bigram_overlay(
 }
 
 // Re-anchor a source's bigram log-probs to the unigram the walker compares against:
-//   stored = min( unigram(current) + boost + (raw - raw_max_of_source), ceiling )
+//   stored = min( unigram(current, cur_code) + boost + (raw - raw_max_of_source), ceiling )
 // boost is how much the source's strongest collocation beats its unigram; the
 // (raw - raw_max) term preserves the source's own confidence ranking, so weaker
 // pairs fall below the unigram and stay inert. boost == 0 is raw passthrough.
+//
+// The anchor is keyed by (current, cur_code), not by `current` alone: a row fires
+// only at the node its cur_code encodes, so a row bound to a polyphonic word's
+// secondary reading must be measured against that reading's unigram. Keying by text
+// would anchor every reading to the strongest one and over-boost the rest.
 pub fn calibrate_bigram_boost(
     mut records: Vec<BigramRecord>,
     boost: f64,
-    unigram_by_current: &HashMap<String, f64>,
+    unigram_by_current_and_qstring: &HashMap<(String, String), f64>,
 ) -> Vec<BigramRecord> {
     if boost == 0.0 || records.is_empty() {
         return records;
@@ -866,9 +871,14 @@ pub fn calibrate_bigram_boost(
         .map(|record| record.probability)
         .fold(f64::NEG_INFINITY, f64::max);
     for record in &mut records {
-        // No unigram for current (e.g. boundary bigrams): leave raw, it is the only
-        // candidate at that node anyway.
-        if let Some(unigram) = unigram_by_current.get(&record.current) {
+        let Some((_, cur_qstring)) = record.qstring.split_once(' ') else {
+            continue;
+        };
+        // No unigram for current at this reading (e.g. boundary bigrams): leave raw,
+        // it is the only candidate at that node anyway.
+        if let Some(unigram) =
+            unigram_by_current_and_qstring.get(&(record.current.clone(), cur_qstring.to_string()))
+        {
             record.probability =
                 (unigram + boost + (record.probability - raw_max)).min(BIGRAM_PROB_CEILING);
         }
@@ -1775,8 +1785,8 @@ mod tests {
         // raw_max = -1.0 (the 強 row). unigram(強)=-1.5, unigram(弱)=-1.2.
         let records = vec![bigram("強", -1.0), bigram("弱", -3.0), bigram("無", -1.0)];
         let mut unigrams = HashMap::new();
-        unigrams.insert("強".to_string(), -1.5);
-        unigrams.insert("弱".to_string(), -1.2);
+        unigrams.insert(("強".to_string(), "x".to_string()), -1.5);
+        unigrams.insert(("弱".to_string(), "x".to_string()), -1.2);
         // 無 deliberately has no unigram.
 
         let out = calibrate_bigram_boost(records.clone(), 1.0, &unigrams);
@@ -1802,6 +1812,42 @@ mod tests {
                 .probability,
             -1.0
         );
+    }
+
+    #[test]
+    fn calibrate_bigram_boost_anchors_each_reading_to_its_own_qstring() {
+        use crate::types::BigramRecord;
+        // 粘 is contested at both of its readings: ㄓㄢ (`A:`) and ㄋㄧㄢˊ (`~I`). The
+        // two rows must anchor to their own reading's unigram, not to the stronger of
+        // the two, or the weaker reading's row gets over-boosted by the gap.
+        let records = vec![
+            BigramRecord {
+                qstring: "前 A:".to_string(),
+                previous: "前".to_string(),
+                current: "粘".to_string(),
+                probability: -0.2,
+            },
+            BigramRecord {
+                qstring: "前 ~I".to_string(),
+                previous: "前".to_string(),
+                current: "粘".to_string(),
+                probability: -0.2,
+            },
+        ];
+        let mut unigrams = HashMap::new();
+        unigrams.insert(("粘".to_string(), "A:".to_string()), -1.4);
+        unigrams.insert(("粘".to_string(), "~I".to_string()), -2.6);
+
+        let out = calibrate_bigram_boost(records, 1.0, &unigrams);
+        let by = |code: &str| {
+            out.iter()
+                .find(|r| r.qstring.ends_with(code))
+                .unwrap()
+                .probability
+        };
+        // raw - raw_max == 0 for both, so each lands at its own unigram + boost.
+        assert!((by("A:") - (-0.4)).abs() < 1e-9);
+        assert!((by("~I") - (-1.6)).abs() < 1e-9);
     }
 
     #[test]

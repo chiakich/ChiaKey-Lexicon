@@ -1120,7 +1120,7 @@ fn import_openformosa_common_voice_bigrams(
 ) -> Result<()> {
     let (records, seen, skipped) =
         importers::parse_bigram_overlay(&paths.openformosa_common_voice_bigrams, cfg)?;
-    let unigrams = db::load_best_unigram_weights_by_current(conn)?;
+    let unigrams = db::load_best_unigram_weights_by_current_and_qstring(conn)?;
     let records =
         importers::calibrate_bigram_boost(records, cfg.commonvoice_bigram_boost, &unigrams);
     let result = db::apply_bigram_records(
@@ -1144,7 +1144,7 @@ fn import_chiaki_tw_homophone_bigrams(
 ) -> Result<()> {
     let (records, seen, skipped) =
         importers::parse_bigram_overlay(&paths.chiaki_tw_homophone_bigrams, cfg)?;
-    let unigrams = db::load_best_unigram_weights_by_current(conn)?;
+    let unigrams = db::load_best_unigram_weights_by_current_and_qstring(conn)?;
     let records =
         importers::calibrate_bigram_boost(records, cfg.chiaki_tw_homophone_bigram_boost, &unigrams);
     let result = db::apply_bigram_records(
