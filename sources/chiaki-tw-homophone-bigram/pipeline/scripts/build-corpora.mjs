@@ -7,8 +7,8 @@
 // title followed by its body, and sources are concatenated in the fixed order
 // below so the output is byte-stable.
 //
-// Reconstruction status is recorded in ../README.md: govnews lands within 0.07%
-// of the shipping corpus, ntpc does not yet reproduce. Not byte-exact.
+// Rebuilt after the fact, so it does not reproduce the shipping corpus byte for
+// byte — see ../README.md 〈幾件要知道的事〉.
 //
 // Usage:
 //   node scripts/build-corpora.mjs --out DIR [--only govnews|ntpc|ptt|ly]
@@ -116,16 +116,12 @@ const NTPC = {
   snapshotRecords: 44372,
 };
 
-// None of the gov-news files ship with the repo and the exact dataset endpoints
-// were never recorded, so a re-download can easily be the wrong export. Fail loudly
-// on a schema mismatch instead of silently emitting a truncated corpus, and report
-// how far the record count drifted from the shipping snapshot.
+// The news corpora are downloaded by hand, so check the shape before using it:
+// a wrong export would otherwise quietly produce a truncated corpus.
 function articleLines(spec) {
   const file = path.join(ROOT, spec.file);
   if (!fs.existsSync(file)) {
-    throw new Error(
-      `missing ${spec.file}\n  this corpus is not in the repo — see README.md "政府新聞：需自行下載"`,
-    );
+    throw new Error(`missing ${spec.file}\n  see README.md 〈語料〉 for where to get it`);
   }
   const records = spec.kind === "json" ? readJson(file) : readCsv(file);
   if (!Array.isArray(records) || records.length === 0) {
