@@ -82,7 +82,7 @@ stored = min( unigram(current) + boost + (raw − raw_max_of_source), −0.05 )
 - **Mozilla Common Voice / OpenFormosa**：bigram 句料的語料來源。
 - **立法院議事暨公報資訊網 / g0v `ly.govapi.tw`**：公報詢答逐字稿，bigram 的即席口語語料來源。
 - **行政院、大陸委員會、中央研究院、客家委員會、新北市政府**：依政府資料開放授權條款釋出的新聞發布，bigram 的書面語料來源。
-- **`yuhuanstudio/PTT-pretrain-zhtw`**（Apache-2.0）：PTT 論壇語料，bigram 的日常語域來源。
+- **PTT、Plurk 與中文維基百科**：bigram 主力層使用的論壇、公開貼文與百科文本來源；各來源資訊見其專屬授權聲明。
 - **Mozc**：顏文字預載分類資料。
 - **教育部《重編國語辭典修訂本》／`g0v/moedict-data`**：`chiaki-modern-overlay/reading-supplements.tsv` 破音字讀音補充的資料來源，依教育部「創用CC－姓名標示－禁止改作 3.0 台灣」授權條款重製讀音；姓名標示：中華民國教育部（終身教育司）。
 
@@ -142,7 +142,8 @@ stored = min( unigram(current) + boost + (raw − raw_max_of_source), −0.05 )
 - `chiaki-auto-hotwords-overlay`：自動刷新 hotwords overlay（僅保留專案輸出 rows）。
 - `chiaki-symbols-overlay`：補 `_punctuation_list` 缺漏符號與 runtime 標點候選。
 - `chiaki-web-overlay`：網路用語 unigram/bigram 補充。
-- `chiaki-tw-homophone-bigram`：從政府新聞、立法院公報與 PTT 語料萃取的 bigram rows，只收「在常用讀音上會輸給同音對手」的配對。目前的 bigram 主力層。
+- `chiaki-tw-homophone-bigram`：從政府新聞、立法院公報、PTT、Plurk 與中文維基百科萃取的 bigram rows，只收「在常用讀音上會輸給同音對手」的配對。目前的非商業主力層。
+- `chiaki-tw-homophone-bigram-clean`：以政府新聞與立法院公報重新建置、採 ODbL 的獨立 bigram add-on。
 - `chiaki-modern-overlay`：專案自有 unigram 補充、精準覆蓋與 bigram 修正；其中保留原 `chiaki-synthetic-overlay` 的 provenance tags。
 - `openformosa-common-voice-25-zh-tw`：從 Common Voice 句料挑選的 bigram rows。
 - `tw-ly-transcript`：從立法院公報詢答逐字稿萃取、經人工複核的 bigram rows。已於 2026-07-29 整層停用，資料與研究紀錄保留供追溯。
@@ -188,14 +189,11 @@ Rust release tooling 與 repository scripts 使用 MIT License；見 [LICENSE](L
 
 每個 source 都必須在公開 release 前宣告自己的 license。未知授權資料只能做本機實驗，不可包含在 public release artifacts。
 
-對於本專案製作的 `chiaki` 系列實驗性詞庫與清單為開放資料集，預設採用 CC BY-NC 4.0 授權條款釋出。
+本專案製作的 `chiaki` 系列實驗性詞庫與清單預設採 CC BY-NC 4.0；各 source 的專屬授權聲明優先於此預設值。
 
 歡迎學術研究與個人非營利專案自由使用，使用時請標示原作者姓名。
 
-商業用途（Commercial Use）：  
-若您的專案涉及商業營利行為（例如：整合至付費產品、商業應用 API、企業內部使用等），則不在上述授權範圍內。如需商用，請透過以下方式與我聯繫，討論商業授權事宜。
-
-聯絡信箱：maid@chiaki.ch
+商業用途須依各 source 的專屬授權判定。`chiaki-tw-homophone-bigram` 不提供商業例外；需要可商業使用的同音消歧資料時，請使用 `chiaki-tw-homophone-bigram-clean` 的 ODbL add-on。
 
 ## 後續工作
 

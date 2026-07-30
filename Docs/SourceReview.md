@@ -367,6 +367,28 @@ sources/chiaki-web-overlay/source-inventory.sha256
 sources/openformosa-common-voice-25-zh-tw/source-inventory.sha256
 ```
 
+### chiaki-tw-homophone-bigram
+
+- 名稱：台灣同音消歧 full bigram overlay
+- 本地來源：`sources/chiaki-tw-homophone-bigram/bigrams.tsv`
+- 來源材料：政府機關新聞、立法院公報詢答逐字稿、PTT 公開貼文、經 Plurk 官方 API 取得的公開貼文、正體轉換後的中文維基百科條文
+- 授權：CC BY-NC 4.0
+- 署名：Chiaki.C；並保留來源目錄 `LICENSE` 所列的上游來源資訊
+- 再散布決策：納入公開 release，限非商業用途；不提供商業例外
+
+這個來源只散布詞對、輸入碼與統計強度，不散布任何上游文本或中間語料。完整來源記錄與建置方法見 `sources/chiaki-tw-homophone-bigram/`。
+
+### chiaki-tw-homophone-bigram-clean
+
+- 名稱：台灣同音消歧 clean bigram add-on
+- 本地來源：`sources/chiaki-tw-homophone-bigram-clean/bigrams.tsv`
+- 來源材料：政府機關新聞與立法院公報詢答逐字稿
+- 授權：ODbL 1.0
+- 署名：依來源目錄 `LICENSE` 的 ODbL 與上游來源標示
+- 再散布決策：作為獨立 add-on 公開發布；不由正式 release 預設匯入
+
+這份 add-on 的來源範圍、格式、重建程序與品質量測見 `sources/chiaki-tw-homophone-bigram-clean/`。
+
 ### tw-ly-transcript
 
 - 名稱：立法院公報詢答語料覆蓋層

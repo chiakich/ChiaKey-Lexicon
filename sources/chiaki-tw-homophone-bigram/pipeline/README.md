@@ -23,7 +23,11 @@ cd sources/chiaki-tw-homophone-bigram/pipeline && cargo build --release
 | 政府新聞 | 行政院、大陸委員會、中央研究院、客家委員會的新聞發布，依政府資料開放授權條款 |
 | 新北市政府新聞 | 新北市政府開放資料的新聞稿匯出 |
 | 立法院公報詢答 | `scripts/corpus/build-ly-corpus.sh` |
-| PTT 論壇 | HuggingFace `yuhuanstudio/PTT-pretrain-zhtw` 的 `ppt_pretrain.json`，Apache-2.0 |
+| PTT 論壇 | HuggingFace `yuhuanstudio/PTT-pretrain-zhtw` 的 `ppt_pretrain.json`（公開 PTT 貼文） |
+| Plurk | 透過 Plurk 官方 API 取得的公開貼文 |
+| 中文維基百科 | 正體轉換後的中文維基百科條文（CC BY-SA 4.0） |
+
+目前 `build-corpora.mjs` 提供政府、立院與 PTT 輸入的處理步驟；Plurk 與中文維基的資料準備流程不納入此腳本。`bigrams.tsv` 是演算法凍結後以完整來源集合建立的發行產物，重新建置時應一併記錄各來源的版本與取得日期。
 
 新聞語料請自行下載後放到以下路徑，`build-corpora.mjs` 會檢查欄位是否相符：
 

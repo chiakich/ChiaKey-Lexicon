@@ -55,17 +55,13 @@ stored = min(unigram(current) + boost + (raw - raw_max_of_source), -0.05)
 
 - 政府新聞：行政院、大陸委員會、中央研究院、客家委員會、新北市政府之公開新聞發布（政府資料開放授權條款）
 - 立法院公報：HuggingFace `aigrant/taiwan-legislator-transcript`，原始資料源自立法院議事暨公報資訊網（立法院網站資料開放宣告）
-- PTT 論壇：HuggingFace `yuhuanstudio/PTT-pretrain-zhtw`（Apache-2.0）
-- Plurk：公開貼文
+- PTT 論壇：經 HuggingFace `yuhuanstudio/PTT-pretrain-zhtw` 取得的公開貼文
+- Plurk：經官方 API 取得的公開貼文
 - 中文維基百科：正體轉換後的條文。上游為 **CC BY-SA 4.0**。
 
 上游授權條款不同，於 `LICENSE` 中分開列出。本目錄下的資料列為萃取後的衍生結果，授權 CC BY-NC 4.0（Chiaki.C）。
 
-本專案的 Bigram 模型權重在訓練過程中，使用了採用 CC BY-SA 4.0 授權的維基百科語料庫。
-
-然依據著作權法之「思想與表達二分法」原則，本專案釋出之權重檔案僅為詞彙接續機率之客觀數據與純粹數學統計事實，未包含原著作之表達，亦無法還原任何受版權保護之原始文本。因此，本權重檔案非屬原語料之改作，不適用原語料之 SA 條款拘束。
-
-基於上述，本專案之模型權重檔案選擇以 CC BY-NC 4.0 授權釋出。
+資料檔只包含詞對、輸入碼與統計強度，不收錄任何上游原文。此版本供非商業用途使用；希望採用明確資料授權的使用者，請使用 `chiaki-tw-homophone-bigram-clean`。
 
 ## 驗證
 

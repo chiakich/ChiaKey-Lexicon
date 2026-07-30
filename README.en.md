@@ -82,7 +82,7 @@ This project builds on years of work by excellent open-source lexicons and commu
 - **Mozilla Common Voice / OpenFormosa**: source material for bigram sentences.
 - **Legislative Yuan Gazette Information Network / g0v `ly.govapi.tw`**: Q&A transcripts that provide spontaneous spoken-language bigram material.
 - **The Executive Yuan, Mainland Affairs Council, Academia Sinica, Hakka Affairs Council, and New Taipei City Government**: government news releases under the Government Open Data License, providing written-language bigram material.
-- **`yuhuanstudio/PTT-pretrain-zhtw`** (Apache-2.0): PTT forum data for everyday-language coverage.
+- **PTT, Plurk, and Traditional Chinese Wikipedia**: forum, public-post, and encyclopedia-text sources for the primary bigram layer; each source's details are recorded in its source-specific license notice.
 - **Mozc**: preloaded emoticon-category data.
 - **Ministry of Education Revised Mandarin Chinese Dictionary / `g0v/moedict-data`**: source for heteronym reading supplements in `chiaki-modern-overlay/reading-supplements.tsv`, reproduced under the Ministry's CC BY-ND 3.0 Taiwan terms; attribution: Ministry of Education, Republic of China (Lifelong Education Administration).
 
@@ -142,7 +142,8 @@ Goal: maintain lexicon data within this project.
 - `chiaki-auto-hotwords-overlay`: an automatically refreshed hotword overlay that keeps only project-output rows.
 - `chiaki-symbols-overlay`: missing `_punctuation_list` symbols and runtime punctuation candidates.
 - `chiaki-web-overlay`: unigram and bigram supplements for web usage.
-- `chiaki-tw-homophone-bigram`: bigram rows extracted from government news, Legislative Yuan gazettes, PTT, Plurk, and Traditional Chinese Wikipedia. It keeps only pairs that lose to a homophone at their usual reading; this is the primary bigram layer.
+- `chiaki-tw-homophone-bigram`: bigram rows extracted from government news, Legislative Yuan gazettes, PTT, Plurk, and Traditional Chinese Wikipedia. It keeps only pairs that lose to a homophone at their usual reading; this is the primary non-commercial bigram layer.
+- `chiaki-tw-homophone-bigram-clean`: a standalone ODbL bigram add-on rebuilt from government news and Legislative Yuan gazettes.
 - `chiaki-modern-overlay`: project-owned unigram supplements, exact overrides, and bigram corrections; it retains provenance tags from the former `chiaki-synthetic-overlay`.
 - `openformosa-common-voice-25-zh-tw`: selected bigram rows from Common Voice sentences.
 - `tw-ly-transcript`: manually reviewed bigram rows from Legislative Yuan gazette Q&A transcripts. The entire layer was disabled on 2026-07-29; its data and research record are retained for traceability.
@@ -188,13 +189,11 @@ Lexicon data does not have one repository-wide license.
 
 Every source must declare its own license before a public release. Data with unknown licensing may be used only for local experiments and must not appear in public release artifacts.
 
-The project-authored experimental `chiaki` lexicons and lists are released under CC BY-NC 4.0 by default.
+Project-authored experimental `chiaki` lexicons and lists use CC BY-NC 4.0 by default; a source-specific license notice takes precedence over that default.
 
 Academic research and personal non-commercial projects are welcome to use them with attribution to the original author.
 
-Commercial use—including integration into paid products, commercial APIs, or internal enterprise deployments—is outside the default license terms. For commercial licensing, contact:
-
-maid@chiaki.ch
+Commercial use depends on the source-specific license. `chiaki-tw-homophone-bigram` provides no commercial exception; for commercially usable homophone-disambiguation data, use the ODbL `chiaki-tw-homophone-bigram-clean` add-on.
 
 ## Future Work
 
