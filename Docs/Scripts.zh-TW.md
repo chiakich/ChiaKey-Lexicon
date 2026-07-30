@@ -70,6 +70,7 @@ ACTIVE_ROOT=/tmp/ChiaKey-Lexicons SLOT=test-dev scripts/release/uninstall-dev-le
 | --- | --- | --- |
 | `fetch-ly-gazette.mjs` | 下載立法院公報議程的處理後純文字檔。可中斷續傳，永久失敗記錄於 `failures.json`。 | `node scripts/corpus/fetch-ly-gazette.mjs --terms 10,11 --out tmp/ly-gazette` |
 | `extract-ly-speech.mjs` | 從公報文字檔只萃取詢答口語段落，丟棄議事錄、預算決議與書面報告。 | `node scripts/corpus/extract-ly-speech.mjs` |
+| `discover-ly-words.mjs` | 從口語語料找出詞庫尚未收錄的詞。以內聚度（PMI）與左右鄰接熵兩條判準並用，避開切窗碎片與「的」系自由組合。輸出的讀音欄位是提案，多音字必須逐筆複核後才能進 `sources/`。 | `node scripts/corpus/discover-ly-words.mjs --limit-chars 12000000 --min-count 150` |
 | `postprocess-ly-bigrams.mjs` | 把 `build-bigram-stats` 的輸出整理成 source 格式：換算機率、過濾語域偏誤、產生人工複核表。 | `node scripts/corpus/postprocess-ly-bigrams.mjs --min-doc-count 17 --drop-dubious-reading` |
 | `build-ly-corpus.sh` | 上述三步加上 `build-bigram-stats` 的一鍵管線。 | `LIMIT=50 scripts/corpus/build-ly-corpus.sh` |
 

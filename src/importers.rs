@@ -1589,15 +1589,15 @@ mod tests {
     use super::{
         calibrate_bigram_boost, joined_phrase_records_from_bigrams, libchewing_weight,
         parse_bigram_overlay, parse_conversion_rules, parse_explicit_overlay,
-        parse_fragment_demotions, parse_normalized_rime_essay, parse_reading_supplements,
-        parse_rime_essay, parse_rime_existing_phrase_reranks, parse_rime_overlap_reranks,
+        parse_fragment_demotions, parse_reading_supplements, parse_rime_essay,
+        parse_rime_existing_phrase_reranks, parse_rime_overlap_reranks,
         parse_single_char_homophone_reranks, parse_variant_demotions,
         phrase_evidence_character_records, phrase_split_rerank_records,
         post_supplement_phrase_evidence_character_records, qstring_for_bpmf_sequence,
-        read_normalized_rime_essay, reading_supplement_records, rime_split_rerank_weight, round6,
-        RimeNormalization, LIBCHEWING_PHRASE_SEGMENT_BONUS,
-        LIBCHEWING_PHRASE_SEGMENT_BONUS_THRESHOLD, RIME_OVERLAP_RERANK_MARGIN,
-        RIME_SPLIT_RERANK_MAX_BOOST, SINGLE_CHAR_HOMOPHONE_RERANK_MARGIN,
+        reading_supplement_records, rime_split_rerank_weight, round6, RimeNormalization,
+        LIBCHEWING_PHRASE_SEGMENT_BONUS, LIBCHEWING_PHRASE_SEGMENT_BONUS_THRESHOLD,
+        RIME_OVERLAP_RERANK_MARGIN, RIME_SPLIT_RERANK_MAX_BOOST,
+        SINGLE_CHAR_HOMOPHONE_RERANK_MARGIN,
     };
     use crate::config::{Config, CHIAKI_WEB_OVERLAY_SOURCE_ID};
     use crate::types::ConversionRule;

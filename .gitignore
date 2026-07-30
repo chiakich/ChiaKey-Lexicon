@@ -2,6 +2,8 @@
 
 # Generated outputs.
 generated/
+__pycache__/
+*.pyc
 .cache/
 normalized/smart-mandarin.tsv
 manifests/lexicon-manifest.json
