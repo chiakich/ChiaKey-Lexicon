@@ -1,0 +1,13 @@
+[package]
+name = "chiakey-bigram-pipeline"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+publish = false
+
+# Standalone workspace: this crate lives inside the lexicon repo but is not part
+# of the chiakey-lexicon package.
+[workspace]
+
+[profile.release]
+opt-level = 3
