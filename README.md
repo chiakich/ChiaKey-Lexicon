@@ -85,6 +85,7 @@ stored = min( unigram(current) + boost + (raw − raw_max_of_source), −0.05 )
 - **PTT、Plurk 與中文維基百科**：bigram 主力層使用的論壇、公開貼文與百科文本來源；各來源資訊見其專屬授權聲明。
 - **Mozc**：顏文字預載分類資料。
 - **教育部《重編國語辭典修訂本》／`g0v/moedict-data`**：`chiaki-modern-overlay/reading-supplements.tsv` 破音字讀音補充的資料來源，依教育部「創用CC－姓名標示－禁止改作 3.0 台灣」授權條款重製讀音；姓名標示：中華民國教育部（終身教育司）。
+- **金妤**：提供法律交流與意見。惟本致謝不構成其對本專案的正式法律意見、法律代理或任何擔保；本專案資料、授權與使用所生責任均不由其承擔。
 
 我們的工作主要是把這些前人的成果，整合成可重現、可追蹤來源的現代輸入法詞庫。各來源的授權、整合決定與風險紀錄詳見 [Docs/SourceReview.md](Docs/SourceReview.md)。
 

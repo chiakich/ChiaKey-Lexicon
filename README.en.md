@@ -85,6 +85,7 @@ This project builds on years of work by excellent open-source lexicons and commu
 - **PTT, Plurk, and Traditional Chinese Wikipedia**: forum, public-post, and encyclopedia-text sources for the primary bigram layer; each source's details are recorded in its source-specific license notice.
 - **Mozc**: preloaded emoticon-category data.
 - **Ministry of Education Revised Mandarin Chinese Dictionary / `g0v/moedict-data`**: source for heteronym reading supplements in `chiaki-modern-overlay/reading-supplements.tsv`, reproduced under the Ministry's CC BY-ND 3.0 Taiwan terms; attribution: Ministry of Education, Republic of China (Lifelong Education Administration).
+- **金妤**: for legal discussion and feedback. This acknowledgment does not constitute formal legal advice, legal representation, or any warranty by 金妤; 金妤 assumes no responsibility for this project's data, licensing, or use.
 
 Our work primarily integrates these predecessors' contributions into a modern, reproducible, source-traceable input-method lexicon. The license, integration decisions, and risk records for every source are documented in [Docs/SourceReview.md](Docs/SourceReview.md).
 
