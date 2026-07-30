@@ -1,7 +1,6 @@
 # chiaki-tw-homophone-bigram 產生管線
 
-`bigrams.tsv` 的產生工具與步驟。演算法本身與各步驟的理由寫在
-[../README.md](../README.md) 的研究附錄，這份文件只講怎麼跑。
+`bigrams.tsv` 的產生工具與步驟。演算法本身與各步驟的理由寫在[../README.md](../README.md) 的研究附錄，這份文件只講怎麼跑。
 
 ## 內容
 
@@ -38,12 +37,9 @@ cd sources/chiaki-tw-homophone-bigram/pipeline && cargo build --release
 
 ## 跑法
 
-前置：`normalized/smart-mandarin.tsv`（repo 根目錄 `cargo run --release -- prepare-release`）。
-詞庫要先定版再跑，因為詞庫會改變斷詞與撞碼判定。
+前置：`normalized/smart-mandarin.tsv`（repo 根目錄 `cargo run --release -- prepare-release`）。詞庫要先定版再跑，因為詞庫會改變斷詞與撞碼判定。
 
-出貨版用的七個語料檔與句數（可用 `wc -l` 對）：`govnews-train.txt` 57,460、
-`ntpc-train.txt` 324,621、`ntpc-test.txt` 326,069、`ly-train.txt` 847,844、
-`ly-test.txt` 74,304、`ptt-95.txt` 2,909,870、`ptt-gold5.txt` 156,656，合計 4,696,824。
+出貨版用的七個語料檔與句數（可用 `wc -l` 對）：`govnews-train.txt` 57,460、`ntpc-train.txt` 324,621、`ntpc-test.txt` 326,069、`ly-train.txt` 847,844、`ly-test.txt` 74,304、`ptt-95.txt` 2,909,870、`ptt-gold5.txt` 156,656，合計 4,696,824。
 
 ```bash
 # 1. 語料 → 一句一行
@@ -75,9 +71,7 @@ awk -F'\t' 'NR>1 && $4>=3 && NF==4' data/pairs-all.tsv > data/pairs-eligible.tsv
   data/ntpc-test.txt
 ```
 
-`evaluate` 以 `already_correct + net_gain` 為總正確位置數。`net_gain` 單獨下降不一定是回歸，
-可能是原本要靠 bigram 救的位置已經自己對了。`--boost` 預設 1.5，對齊 release 的
-`CHIAKI_TW_HOMOPHONE_BIGRAM_BOOST`。
+`evaluate` 以 `already_correct + net_gain` 為總正確位置數。`net_gain` 單獨下降不一定是回歸，可能是原本要靠 bigram 救的位置已經自己對了。`--boost` 預設 1.5，對齊 release 的`CHIAKI_TW_HOMOPHONE_BIGRAM_BOOST`。
 
 匯入由 release 流程處理（`src/release.rs` 的 `import_chiaki_tw_homophone_bigrams`），權重會被 `calibrate_bigram_boost` 重新錨定到 `(current, cur_code)` 的 unigram。
 

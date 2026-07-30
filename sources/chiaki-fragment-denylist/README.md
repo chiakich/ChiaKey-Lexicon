@@ -10,8 +10,7 @@
 
 ## 用途與定位
 
-此來源為專案自建的片段詞權重上限清單，目標是抑制「非詞彙化句片段」在斷詞時搶分；它不是
-一般低頻詞或同音候選的降權表。
+此來源為專案自建的片段詞權重上限清單，目標是抑制「非詞彙化句片段」在斷詞時搶分；它不是一般低頻詞或同音候選的降權表。
 
 典型例子是助動詞/情態詞 + 動詞的雙字片段（如 `會比`、`會在`、`想用`）。由於 KeyKey walker 會最大化節點 log-probabilities 之和，若此類雙字片段權重過高，可能在二節點剖分中偷走原本三節點剖分的一個音節，例如在輸入 `會比較準` 時讓 `會比`（會 + 比）錯誤壓過 `會 | 比較 | 準`。
 
@@ -25,8 +24,7 @@ phrase<TAB>max_weight<TAB>tags
 
 ## Release 匯入規則
 
-此表作為最後階段 unigram phrase-level cap（`apply_variant_demotions`），在
-`chiaki-modern-overlay/explicit.tsv` 之後執行，因而優先於一般候選排序調整：
+此表作為最後階段 unigram phrase-level cap（`apply_variant_demotions`），在`chiaki-modern-overlay/explicit.tsv` 之後執行，因而優先於一般候選排序調整：
 
 - 若某片語 unigram 權重高於 `max_weight`，則降到 `max_weight`。
 - 若原本已低於上限，則保持不變。
@@ -37,10 +35,7 @@ phrase<TAB>max_weight<TAB>tags
 effective = raw_weight + 1.0 × (syllable_count - 1)
 ```
 
-先比較正確與錯誤剖分的 effective score，再把目標差距（通常 `0.30`）換回
-fragment 的 raw `max_weight`。不能只以 raw weights 相減：若錯誤 fragment 比正確
-剖分少一個節點，它會額外取得 `+1.0` 詞長加分。例如 `畫了` 相對 `化｜了` 須額外
-扣除這 `1.0`，才能避免在 `平面化了` 中偷字。
+先比較正確與錯誤剖分的 effective score，再把目標差距（通常 `0.30`）換回fragment 的 raw `max_weight`。不能只以 raw weights 相減：若錯誤 fragment 比正確剖分少一個節點，它會額外取得 `+1.0` 詞長加分。例如 `畫了` 相對 `化｜了` 須額外扣除這 `1.0`，才能避免在 `平面化了` 中偷字。
 
 此策略不影響單字直出能力：同一組字元仍可由字元切分輸出。
 

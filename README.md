@@ -62,8 +62,7 @@
 stored = min( unigram(current) + boost + (raw − raw_max_of_source), −0.05 )
 ```
 
-`boost` 預設 1.5，各來源可用自己的環境變數覆寫（設為 0 則 raw 值直通）。
-`raw − raw_max_of_source` 這一項保留了來源自身的信心排序，同時把整組權重錨定到 unigram 基準上：足夠強的 disambiguation 邊會高於逐字 unigram 路徑而生效，弱邊則落在基準線以下保持 inert。
+`boost` 預設 1.5，各來源可用自己的環境變數覆寫（設為 0 則 raw 值直通）。`raw − raw_max_of_source` 這一項保留了來源自身的信心排序，同時把整組權重錨定到 unigram 基準上：足夠強的 disambiguation 邊會高於逐字 unigram 路徑而生效，弱邊則落在基準線以下保持 inert。
 
 各層的完整方法、實測數字與已知限制寫在 [sources/chiaki-tw-homophone-bigram/README.md](sources/chiaki-tw-homophone-bigram/README.md) 的研究附錄。
 
@@ -186,7 +185,7 @@ Rust release tooling 與 repository scripts 使用 MIT License；見 [LICENSE](L
 
 歡迎學術研究與個人非營利專案自由使用，使用時請標示原作者姓名。
 
-商業用途（Commercial Use）：
+商業用途（Commercial Use）：  
 若您的專案涉及商業營利行為（例如：整合至付費產品、商業應用 API、企業內部使用等），則不在上述授權範圍內。如需商用，請透過以下方式與我聯繫，討論商業授權事宜。
 
 聯絡信箱：maid@chiaki.ch

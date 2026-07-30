@@ -38,9 +38,7 @@ _punctuation_list<TAB>symbol
 
 若符號已存在於 Yahoo 原始列表，則跳過以維持原有順序。
 
-`punctuation-alternatives.tsv` 會補充既有 runtime 標點 key 的候選符號，例如在
-`_punctuation_[` 原本輸出 `「` 之後，追加 `『`、`《`、`﹁` 等同族開符號候選。
-若 exact key/value 已存在，則跳過以維持 Yahoo 原始資料的排序與相容性。
+`punctuation-alternatives.tsv` 會補充既有 runtime 標點 key 的候選符號，例如在`_punctuation_[` 原本輸出 `「` 之後，追加 `『`、`《`、`﹁` 等同族開符號候選。若 exact key/value 已存在，則跳過以維持 Yahoo 原始資料的排序與相容性。
 
 ## 上游與授權
 

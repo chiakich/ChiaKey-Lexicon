@@ -29,8 +29,7 @@ Release builder 會把 plist 內容寫入 `prepopulated_service_data`：
 
 在 release cooking 過程，payload 會再做兩項增補：
 
-- `chiaki-symbols-overlay/symbols.tsv` 轉成 8 個補充按鈕分類：
-  `補充標點`、`貨幣與標記`、`數字序號`、`補充箭頭`、`補充數學`、`勾叉與星號`、`花色與音樂`、`單位符號`
+- `chiaki-symbols-overlay/symbols.tsv` 轉成 8 個補充按鈕分類：`補充標點`、`貨幣與標記`、`數字序號`、`補充箭頭`、`補充數學`、`勾叉與星號`、`花色與音樂`、`單位符號`
 - 以 `mozc-emoticon-data` 全面替換原本帶註解的 `顏文字` 分類，改為乾淨的 Mozc `Messages` 清單
 
 `onekey_services` 與 `onekey_services_timestamp` 刻意不輸出，因現代 ChiaKey 已不再載入 Yahoo 時代 OneKey URL launcher。

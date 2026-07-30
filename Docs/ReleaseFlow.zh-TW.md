@@ -113,19 +113,15 @@ workflow 會做：
 
 ## 更新外部來源
 
-外部來源以 pinned raw snapshot 形式 commit 在 `sources/*/raw/`。一般本機
-build 和 CI release 不需要網路下載來源資料。
+外部來源以 pinned raw snapshot 形式 commit 在 `sources/*/raw/`。一般本機build 和 CI release 不需要網路下載來源資料。
 
-若要升級 libchewing、Rime essay 或 Mozc 顏文字等 pinned source，維護者先
-更新 `src/config.rs` 裡的 URL / checksum，再執行：
+若要升級 libchewing、Rime essay 或 Mozc 顏文字等 pinned source，維護者先更新 `src/config.rs` 裡的 URL / checksum，再執行：
 
 ```sh
 cargo run --release -- fetch-modern-sources
 ```
 
-這會重新下載 raw files、驗證 SHA-256，並更新對應的
-`source-inventory.sha256`。更新後應把 raw source snapshot、inventory、
-license 變更與 builder 變更一起 commit。
+這會重新下載 raw files、驗證 SHA-256，並更新對應的`source-inventory.sha256`。更新後應把 raw source snapshot、inventory、license 變更與 builder 變更一起 commit。
 
 若只是調整 release workflow 本身、而且會另外手動發版，可以在 commit message 放 `[skip release]`。這只應用在少數維護流程的情境；一般 `main` merge 應該讓 CI 自動 release。
 

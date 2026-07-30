@@ -84,10 +84,7 @@ release builder 匯入這些 pinned files：
 
 `tsi.csv` 與 `alt.csv` 會作為主要現代詞彙層匯入，因為它們包含明確注音讀音。對 libchewing-data 中存在的詞，builder 會用 libchewing 的明確讀音取代 bootstrap database 中較舊的推導讀音。`word.csv` 只用來補缺少的單字讀音。
 
-自 `2026.06.5` 起，`tsi.csv` 中的單字 rows 也會匯入作為 character-frequency correction layer。這讓 `我` 等常用字保留 libchewing 頻率，而不是與 bootstrap database 中同讀音的罕用字 tie。
-character-frequency mapping 會保留一個小型 single-character segmentation penalty，避免常用字意外超過同讀音的明確詞彙 rows。
-較低排序的 libchewing 多字 rows 也會取得 bounded segment bonus，讓 `地基`、`權重` 這類已知詞能高於同讀音的逐字切分，同時不把原本已強的詞推過 phrase scale 的上緣。
-當多個高頻 libchewing phrase 都以同一個字與同一讀音開頭時，weak single-character readings 也可被提升。這能讓 `數` / `ㄕㄨˋ` 這類讀音依據 `數位`、`數學`、`數量`、`數字` 等詞的證據出現在候選列表，同時仍保持在最強 phrase evidence 之下。
+自 `2026.06.5` 起，`tsi.csv` 中的單字 rows 也會匯入作為 character-frequency correction layer。這讓 `我` 等常用字保留 libchewing 頻率，而不是與 bootstrap database 中同讀音的罕用字 tie。character-frequency mapping 會保留一個小型 single-character segmentation penalty，避免常用字意外超過同讀音的明確詞彙 rows。較低排序的 libchewing 多字 rows 也會取得 bounded segment bonus，讓 `地基`、`權重` 這類已知詞能高於同讀音的逐字切分，同時不把原本已強的詞推過 phrase scale 的上緣。當多個高頻 libchewing phrase 都以同一個字與同一讀音開頭時，weak single-character readings 也可被提升。這能讓 `數` / `ㄕㄨˋ` 這類讀音依據 `數位`、`數學`、`數量`、`數字` 等詞的證據出現在候選列表，同時仍保持在最強 phrase evidence 之下。
 
 最終 release database 也會從組裝完成的 `unigrams` table 派生 `associated_phrases`，供 runtime associated-phrase module 使用。每列會把已 commit 的 head character 映射到 comma-separated phrase tails，所以 commit `我` 後可以提示 `們`、`的` 等 tails。這張表會在所有 lexical imports 與 policy layers 套用後產生，release 完成前也會驗證代表性 rows。
 
@@ -263,14 +260,9 @@ sources/keykey-module-cin/source-inventory.sha256
 - 署名：Chiaki.C
 - 再散布決策：納入公開 release
 
-這個來源是自動維護的短期熱詞補充層。Google Trends 只作為 discovery signal；
-daily collector 會查詢 24 小時、48 小時與 7 天 trending windows，並把最小化、
-正規化後的 observations 存成 GitHub Actions artifacts。weekly refresh 才會彙整狀態
-並寫出本 repository 自有的 `phrases.tsv`。
+這個來源是自動維護的短期熱詞補充層。Google Trends 只作為 discovery signal；daily collector 會查詢 24 小時、48 小時與 7 天 trending windows，並把最小化、正規化後的 observations 存成 GitHub Actions artifacts。weekly refresh 才會彙整狀態並寫出本 repository 自有的 `phrases.tsv`。
 
-repository 不保存 Google Trends 的原始 CSV、排名表、新聞摘要或完整 related queries。
-`state.json` 只保存每個候選詞的最小聚合狀態，例如 `first_seen`、`last_seen`、
-`seen_dates` 與 `max_traffic`，用於自動權重與過期清理。
+repository 不保存 Google Trends 的原始 CSV、排名表、新聞摘要或完整 related queries。`state.json` 只保存每個候選詞的最小聚合狀態，例如 `first_seen`、`last_seen`、`seen_dates` 與 `max_traffic`，用於自動權重與過期清理。
 
 自動收詞規則刻意保守：
 
@@ -385,8 +377,7 @@ sources/openformosa-common-voice-25-zh-tw/source-inventory.sha256
 - 署名：立法院議事暨公報資訊網／g0v ly.govapi.tw
 - 再散布決策：以萃取並複核後的 runtime bigram rows 納入公開 release
 
-這個來源只貢獻選出的 runtime bigram rows。raw 公報文字不在這個 repository 再散布。
-人工複核紀錄保存於 `sources/tw-ly-transcript/review-decisions.tsv`，供重新產生時沿用。
+這個來源只貢獻選出的 runtime bigram rows。raw 公報文字不在這個 repository 再散布。人工複核紀錄保存於 `sources/tw-ly-transcript/review-decisions.tsv`，供重新產生時沿用。
 
 萃取與過濾方法、語域偏誤分析與品質評估見 `sources/tw-ly-transcript/README.md` 的研究附錄。
 
