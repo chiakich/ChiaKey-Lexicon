@@ -35,28 +35,47 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+
+      - name: Restore normalized lexicon cache
+        id: normalized-lexicon-cache
+        uses: actions/cache@v6
+        with:
+          path: normalized/smart-mandarin.tsv
+          key: normalized-lexicon-v1-${{ runner.os }}-${{ hashFiles('Cargo.lock', 'Cargo.toml', 'src/**', 'sources/**') }}
 
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "24"
 
       - name: Install Rust
+        if: steps.normalized-lexicon-cache.outputs.cache-hit != 'true'
         uses: dtolnay/rust-toolchain@stable
 
       - name: Install lexicon build dependencies
+        if: steps.normalized-lexicon-cache.outputs.cache-hit != 'true'
         run: |
           sudo apt-get update
           sudo apt-get install -y pkg-config libsqlite3-dev unzip opencc
 
       - name: Build normalized lexicon for PTT filtering
+        if: steps.normalized-lexicon-cache.outputs.cache-hit != 'true'
         run: cargo run --release -- prepare-release
 
       - name: Install Python for PTT crawler
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
           python-version: "3.11"
+          cache: pip
+          cache-dependency-path: scripts/hotwords/requirements-ptt.txt
+
+      - name: Restore PTT crawler cache
+        id: ptt-crawler-cache
+        uses: actions/cache@v6
+        with:
+          path: tmp/ptt-web-crawler/source
+          key: ptt-web-crawler-v1-7fe6191b451ebba4c668db1afc23b4ac99f81494
 
       - name: Collect PTT observations
         id: ptt
@@ -64,11 +83,31 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p tmp/ptt-web-crawler
-          python -m pip install --disable-pip-version-check requests beautifulsoup4 six
-          git init tmp/ptt-web-crawler/source
-          git -C tmp/ptt-web-crawler/source remote add origin https://github.com/jwlin/ptt-web-crawler.git
-          git -C tmp/ptt-web-crawler/source fetch --depth 1 origin 7fe6191b451ebba4c668db1afc23b4ac99f81494
-          git -C tmp/ptt-web-crawler/source checkout --detach FETCH_HEAD
+          python -m pip install --disable-pip-version-check -r scripts/hotwords/requirements-ptt.txt
+          if [[ "${{ steps.ptt-crawler-cache.outputs.cache-hit }}" != "true" ]]; then
+            git init tmp/ptt-web-crawler/source
+            git -C tmp/ptt-web-crawler/source remote add origin https://github.com/jwlin/ptt-web-crawler.git
+            git -C tmp/ptt-web-crawler/source fetch --depth 1 origin 7fe6191b451ebba4c668db1afc23b4ac99f81494
+            git -C tmp/ptt-web-crawler/source checkout --detach FETCH_HEAD
+          fi
+          # The pinned crawler assumes every push has IP/time metadata, but PTT
+          # legitimately omits that field on some pushes. Keep those messages
+          # parseable with an empty metadata value.
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path("tmp/ptt-web-crawler/source/PttWebCrawler/crawler.py")
+          source = path.read_text(encoding="utf-8")
+          old = "push_ipdatetime = push.find('span', 'push-ipdatetime').string.strip(' \\t\\n\\r')"
+          new = """push_ipdatetime_tag = push.find('span', 'push-ipdatetime')
+                      push_ipdatetime = (
+                          push_ipdatetime_tag.get_text(strip=True) if push_ipdatetime_tag else ''
+                      )"""
+          if old in source:
+              path.write_text(source.replace(old, new, 1), encoding="utf-8")
+          elif new not in source:
+              raise RuntimeError("Unable to apply the PTT crawler metadata compatibility patch")
+          PY
           gossiping_output="tmp/ptt-web-crawler/gossiping-last-24h.json"
           if python scripts/hotwords/collect-ptt-gossiping.py \
             --crawler-dir tmp/ptt-web-crawler/source \
@@ -77,7 +116,7 @@ jobs:
             --output "${gossiping_output}"; then
             echo "gossiping_input=${gossiping_output}" >> "$GITHUB_OUTPUT"
           else
-            echo "::warning::PTT Gossiping rejected or reset the GitHub runner connection."
+            echo "::warning::PTT Gossiping collection failed; continuing with the remaining sources."
           fi
           cchat_output="tmp/ptt-web-crawler/cchat-last-24h.json"
           if python scripts/hotwords/collect-ptt-gossiping.py \
@@ -87,7 +126,7 @@ jobs:
             --output "${cchat_output}"; then
             echo "cchat_input=${cchat_output}" >> "$GITHUB_OUTPUT"
           else
-            echo "::warning::PTT C_Chat rejected or reset the GitHub runner connection."
+            echo "::warning::PTT C_Chat collection failed; continuing with the remaining sources."
           fi
 
       - name: Collect Google Trends and PTT observations
@@ -116,7 +155,7 @@ jobs:
             --output "tmp/hotwords-observations/${observed_on}.json"
 
       - name: Upload observations
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: hotwords-observations-${{ steps.collect.outputs.observed_on }}
           path: tmp/hotwords-observations/*.json
@@ -130,10 +169,10 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "24"
 
