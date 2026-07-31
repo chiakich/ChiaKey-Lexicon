@@ -58,11 +58,13 @@ qstring<TAB>phrase<TAB>tags
 
 套用後的列會帶 `reading-supplements,supplemental-reading` tag，外加檔案內該行自己的 tags。
 
-**目前這張表的內容全部重製自教育部《重編國語辭典修訂本》**（透過 `g0v/moedict-data`，<https://github.com/g0v/moedict-data>，`dict-revised.json` 查閱、比對後產生）。教育部《重編國語辭典修訂本》採「創用CC－姓名標示－禁止改作 3.0 台灣」授權條款釋出（詳見<https://ti-wb.github.io/creativecommon-tw/index.html>），本授權允許重製、散布（含商業性利用），但不得改作；本表只逐一記錄讀音本身、未做任何修改或詮釋，屬授權允許的重製範圍。
+這張表帶 `moedict-reviewed` tag 的列重製自教育部《重編國語辭典修訂本》（透過 `g0v/moedict-data`，<https://github.com/g0v/moedict-data>，`dict-revised.json` 查閱、比對後產生）。教育部《重編國語辭典修訂本》採「創用CC－姓名標示－禁止改作 3.0 台灣」授權條款釋出（詳見<https://ti-wb.github.io/creativecommon-tw/index.html>），本授權允許重製、散布（含商業性利用），但不得改作；本表只逐一記錄讀音本身、未做任何修改或詮釋，屬授權允許的重製範圍。
 
-> 中華民國教育部《重編國語辭典修訂本》採「創用CC-姓名標示-禁止改作 3.0 臺灣授權條款」釋出，> 姓名標示：教育部（終身教育司）。
+> 中華民國教育部《重編國語辭典修訂本》採「創用CC-姓名標示-禁止改作 3.0 臺灣授權條款」釋出。
 
-這張表本身不隨這個檔案內嵌字典原文（釋義、例句等），只有讀音；release 匯入時也不會讀取moedict-data 本身。整份表可用以下流程重新產生：
+帶 `tw-usage-reading` tag 的列則是專案自己人工複核的台灣實際用法讀音，不是辭典收錄的讀音，屬本層自有資料（CC BY-NC 4.0）。
+
+這張表本身不隨這個檔案內嵌字典原文（釋義、例句等），只有讀音；release 匯入時也不會讀取moedict-data 本身。`moedict-reviewed` 的部分可用以下流程重新產生（重跑會覆寫整份檔案，人工複核的列需另外保留）：
 
 ```sh
 node scripts/audit/audit-moedict-readings.mjs
