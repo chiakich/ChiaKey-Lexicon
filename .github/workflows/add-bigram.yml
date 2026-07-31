@@ -46,7 +46,7 @@ jobs:
           ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_USER: ${{ github.event.issue.user.login }}
           BIGRAM_REPORT_OUT_DIR: ${{ runner.temp }}/bigram-report
-        run: node scripts/process-bigram-issue.mjs
+        run: node scripts/lexicon/process-bigram-issue.mjs
 
       - name: Comment on issue
         env:

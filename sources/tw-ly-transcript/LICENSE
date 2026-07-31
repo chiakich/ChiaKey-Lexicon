@@ -1,0 +1,45 @@
+Chiaki.C Legislative Yuan Gazette Transcript Overlay License Notice
+
+Source id: tw-ly-transcript
+Copyright (c) Chiaki.C
+
+This lexicon source is licensed under the Creative Commons
+Attribution-NonCommercial 4.0 International License (CC BY-NC 4.0).
+
+Canonical license URL:
+https://creativecommons.org/licenses/by-nc/4.0/
+
+Under CC BY-NC 4.0, non-commercial users may share and adapt this source with
+attribution to Chiaki.C. Open-source projects may use this source under CC
+BY-NC 4.0.
+
+Commercial use is not granted by CC BY-NC 4.0. For commercial use, including
+redistribution in a commercial product or service, paid integration, or other
+revenue-generating use, contact Chiaki.C for separate written permission.
+
+This notice applies only to the tw-ly-transcript source rows.
+Other ChiaKey Lexicon sources remain governed by their own source-specific
+licenses and notices.
+
+Provenance note:
+
+The rows in this source are derived by the ChiaKey Lexicon corpus pipeline
+under Chiaki.C's direction from Legislative Yuan gazette Q&A passages, obtained
+through the g0v ly.govapi.tw API. Speaker turns are extracted and filtered
+automatically, and the resulting bigram candidates are manually reviewed. This
+repository does not redistribute the gazette text, the intermediate speech
+corpus, or the raw candidate set, and stores only the reviewed qstring,
+previous, current, and probability rows together with the review decisions
+needed to reproduce them.
+
+## 立法院資料開放宣告
+
+本來源的原始材料取自立法院議事暨公報資訊網，經 g0v ly.govapi.tw 提供之 API 取得。
+
+依立法院網站資料開放宣告，該等資料以無償、非專屬、可再授權之方式提供公眾使用，
+使用者得重製、改作、編輯、公開傳輸或為其他利用，惟應標示來源。
+
+來源標示：立法院議事暨公報資訊網／g0v ly.govapi.tw
+
+本目錄下的 bigrams.tsv 與 review-decisions.tsv 為專案萃取與審查後之衍生資料列，
+依上方 CC BY-NC 4.0 授權。原始公報文字與中間語料不在本專案再散布。

@@ -2,7 +2,15 @@ MIT License
 
 Copyright (c) 2026 ChiaKey Lexicon contributors
 
-This license applies to code only; each project under sources/ follows its own licensing policy.
+This license applies to code only. Lexicon data, normalized data, source inventories,
+release database artifacts, and third-party source materials are excluded and follow
+the license notice in their respective source directory.
+
+In particular, `sources/chiaki-tw-homophone-bigram/` is licensed under CC BY-NC 4.0
+and provides no commercial-use exception. `sources/chiaki-tw-homophone-bigram-clean/`
+is licensed under ODbL 1.0. See the `LICENSE` file in each directory for the complete
+terms, required attribution, source information, and notices concerning third-party
+data. These source-specific notices control if they conflict with this file.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of the source code and associated documentation files in this repository,

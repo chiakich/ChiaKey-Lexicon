@@ -52,8 +52,8 @@ BONEYARD_DB=/path/to/KeyKeySource.db cargo run --release -- prepare-release
 要讓本機輸入法載入剛建好的 dev 詞庫，用：
 
 ```sh
-scripts/install-dev-lexicon.sh            # build + 備份 + 安裝 + 切換 active
-scripts/install-dev-lexicon.sh --no-build # 直接安裝現有的 dist/dev build
+scripts/release/install-dev-lexicon.sh            # build + 備份 + 安裝 + 切換 active
+scripts/release/install-dev-lexicon.sh --no-build # 直接安裝現有的 dist/dev build
 ```
 
 腳本會把 `dist/dev/` 的產物改名搬進 active 佈局（輸入法跟著 `active` symlink 載入）：
@@ -91,7 +91,7 @@ GitHub Actions 的 release workflow 觸發條件：
 workflow 會做：
 
 1. 安裝 Rust 與 SQLite 依賴。
-2. 用 `scripts/compute-release-version.sh` 計算 release 版本並注入 builder。
+2. 用 `scripts/release/compute-release-version.sh` 計算 release 版本並注入 builder。
 3. 跑 `cargo test`。
 4. 執行 `cargo run --release -- prepare-release`。
 5. 驗證 `SHA256SUMS`。
@@ -105,27 +105,23 @@ workflow 會做：
 
 `.github/workflows/hotwords.yml` 另外維護 `chiaki-auto-hotwords-overlay`，與 release workflow 分開排程：
 
-- `collect`（每日 04:00 Asia/Taipei）：跑 `scripts/hotwords.mjs collect`，把當日 Google Trends 觀測值存成 GitHub Actions artifact，不 commit 進 repo。
-- `refresh`（每週一 04:30 Asia/Taipei）：下載近期 `collect` artifacts，跑 `scripts/hotwords.mjs refresh` 重新聚合狀態並寫出 `sources/chiaki-auto-hotwords-overlay/{phrases.tsv,state.json}`，本機驗證 `prepare-release` 可正常建置後，開一個 `ci/auto-hotwords` PR 讓維護者審查再合併。
+- `collect`（每日 04:00 Asia/Taipei）：跑 `scripts/hotwords/hotwords.mjs collect`，把當日 Google Trends 觀測值存成 GitHub Actions artifact，不 commit 進 repo。
+- `refresh`（每週一 04:30 Asia/Taipei）：下載近期 `collect` artifacts，跑 `scripts/hotwords/hotwords.mjs refresh` 重新聚合狀態並寫出 `sources/chiaki-auto-hotwords-overlay/{phrases.tsv,state.json}`，本機驗證 `prepare-release` 可正常建置後，開一個 `ci/auto-hotwords` PR 讓維護者審查再合併。
 - 也可用 `workflow_dispatch` 手動指定 `mode`（`all` / `collect` / `refresh`）觸發。
 
 這個 workflow 不會直接 push 到 `main` 或觸發 release；`chiaki-auto-hotwords-overlay` 的變更要等 PR 合併進 `dev`、再依一般流程走到 `main` 才會反映在下一版 release。
 
 ## 更新外部來源
 
-外部來源以 pinned raw snapshot 形式 commit 在 `sources/*/raw/`。一般本機
-build 和 CI release 不需要網路下載來源資料。
+外部來源以 pinned raw snapshot 形式 commit 在 `sources/*/raw/`。一般本機build 和 CI release 不需要網路下載來源資料。
 
-若要升級 libchewing、Rime essay 或 Mozc 顏文字等 pinned source，維護者先
-更新 `src/config.rs` 裡的 URL / checksum，再執行：
+若要升級 libchewing、Rime essay 或 Mozc 顏文字等 pinned source，維護者先更新 `src/config.rs` 裡的 URL / checksum，再執行：
 
 ```sh
 cargo run --release -- fetch-modern-sources
 ```
 
-這會重新下載 raw files、驗證 SHA-256，並更新對應的
-`source-inventory.sha256`。更新後應把 raw source snapshot、inventory、
-license 變更與 builder 變更一起 commit。
+這會重新下載 raw files、驗證 SHA-256，並更新對應的`source-inventory.sha256`。更新後應把 raw source snapshot、inventory、license 變更與 builder 變更一起 commit。
 
 若只是調整 release workflow 本身、而且會另外手動發版，可以在 commit message 放 `[skip release]`。這只應用在少數維護流程的情境；一般 `main` merge 應該讓 CI 自動 release。
 

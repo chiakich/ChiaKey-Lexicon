@@ -8,7 +8,7 @@ on:
 
 jobs:
   rust:
-    name: Rust tests
+    name: Rust checks
     runs-on: ubuntu-latest
 
     steps:
@@ -18,16 +18,8 @@ jobs:
       - name: Install Rust
         uses: dtolnay/rust-toolchain@stable
 
-      - name: Install release dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y pkg-config libsqlite3-dev opencc
-
       - name: Check formatting
         run: cargo fmt --check
 
       - name: Run tests
-        run: cargo test
-
-      - name: Build release artifacts
-        run: cargo run --release -- prepare-release
+        run: cargo test --locked

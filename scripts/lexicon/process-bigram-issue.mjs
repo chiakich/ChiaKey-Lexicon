@@ -6,7 +6,7 @@ import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 import { DatabaseSync } from "node:sqlite";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT_DIR = process.env.BIGRAM_REPORT_OUT_DIR ?? path.join(ROOT, ".github/bigram-report");
 const NORMALIZED_PATH = path.join(ROOT, "normalized/smart-mandarin.tsv");
 const DB_PATH = process.env.DB_PATH ?? path.join(ROOT, "dist/dev/ChiaKeySource-dev.db");
@@ -43,7 +43,7 @@ async function main() {
     return;
   }
 
-  const dryRun = runNodeScript("scripts/add-bigram.mjs", [
+  const dryRun = runNodeScript("scripts/lexicon/add-bigram.mjs", [
     previous,
     previousKeyboard,
     current,
@@ -99,7 +99,7 @@ async function main() {
     return;
   }
 
-  const addOutput = runNodeScript("scripts/add-bigram.mjs", [
+  const addOutput = runNodeScript("scripts/lexicon/add-bigram.mjs", [
     previous,
     previousKeyboard,
     current,

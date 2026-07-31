@@ -48,14 +48,18 @@ pub const OVERLAY_SOURCE_ID: &str = "chiaki-modern-overlay";
 pub const OVERLAY_SOURCE_NAME: &str = "ChiaKey modern overlay phrases";
 pub const CHIAKI_WEB_OVERLAY_SOURCE_ID: &str = "chiaki-web-overlay";
 pub const CHIAKI_WEB_OVERLAY_SOURCE_NAME: &str = "Chiaki reviewed web corpus overlay";
-pub const CHIAKI_SYNTHETIC_SOURCE_ID: &str = "chiaki-synthetic-overlay";
-pub const CHIAKI_SYNTHETIC_SOURCE_NAME: &str =
-    "Chiaki.C GPT-5.5 synthetic Taiwan internet usage overlay";
 pub const CHIAKEY_AUTO_HOTWORDS_SOURCE_ID: &str = "chiaki-auto-hotwords-overlay";
 pub const CHIAKEY_AUTO_HOTWORDS_SOURCE_NAME: &str =
     "ChiaKey automatically refreshed hotwords overlay";
 pub const GENERATED_CHARACTER_EVIDENCE_SOURCE_ID: &str = "generated-character-phrase-evidence";
 pub const OPENFORMOSA_COMMON_VOICE_SOURCE_ID: &str = "openformosa-common-voice-25-zh-tw";
+pub const TW_LY_TRANSCRIPT_SOURCE_ID: &str = "tw-ly-transcript";
+pub const CHIAKI_TW_HOMOPHONE_SOURCE_ID: &str = "chiaki-tw-homophone-bigram";
+// retired alongside the tw-ly-transcript bigram import; kept for provenance
+#[allow(dead_code)]
+pub const TW_LY_TRANSCRIPT_SOURCE_NAME: &str = "Legislative Yuan gazette Q&A transcript overlay";
+pub const CHIAKI_TW_HOMOPHONE_SOURCE_NAME: &str =
+    "Chiaki.C Taiwanese homophone-disambiguation bigram overlay";
 pub const OPENFORMOSA_COMMON_VOICE_SOURCE_NAME: &str =
     "OpenFormosa Common Voice 25 zh-TW bigram overlay";
 pub const OPENCC_VARIANT_SOURCE_ID: &str = "opencc-variant-policy";
@@ -127,8 +131,14 @@ pub struct Config {
     // How much each source's strongest collocation should beat its unigram floor
     // when re-anchored to the unigram scale (see importers::calibrate_bigram_boost).
     // 0 = raw passthrough.
+    // retired with the synthetic bigram import; kept so the env var stays inert
+    #[allow(dead_code)]
     pub synthetic_bigram_boost: f64,
     pub commonvoice_bigram_boost: f64,
+    // retired with the tw-ly-transcript bigram import; env var stays inert
+    #[allow(dead_code)]
+    pub tw_ly_transcript_bigram_boost: f64,
+    pub chiaki_tw_homophone_bigram_boost: f64,
     // Min rime-essay frequency advantage for a homophone to be promoted to its
     // reading group's top single-char candidate (see single-char homophone rerank).
     pub homophone_rerank_min_ratio: f64,
@@ -162,6 +172,12 @@ pub fn load() -> Result<Config> {
     let commonvoice_bigram_boost = env_or("COMMONVOICE_BIGRAM_BOOST", "1.5")
         .parse()
         .context("parse COMMONVOICE_BIGRAM_BOOST")?;
+    let chiaki_tw_homophone_bigram_boost = env_or("CHIAKI_TW_HOMOPHONE_BIGRAM_BOOST", "1.5")
+        .parse()
+        .context("CHIAKI_TW_HOMOPHONE_BIGRAM_BOOST must be a number")?;
+    let tw_ly_transcript_bigram_boost = env_or("TW_LY_TRANSCRIPT_BIGRAM_BOOST", "1.5")
+        .parse()
+        .context("parse TW_LY_TRANSCRIPT_BIGRAM_BOOST")?;
     let homophone_rerank_min_ratio = env_or("HOMOPHONE_RERANK_MIN_RATIO", "2.5")
         .parse()
         .context("parse HOMOPHONE_RERANK_MIN_RATIO")?;
@@ -205,6 +221,8 @@ pub fn load() -> Result<Config> {
         opencc_t2tw_config,
         synthetic_bigram_boost,
         commonvoice_bigram_boost,
+        tw_ly_transcript_bigram_boost,
+        chiaki_tw_homophone_bigram_boost,
         homophone_rerank_min_ratio,
         dist_dir,
         normalized_path,

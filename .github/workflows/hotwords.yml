@@ -42,15 +42,77 @@ jobs:
         with:
           node-version: "24"
 
-      - name: Collect Google Trends observations
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install lexicon build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pkg-config libsqlite3-dev unzip opencc
+
+      - name: Build normalized lexicon for PTT filtering
+        run: cargo run --release -- prepare-release
+
+      - name: Install Python for PTT crawler
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Collect PTT observations
+        id: ptt
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p tmp/ptt-web-crawler
+          python -m pip install --disable-pip-version-check requests beautifulsoup4 six
+          git init tmp/ptt-web-crawler/source
+          git -C tmp/ptt-web-crawler/source remote add origin https://github.com/jwlin/ptt-web-crawler.git
+          git -C tmp/ptt-web-crawler/source fetch --depth 1 origin 7fe6191b451ebba4c668db1afc23b4ac99f81494
+          git -C tmp/ptt-web-crawler/source checkout --detach FETCH_HEAD
+          gossiping_output="tmp/ptt-web-crawler/gossiping-last-24h.json"
+          if python scripts/hotwords/collect-ptt-gossiping.py \
+            --crawler-dir tmp/ptt-web-crawler/source \
+            --hours 24 \
+            --board Gossiping \
+            --output "${gossiping_output}"; then
+            echo "gossiping_input=${gossiping_output}" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::PTT Gossiping rejected or reset the GitHub runner connection."
+          fi
+          cchat_output="tmp/ptt-web-crawler/cchat-last-24h.json"
+          if python scripts/hotwords/collect-ptt-gossiping.py \
+            --crawler-dir tmp/ptt-web-crawler/source \
+            --hours 24 \
+            --board C_Chat \
+            --output "${cchat_output}"; then
+            echo "cchat_input=${cchat_output}" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::PTT C_Chat rejected or reset the GitHub runner connection."
+          fi
+
+      - name: Collect Google Trends and PTT observations
         id: collect
         shell: bash
         run: |
           set -euo pipefail
           observed_on="$(TZ=Asia/Taipei date +%F)"
           echo "observed_on=${observed_on}" >> "$GITHUB_OUTPUT"
-          node scripts/hotwords.mjs collect \
+          ptt_args=()
+          ptt_inputs=()
+          if [[ -n "${{ steps.ptt.outputs.gossiping_input }}" ]]; then
+            ptt_inputs+=("${{ steps.ptt.outputs.gossiping_input }}")
+          fi
+          if [[ -n "${{ steps.ptt.outputs.cchat_input }}" ]]; then
+            ptt_inputs+=("${{ steps.ptt.outputs.cchat_input }}")
+          fi
+          if [[ ${#ptt_inputs[@]} -gt 0 ]]; then
+            ptt_args=(--ptt-input "$(IFS=,; echo "${ptt_inputs[*]}")")
+          else
+            echo "PTT collection failed or produced no output; continuing with Google Trends only."
+          fi
+          node scripts/hotwords/hotwords.mjs collect \
             --date "${observed_on}" \
+            "${ptt_args[@]}" \
             --output "tmp/hotwords-observations/${observed_on}.json"
 
       - name: Upload observations
@@ -123,7 +185,7 @@ jobs:
         run: |
           set -euo pipefail
           today="$(TZ=Asia/Taipei date +%F)"
-          node scripts/hotwords.mjs refresh \
+          node scripts/hotwords/hotwords.mjs refresh \
             --today "${today}" \
             --observations-dir tmp/hotwords-observations \
             --state sources/chiaki-auto-hotwords-overlay/state.json \

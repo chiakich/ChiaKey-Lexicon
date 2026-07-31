@@ -5,7 +5,7 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const OUT_DIR = process.env.MISSING_WORD_OUT_DIR ?? path.join(ROOT, ".github/missing-word");
 const NORMALIZED_PATH = path.join(ROOT, "normalized/smart-mandarin.tsv");
 
@@ -35,14 +35,14 @@ async function main() {
     return;
   }
 
-  const dryRun = runNodeScript("scripts/add-explicit.mjs", [keyboard, phrase, "--dry-run"]);
+  const dryRun = runNodeScript("scripts/lexicon/add-unigram.mjs", [keyboard, phrase, "--dry-run"]);
   const qstring = matchLine(dryRun, /^qstring:\s*(.+)$/m);
   const bpmf = matchLine(dryRun, /^bpmf:\s*(.+)$/m);
   const weight = matchLine(dryRun, /^weight:\s*(.+)$/m);
 
   const existingRows = findExistingRows(phrase, qstring);
   if (existingRows.length > 0) {
-    const explain = runNodeScript("scripts/explain-weight.mjs", [phrase]);
+    const explain = runNodeScript("scripts/audit/explain-weight.mjs", [phrase]);
     writeComment([
       "您好！感謝您回報缺詞！",
       `但「${phrase}」已存在於目前詞庫中，請至「偏好設定」->「更新」中檢查是否有新版詞庫。`,
@@ -70,7 +70,7 @@ async function main() {
     return;
   }
 
-  const addOutput = runNodeScript("scripts/add-explicit.mjs", [keyboard, phrase]);
+  const addOutput = runNodeScript("scripts/lexicon/add-unigram.mjs", [keyboard, phrase]);
   const row = matchLine(addOutput, /^Appended to .+\n(.+)$/m);
   const prTitle = `Add missing word: ${phrase}`;
   const commitMessage = `feat: add missing word ${phrase}`;

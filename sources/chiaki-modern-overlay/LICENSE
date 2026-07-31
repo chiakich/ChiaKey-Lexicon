@@ -26,3 +26,7 @@ Provenance note:
 The rows in this source are project-owned corrections written directly by
 Chiaki.C to patch obvious seed lexicon gaps and ordering issues, ahead of
 integrating larger public frequency corpora.
+
+Rows tagged `chiaki-synthetic-overlay` were reviewed from a synthetic
+Traditional Chinese Taiwan internet-usage corpus generated with GPT-5.5 at
+Chiaki.C's direction. The raw synthetic corpus is not redistributed here.

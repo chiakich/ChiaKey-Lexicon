@@ -5,16 +5,16 @@ import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const BIGRAM_PATH = path.join(ROOT, "sources/chiaki-modern-overlay/bigrams.tsv");
 const DEFAULT_PROBABILITY = -0.35;
 
 const USAGE = `Usage:
-  node scripts/add-bigram.mjs <previous> <previous-keyboard-zhuyin> <current> <current-keyboard-zhuyin> [probability] [--dry-run] [--force]
+  node scripts/lexicon/add-bigram.mjs <previous> <previous-keyboard-zhuyin> <current> <current-keyboard-zhuyin> [probability] [--dry-run] [--force]
 
 Examples:
-  node scripts/add-bigram.mjs 天意 "tu0 u4" 難測 "s06hk4" --dry-run
-  node scripts/add-bigram.mjs 天意 "tu0 u4" 難測 "s06hk4" -0.5
+  node scripts/lexicon/add-bigram.mjs 天意 "tu0 u4" 難測 "s06hk4" --dry-run
+  node scripts/lexicon/add-bigram.mjs 天意 "tu0 u4" 難測 "s06hk4" -0.5
 
 Notes:
   A bigram fixes the transition previous -> current. The runtime looks up
@@ -119,7 +119,7 @@ function parseProbability(value) {
 
 function currentReading(current, keyboard) {
   const output = execFileSync(process.execPath, [
-    "scripts/add-explicit.mjs",
+    "scripts/lexicon/add-unigram.mjs",
     keyboard,
     current,
     "--dry-run",

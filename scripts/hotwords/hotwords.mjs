@@ -7,12 +7,14 @@ import path from "node:path";
 const DEFAULT_SOURCE_ID = "chiaki-auto-hotwords-overlay";
 const DEFAULT_GEO = "TW";
 const DEFAULT_HL = "zh-TW";
-const DEFAULT_RETENTION_DAYS = 30;
-const DEFAULT_STATE_WINDOW_DAYS = 90;
+const DEFAULT_RETENTION_DAYS = 90;
+const DEFAULT_STATE_WINDOW_DAYS = 180;
+const DEFAULT_STATE_RETENTION_DAYS = 180;
 const MIN_EMIT_SIGNAL = 3;
 const MAX_SEGMENT_DERIVATION_SURFACE_LENGTH = 8;
 const DEFAULT_OPENCC_BINARY = "opencc";
 const DEFAULT_OPENCC_CONFIG = "s2tw.json";
+const PR_CHANGE_TABLE_LIMIT = 50;
 
 const WINDOWS = [
   { label: "24h", hours: 24, score: 1 },
@@ -39,10 +41,16 @@ const CORE_CANDIDATE_SUFFIXES = [
 ];
 
 const DERIVED_SEGMENT_STOP_CHARS = new Set(["對", "的", "是", "嗎"]);
+const PTT_MIN_NET_PUSH = 20;
+const PTT_GENERIC_TERMS = new Set(["公告", "新聞", "問卦", "爆卦", "快訊", "最老", "公開賽", "冠軍", "可能", "現在", "目前", "擬報"]);
+const PTT_BOUNDARY_STOP_CHARS = new Set(["的", "是", "在", "與", "又", "而", "了", "嗎", "呢", "不", "之", "萬"]);
+const PTT_PERSON_NAME_STOP_CHARS = new Set(["要", "會", "在", "的", "不", "很", "一", "這", "那", "又", "沒", "有", "被"]);
+const PTT_SURNAMES = new Set("王李張劉陳楊黃趙周吳徐孫胡朱高林何郭馬羅梁宋鄭謝韓唐馮于董蕭程曹袁鄧許傅沈曾彭呂蘇盧蔣蔡賈丁魏薛葉阮余潘杜戴夏鍾汪田任姜范方石姚廖鄒熊金陸郝孔白崔康毛邱秦江史顧侯邵孟龍萬段雷錢湯尹黎易常武喬賀賴龔文牛".split(""));
+const PTT_PERSON_FOLLOWERS = ["驚傳", "表示", "憶", "曝", "稱", "遭", "被", "籲", "談", "批", "喊"];
 
 const USAGE = `Usage:
-  node scripts/hotwords.mjs collect --output tmp/hotwords-observations/DATE.json [--date YYYY-MM-DD]
-  node scripts/hotwords.mjs refresh --observations-dir tmp/hotwords-observations --state sources/chiaki-auto-hotwords-overlay/state.json --output sources/chiaki-auto-hotwords-overlay/phrases.tsv --summary tmp/hotwords-summary.md [--today YYYY-MM-DD]
+  node scripts/hotwords/hotwords.mjs collect --output tmp/hotwords-observations/DATE.json [--date YYYY-MM-DD] [--ptt-input FILE]
+  node scripts/hotwords/hotwords.mjs refresh --observations-dir tmp/hotwords-observations --state sources/chiaki-auto-hotwords-overlay/state.json --output sources/chiaki-auto-hotwords-overlay/phrases.tsv --summary tmp/hotwords-summary.md [--today YYYY-MM-DD]
 `;
 
 async function main() {
@@ -86,29 +94,48 @@ async function collect(options) {
   const output = options.output || path.join("tmp", "hotwords-observations", `${observedOn}.json`);
   const observations = [];
   const fetchedRows = {};
+  const sourceStats = {};
 
-  for (const window of WINDOWS) {
-    const rows = await fetchGoogleTrends({ geo, hl, windowHours: window.hours });
-    fetchedRows[window.label] = rows.length;
-    observations.push(
-      ...dedupeByTerm(
-        rows
-          .map((row) => ({
-            term: normalizeTerm(row.term),
-            traffic: row.traffic,
-            growth_pct: row.growthPct,
-            started_at: row.startedAt,
-            window_hours: window.hours,
-            window_label: window.label,
-          }))
-          .filter((row) => row.term && isHanOnly(row.term) && !hasAsciiAlnum(row.term)),
-      ),
-    );
+  if (!options["skip-google"]) {
+    for (const window of WINDOWS) {
+      const rows = await fetchGoogleTrends({ geo, hl, windowHours: window.hours });
+      fetchedRows[window.label] = rows.length;
+      observations.push(
+        ...dedupeByTerm(
+          rows
+            .map((row) => ({
+              term: normalizeTerm(row.term),
+              traffic: row.traffic,
+              growth_pct: row.growthPct,
+              started_at: row.startedAt,
+              source: "google-trends",
+              window_hours: window.hours,
+              window_label: window.label,
+            }))
+            .filter((row) => row.term && isHanOnly(row.term) && !hasAsciiAlnum(row.term)),
+        ),
+      );
+    }
+  }
+
+  if (options["ptt-input"]) {
+    const pttLexicon = loadLexicon(String(options.normalized || "normalized/smart-mandarin.tsv"), DEFAULT_SOURCE_ID);
+    for (const file of String(options["ptt-input"]).split(",").filter(Boolean)) {
+      const pttObservations = collectPttObservations(file, observedOn, pttLexicon);
+      observations.push(...pttObservations.observations);
+      fetchedRows[pttObservations.source] = pttObservations.fetchedArticleCount;
+      sourceStats[pttObservations.source] = {
+        articles_fetched: pttObservations.fetchedArticleCount,
+        articles_accepted: pttObservations.articleCount,
+        observations: pttObservations.observations.length,
+        articles_skipped: pttObservations.skipped,
+      };
+    }
   }
 
   const payload = {
     schema_version: 2,
-    source: "google-trends-trending",
+    source: "hotwords",
     geo,
     hl,
     windows: WINDOWS.map((window) => ({ label: window.label, hours: window.hours })),
@@ -116,12 +143,146 @@ async function collect(options) {
     collected_at: collectedAt,
     fetched_rows_by_window: fetchedRows,
     fetched_rows: Object.values(fetchedRows).reduce((sum, value) => sum + value, 0),
+    source_stats: sourceStats,
     observations,
   };
 
   writeJson(output, payload);
   console.log(
-    `Collected ${observations.length} normalized hotword observations from ${payload.fetched_rows} Trends rows into ${output}`,
+    `Collected ${observations.length} normalized hotword observations from ${payload.fetched_rows} source rows into ${output}`,
+  );
+}
+
+function collectPttObservations(file, observedOn, lexicon) {
+  const payload = JSON.parse(fs.readFileSync(file, "utf8"));
+  const source = String(payload.source || "ptt-gossiping");
+  const candidates = new Map();
+  const articles = Array.isArray(payload.articles) ? payload.articles : [];
+  for (const article of articles) {
+    const netPush = numberOrNull(article.message_count?.count) || 0;
+    if (netPush < PTT_MIN_NET_PUSH || !article.article_title) {
+      continue;
+    }
+    for (const candidate of pttTitleCandidates(article.article_title, lexicon)) {
+      const value = candidates.get(candidate.term) || { titleIds: new Set(), maxTraffic: 0, kinds: new Set() };
+      value.titleIds.add(article.article_id);
+      value.maxTraffic = Math.max(value.maxTraffic, netPush);
+      value.kinds.add(candidate.kind);
+      candidates.set(candidate.term, value);
+    }
+  }
+  for (const candidate of Array.isArray(payload.comment_terms) ? payload.comment_terms : []) {
+    const term = normalizeTerm(candidate.term);
+    if (!isPttCommentCandidate(term, candidate, source)) continue;
+    const value = candidates.get(term) || { titleIds: new Set(), maxTraffic: 0, kinds: new Set() };
+    value.maxTraffic = Math.max(value.maxTraffic, numberOrNull(candidate.max_net_push) || 0);
+    value.kinds.add("comment");
+    candidates.set(term, value);
+  }
+  const observations = [];
+  for (const [term, candidate] of candidates) {
+    const trusted =
+      candidate.kinds.has("quoted") ||
+      candidate.kinds.has("person") ||
+      candidate.kinds.has("landmark") ||
+      candidate.kinds.has("comment");
+    if (!trusted && candidate.titleIds.size < 2) {
+      continue;
+    }
+    observations.push({
+      term,
+      traffic: candidate.maxTraffic,
+      source,
+      observed_on: observedOn,
+      window_hours: 24,
+      window_label: "24h",
+    });
+  }
+  return {
+    articleCount: articles.length,
+    fetchedArticleCount: numberOrNull(payload.popular_articles_fetched) || articles.length,
+    skipped: payload.articles_skipped || {},
+    source,
+    observations: dedupeByTerm(observations),
+  };
+}
+
+function isPttCommentCandidate(term, candidate, source) {
+  if (source === "ptt-cchat") {
+    return isPttCandidate(term) && Array.from(term).length >= 3 && Number(candidate.max_article_distinct_pusher_count) >= 2;
+  }
+  return (
+    isPttCandidate(term) &&
+    Array.from(term).length >= 3 &&
+    Number(candidate.article_count) >= 10 &&
+    Number(candidate.push_count) >= 15
+  );
+}
+
+function pttTitleCandidates(title, lexicon) {
+  const candidates = new Set();
+  const plainTitle = String(title).replace(/^\s*(?:Re:\s*)?(?:\[[^\]]*\]\s*)+/i, "");
+  const add = (term, kind) => {
+    const normalized = normalizeTerm(term);
+    if (isPttCandidate(normalized)) candidates.add(`${kind}\0${normalized}`);
+  };
+
+  for (const quoted of plainTitle.matchAll(/[「“]([^」”]+)[」”]/gu)) {
+    for (const sequence of quoted[1].matchAll(/[\p{Script=Han}]+/gu)) {
+      for (const term of pttUnknownRuns(sequence[0], lexicon)) add(term, "quoted");
+    }
+  }
+  for (const match of plainTitle.matchAll(/(?:台北|新北|桃園|台中|台南|高雄|基隆|新竹|嘉義|屏東|宜蘭|花蓮|台東)([\p{Script=Han}]{1,3}[橋路站溪山港島])/gu)) {
+    add(match[1], "landmark");
+  }
+  for (const sequence of plainTitle.matchAll(/[\p{Script=Han}]{2,}/gu)) {
+    const people = pttPersonCandidates(sequence[0]);
+    for (const term of pttUnknownRuns(sequence[0], lexicon)) {
+      if (people.some((person) => term.startsWith(person) && term !== person)) continue;
+      add(term, "unknown");
+    }
+    for (const term of people) add(term, "person");
+  }
+  return [...candidates].map((value) => {
+    const [kind, term] = value.split("\0");
+    return { term, kind };
+  });
+}
+
+function pttPersonCandidates(text) {
+  const surnamePattern = [...PTT_SURNAMES].join("");
+  const followerPattern = PTT_PERSON_FOLLOWERS.join("|");
+  const expression = new RegExp(`([${surnamePattern}][\\p{Script=Han}]{1,2}?)(?=${followerPattern})`, "gu");
+  return [...text.matchAll(expression)]
+    .map((match) => match[1])
+    .filter((term) => !PTT_PERSON_NAME_STOP_CHARS.has(Array.from(term)[1]));
+}
+
+function pttUnknownRuns(text, lexicon) {
+  const tokens = tokenize(normalizeTerm(text), lexicon);
+  const candidates = [];
+  let current = "";
+  for (const token of tokens) {
+    if (Array.from(token).length === 1) {
+      current += token;
+    } else if (current) {
+      candidates.push(current);
+      current = "";
+    }
+  }
+  if (current) candidates.push(current);
+  return candidates;
+}
+
+function isPttCandidate(term) {
+  const chars = Array.from(term);
+  return (
+    chars.length >= 2 &&
+    chars.length <= 4 &&
+    isHanOnly(term) &&
+    !PTT_GENERIC_TERMS.has(term) &&
+    !PTT_BOUNDARY_STOP_CHARS.has(chars[0]) &&
+    !PTT_BOUNDARY_STOP_CHARS.has(chars.at(-1))
   );
 }
 
@@ -133,6 +294,7 @@ async function refresh(options) {
   const normalizedPath = String(options.normalized || "normalized/smart-mandarin.tsv");
   const today = String(options.today || taipeiDate());
   const sourceId = String(options["source-id"] || DEFAULT_SOURCE_ID);
+  const previousRows = loadOverlayRows(outputPath);
   const canonicalize = createOpenCcCanonicalizer({
     binary: String(options["opencc-binary"] || DEFAULT_OPENCC_BINARY),
     config: String(options["opencc-config"] || DEFAULT_OPENCC_CONFIG),
@@ -152,6 +314,7 @@ async function refresh(options) {
     today,
     observations,
     rows: result.rows,
+    previousRows,
     filtered: result.filtered,
     stateTerms: outputState.size,
     sourceId,
@@ -238,8 +401,9 @@ function loadObservations(root) {
         observed_on: observedOn,
         window_hours: windowHours,
         window_label: observation.window_label || windowLabelForHours(windowHours),
-        traffic: numberOrNull(observation.traffic),
-        growth_pct: numberOrNull(observation.growth_pct),
+      traffic: numberOrNull(observation.traffic),
+      growth_pct: numberOrNull(observation.growth_pct),
+      source: observation.source || payload.source || "google-trends",
       });
     }
   }
@@ -265,6 +429,8 @@ function loadState(file) {
       seen_windows: normalizeSeenWindows(value.seen_windows, value.seen_dates),
       max_traffic: numberOrNull(value.max_traffic),
       derived_from: Array.isArray(value.derived_from) ? value.derived_from.map(normalizeTerm).filter(Boolean) : [],
+      sources: Array.isArray(value.sources) && value.sources.length > 0 ? value.sources : ["google-trends"],
+      admitted: value.admitted !== false,
     });
   }
   return state;
@@ -280,6 +446,8 @@ function mergeState(state, observations, today, lexicon) {
       seen_windows: mapSeenWindowsToSets(value.seen_windows || {}),
       max_traffic: value.max_traffic || 0,
       derived_from: new Set(value.derived_from || []),
+      sources: new Set(value.sources || []),
+      admitted: Boolean(value.admitted),
     });
   }
 
@@ -293,7 +461,7 @@ function mergeState(state, observations, today, lexicon) {
   for (const [term, entry] of merged.entries()) {
     entry.seen_dates = new Set([...entry.seen_dates].filter((date) => date >= cutoff && date <= today));
     entry.seen_windows = pruneSeenWindows(entry.seen_windows, cutoff, today);
-    if (entry.seen_dates.size === 0 || daysBetween(entry.last_seen, today) > DEFAULT_RETENTION_DAYS) {
+    if (entry.seen_dates.size === 0 || daysBetween(entry.last_seen, today) > DEFAULT_STATE_RETENTION_DAYS) {
       merged.delete(term);
     }
   }
@@ -419,6 +587,8 @@ function mergeObservation(merged, observation) {
       seen_windows: {},
       max_traffic: 0,
       derived_from: new Set(),
+      sources: new Set(),
+      admitted: false,
     };
   entry.seen_dates.add(observation.observed_on);
   const windowLabel = observation.window_label || windowLabelForHours(observation.window_hours || 24);
@@ -429,6 +599,9 @@ function mergeObservation(merged, observation) {
   entry.max_traffic = Math.max(entry.max_traffic || 0, observation.traffic || 0);
   if (observation.derived_from) {
     entry.derived_from.add(observation.derived_from);
+  }
+  if (observation.source) {
+    entry.sources.add(observation.source);
   }
   merged.set(term, entry);
 }
@@ -483,26 +656,25 @@ function buildOverlayRows(state, lexicon, today, sourceId) {
 
     const daysSinceSeen = daysBetween(entry.last_seen, today);
     if (daysSinceSeen > DEFAULT_RETENTION_DAYS) {
+      watchlistTerms.add(term);
       filtered.expired.push(term);
       continue;
     }
     const signal = signalFor(entry, today);
-    if (!shouldKeepInState(signal)) {
+    const newlyEligible = shouldEmitSignal(signal);
+    if (!entry.admitted && !newlyEligible) {
       filtered.weak_signal.push(formatWeakSignal(term, signal));
       continue;
     }
     watchlistTerms.add(term);
-    if (!shouldEmitSignal(signal)) {
-      filtered.weak_signal.push(formatWeakSignal(term, signal));
-      continue;
-    }
+    entry.admitted = true;
     const seenLast14 = countSeenSince(entry.seen_dates, addDays(today, -13));
     const seenLast30 = countSeenSince(entry.seen_dates, addDays(today, -29));
     const weight = weightFor({ daysSinceSeen, signal14: signal.score14, signal30: signal.score30 });
     const tags = [
       sourceId,
       "auto",
-      "google-trends",
+      `source=${[...entry.sources].sort().join("+") || "google-trends"}`,
       `first_seen=${entry.first_seen}`,
       `last_seen=${entry.last_seen}`,
       `seen_days_30=${seenLast30}`,
@@ -510,6 +682,7 @@ function buildOverlayRows(state, lexicon, today, sourceId) {
       `signal_30=${signal.score30}`,
       `windows_14=${signal.windows14.join("+")}`,
       `max_traffic=${entry.max_traffic || 0}`,
+      `status=${daysSinceSeen > 60 ? "dormant" : daysSinceSeen > 30 ? "cooling" : "active"}`,
     ];
     const derivedFrom = sortedDerivedFrom(entry).slice(0, 3);
     if (derivedFrom.length > 0) {
@@ -684,6 +857,12 @@ function windowsSeenSince(seenWindows, cutoff) {
 }
 
 function weightFor({ daysSinceSeen, signal14, signal30 }) {
+  if (daysSinceSeen > 60) {
+    return "-3.0";
+  }
+  if (daysSinceSeen > 30) {
+    return "-2.8";
+  }
   if (daysSinceSeen > 14) {
     return "-2.6";
   }
@@ -711,17 +890,20 @@ function buildStatePayload(state, today) {
       signal_14: signal.score14,
       signal_30: signal.score30,
       max_traffic: entry.max_traffic || 0,
+      admitted: Boolean(entry.admitted),
     };
     const derivedFrom = sortedDerivedFrom(entry);
     if (derivedFrom.length > 0) {
       terms[term].derived_from = derivedFrom.slice(0, 10);
     }
+    terms[term].sources = [...(entry.sources || [])].sort();
   }
   return {
     schema_version: 2,
     updated_at: new Date().toISOString(),
     updated_on: today,
     retention_days: DEFAULT_RETENTION_DAYS,
+    state_retention_days: DEFAULT_STATE_RETENTION_DAYS,
     terms,
   };
 }
@@ -740,22 +922,37 @@ function filterStateByTerms(state, kept) {
   return filtered;
 }
 
-function buildSummary({ today, observations, rows, filtered, stateTerms, sourceId }) {
+function buildSummary({ today, observations, rows, previousRows, filtered, stateTerms, sourceId }) {
   const lines = [];
+  const changes = compareOverlayRows(previousRows, rows);
   const filteredCounts = Object.entries(filtered)
     .map(([reason, values]) => `${reason}=${values.length}`)
     .join(", ");
 
   lines.push(`# Auto Hotwords Refresh`);
   lines.push("");
-  lines.push(`- Date: ${today}`);
-  lines.push(`- Source layer: ${sourceId}`);
-  lines.push(`- Observations loaded: ${observations.length}`);
-  lines.push(`- State terms retained: ${stateTerms}`);
-  lines.push(`- Overlay rows: ${rows.length}`);
-  lines.push(`- Filtered terms: ${filteredCounts}`);
+  lines.push(`本次有 **${changes.behavioralCount} 項影響輸入排序的變動**：新增 ${changes.added.length}、移除 ${changes.removed.length}、權重調整 ${changes.weightChanged.length}。`);
+  lines.push(`另有 ${changes.metadataChanged.length} 項僅更新觀測資料的詞彙，不影響排序。`);
+  lines.push("");
+
+  appendChangeTable(lines, "新增詞彙", changes.added, (row) => [row.phrase, row.weight, evidenceForRow(row)]);
+  appendChangeTable(lines, "移除詞彙", changes.removed, (row) => [row.phrase, row.weight, removalReason(row.phrase, filtered)]);
+  appendChangeTable(lines, "權重調整", changes.weightChanged, ({ previous, next }) => [
+    next.phrase,
+    `${previous.weight} → ${next.weight}`,
+    evidenceForRow(next),
+  ]);
+
+  lines.push("## 收集摘要");
+  lines.push("");
+  lines.push(`- 日期：${today}`);
+  lines.push(`- 資料層：${sourceId}`);
+  lines.push(`- 載入觀測值：${observations.length}`);
+  lines.push(`- 保留狀態詞：${stateTerms}`);
+  lines.push(`- 覆蓋層詞數：${rows.length}`);
+  lines.push(`- 篩除統計：${filteredCounts}`);
   lines.push(
-    `- Observation windows: ${Object.entries(countObservationsByWindow(observations))
+    `- 觀測視窗：${Object.entries(countObservationsByWindow(observations))
       .map(([label, count]) => `${label}=${count}`)
       .join(", ")}`,
   );
@@ -763,8 +960,10 @@ function buildSummary({ today, observations, rows, filtered, stateTerms, sourceI
 
   appendDetails(
     lines,
-    `Proposed overlay (${rows.length})`,
-    rows.length === 0 ? ["No rows emitted."] : rows.map((row) => `- ${row.phrase} (${row.weight})`),
+    `僅更新觀測資料、排序不變 (${changes.metadataChanged.length})`,
+    changes.metadataChanged.length === 0
+      ? ["沒有。"]
+      : changes.metadataChanged.map(({ previous, next }) => `- ${next.phrase}：${previous.weight}（${evidenceForRow(next)}）`),
   );
 
   for (const [reason, values] of Object.entries(filtered)) {
@@ -775,11 +974,118 @@ function buildSummary({ today, observations, rows, filtered, stateTerms, sourceI
     if (values.length > 80) {
       body.push(`- ... ${values.length - 80} more`);
     }
-    appendDetails(lines, `Filtered: ${reason} (${values.length})`, body.length ? body : ["No terms."]);
+    appendDetails(lines, `已篩除：${reason} (${values.length})`, body.length ? body : ["沒有。"]);
   }
 
   lines.push("");
   return `${lines.join("\n")}\n`;
+}
+
+function loadOverlayRows(file) {
+  if (!fs.existsSync(file)) {
+    return [];
+  }
+  return fs
+    .readFileSync(file, "utf8")
+    .split(/\r?\n/)
+    .filter((line) => line && !line.startsWith("#"))
+    .map((line) => {
+      const [phrase, weight, tags] = line.split("\t");
+      return { phrase, weight, tags: tags || "" };
+    })
+    .filter((row) => row.phrase && row.weight);
+}
+
+function compareOverlayRows(previousRows, nextRows) {
+  const previousByPhrase = new Map(previousRows.map((row) => [row.phrase, row]));
+  const nextByPhrase = new Map(nextRows.map((row) => [row.phrase, row]));
+  const added = nextRows.filter((row) => !previousByPhrase.has(row.phrase));
+  const removed = previousRows.filter((row) => !nextByPhrase.has(row.phrase));
+  const weightChanged = [];
+  const metadataChanged = [];
+
+  for (const next of nextRows) {
+    const previous = previousByPhrase.get(next.phrase);
+    if (!previous) continue;
+    if (previous.weight !== next.weight) {
+      weightChanged.push({ previous, next });
+    } else if (previous.tags !== next.tags) {
+      metadataChanged.push({ previous, next });
+    }
+  }
+
+  const byPhrase = (left, right) => left.phrase.localeCompare(right.phrase);
+  return {
+    added: added.sort(byPhrase),
+    removed: removed.sort(byPhrase),
+    weightChanged: weightChanged.sort((left, right) => byPhrase(left.next, right.next)),
+    metadataChanged: metadataChanged.sort((left, right) => byPhrase(left.next, right.next)),
+    behavioralCount: added.length + removed.length + weightChanged.length,
+  };
+}
+
+function appendChangeTable(lines, title, entries, formatRow) {
+  lines.push(`## ${title} (${entries.length})`);
+  lines.push("");
+  if (entries.length === 0) {
+    lines.push("沒有。\n");
+    return;
+  }
+  lines.push("| 詞彙 | 權重 | 訊號／原因 |");
+  lines.push("| --- | --- | --- |");
+  const visibleEntries = entries.slice(0, PR_CHANGE_TABLE_LIMIT);
+  for (const entry of visibleEntries) {
+    const [phrase, weight, detail] = formatRow(entry);
+    lines.push(`| ${phrase} | ${weight} | ${detail} |`);
+  }
+  lines.push("");
+  if (entries.length > visibleEntries.length) {
+    appendDetails(
+      lines,
+      `${title}其餘 ${entries.length - visibleEntries.length} 項`,
+      entries.slice(PR_CHANGE_TABLE_LIMIT).map((entry) => {
+        const [phrase, weight, detail] = formatRow(entry);
+        return `- ${phrase}｜${weight}｜${detail}`;
+      }),
+    );
+  }
+}
+
+function evidenceForRow(row) {
+  const tags = Object.fromEntries(
+    row.tags.split(",").map((tag) => {
+      const [key, value] = tag.split("=", 2);
+      return [key, value || ""];
+    }),
+  );
+  const details = [
+    tags.source ? `來源 ${tags.source.replaceAll("+", "、")}` : null,
+    tags.signal_30 ? `30 天訊號 ${tags.signal_30}` : null,
+    tags.seen_days_30 ? `觀測 ${tags.seen_days_30} 天` : null,
+    tags.last_seen ? `最近 ${tags.last_seen}` : null,
+    tags.derived_from ? `派生自 ${tags.derived_from.replaceAll("+", "、")}` : null,
+  ].filter(Boolean);
+  return details.join("；") || "無額外訊號";
+}
+
+function removalReason(phrase, filtered) {
+  const reasons = {
+    expired: "超過保留期限",
+    weak_signal: "訊號不足",
+    existing_phrase: "已收錄於基底詞庫",
+    covered_by_existing_core: "既有核心詞已涵蓋",
+    typeable_by_top_segments: "可由高排名片段自然輸入",
+    missing_character_reading: "無法推導讀音",
+    query_like: "查詢型詞",
+    too_short_or_long: "詞長不符合規則",
+    non_han: "非全漢字詞",
+  };
+  for (const [reason, values] of Object.entries(filtered)) {
+    if (values.some((value) => value === phrase || value.startsWith(`${phrase} (`))) {
+      return reasons[reason] || "未通過目前篩選規則";
+    }
+  }
+  return "未通過目前篩選規則";
 }
 
 function appendDetails(lines, summary, body) {
@@ -872,6 +1178,8 @@ function canonicalizeState(state, canonicalize) {
         seen_windows: mapSeenWindowsToSets(entry.seen_windows),
         max_traffic: entry.max_traffic || 0,
         derived_from: new Set(entry.derived_from),
+        sources: new Set(entry.sources),
+        admitted: Boolean(entry.admitted),
       });
       continue;
     }
@@ -884,6 +1192,8 @@ function canonicalizeState(state, canonicalize) {
     }
     previous.max_traffic = Math.max(previous.max_traffic, entry.max_traffic || 0);
     for (const source of entry.derived_from) previous.derived_from.add(source);
+    for (const source of entry.sources) previous.sources.add(source);
+    previous.admitted ||= Boolean(entry.admitted);
   }
   return result;
 }

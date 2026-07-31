@@ -5,8 +5,8 @@ import path from "node:path";
 import readline from "node:readline";
 import { fileURLToPath } from "node:url";
 
-const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const EXPLICIT_PATH = path.join(ROOT, "sources/chiaki-modern-overlay/explicit.tsv");
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
+const UNIGRAM_PATH = path.join(ROOT, "sources/chiaki-modern-overlay/unigrams.tsv");
 const NORMALIZED_PATH =
   process.env.NORMALIZED_PATH ?? path.join(ROOT, "normalized/smart-mandarin.tsv");
 const DEFAULT_TAGS = "chiaki-modern-overlay,auto-pr";
@@ -104,11 +104,11 @@ const COMPONENT_VALUES = new Map(COMPONENTS);
 const TONE_KEYS = new Set(["6", "3", "4", "7"]);
 
 const USAGE = `Usage:
-  node scripts/add-explicit.mjs <keyboard-zhuyin> <phrase> [weight] [--tag TAG] [--tags TAGS] [--dry-run]
+  node scripts/lexicon/add-unigram.mjs <keyboard-zhuyin> <phrase> [weight] [--tag TAG] [--tags TAGS] [--dry-run]
 
 Examples:
-  node scripts/add-explicit.mjs "su3 cl3" 你好 --dry-run
-  node scripts/add-explicit.mjs "ek7" 個 -2.9 --tag neutral-tone
+  node scripts/lexicon/add-unigram.mjs "su3 cl3" 你好 --dry-run
+  node scripts/lexicon/add-unigram.mjs "ek7" 個 -2.9 --tag neutral-tone
 
 Notes:
   Use standard Taiwan Zhuyin keyboard keys: su3 = ㄋㄧˇ, cl3 = ㄏㄠˇ.
@@ -125,8 +125,8 @@ async function main() {
   const bpmfSyllables = keyboardToBpmfSyllables(options.keyboard);
   const qstring = qstringForBpmfSyllables(bpmfSyllables);
   const lexicon = fs.existsSync(NORMALIZED_PATH) ? await loadLexicon(NORMALIZED_PATH) : null;
-  const explicitRows = await loadExplicitRows(EXPLICIT_PATH);
-  const existingExplicit = explicitRows.find(
+  const unigramRows = await loadUnigramRows(UNIGRAM_PATH);
+  const existingUnigram = unigramRows.find(
     (row) => row.qstring === qstring && row.phrase === options.phrase,
   );
   const suggested = options.weight ?? suggestWeight(qstring, options.phrase, lexicon);
@@ -139,9 +139,9 @@ async function main() {
   console.log(`tags: ${tags}`);
   printContext(qstring, options.phrase, lexicon);
 
-  if (existingExplicit && !options.force) {
+  if (existingUnigram && !options.force) {
     console.error(
-      `\nAlready exists in ${relative(EXPLICIT_PATH)}: ${existingExplicit.line}`,
+      `\nAlready exists in ${relative(UNIGRAM_PATH)}: ${existingUnigram.line}`,
     );
     console.error("Use --force to append anyway.");
     process.exit(1);
@@ -152,8 +152,8 @@ async function main() {
     return;
   }
 
-  fs.appendFileSync(EXPLICIT_PATH, `${line}\n`, "utf8");
-  console.log(`\nAppended to ${relative(EXPLICIT_PATH)}:\n${line}`);
+  fs.appendFileSync(UNIGRAM_PATH, `${line}\n`, "utf8");
+  console.log(`\nAppended to ${relative(UNIGRAM_PATH)}:\n${line}`);
 }
 
 function parseArgs(argv) {
@@ -301,7 +301,7 @@ async function loadLexicon(filePath) {
   return { rows, byPhrase, byQstring, bestByQstring };
 }
 
-async function loadExplicitRows(filePath) {
+async function loadUnigramRows(filePath) {
   const rows = [];
   await forEachLine(filePath, (line) => {
     const [qstring, phrase] = line.split("\t");

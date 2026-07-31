@@ -44,14 +44,25 @@ manifest 記錄的是該 inventory file 的 SHA-256，而不是單一 upstream a
 
 - 名稱：ChiaKey modern overlay phrases
 - 本地來源：
+  - `sources/chiaki-modern-overlay/unigrams.tsv`
   - `sources/chiaki-modern-overlay/explicit.tsv`
-- 授權：CC BY-NC 4.0；商用需取得 Chiaki.C 許可
+  - `sources/chiaki-modern-overlay/reading-supplements.tsv`
+- 授權：CC BY-NC 4.0；商用需取得 Chiaki.C 許可（`reading-supplements.tsv` 例外，見下）
 - 署名：Chiaki.C
 - 再散布決策：納入公開 release
 
 這個來源刻意保持小型且由專案自有維護。它用於實測時發現的明顯 seed lexicon 缺漏，例如不應等未來大型 frequency corpus 才補上的基本輸入法用語。
 
-`explicit.tsv` 用於取代特定 qstring 權重修正與加入常見錯讀音，例如為 neutral-tone `ㄍㄜ˙` / `ek7` 提升 `個`。
+`unigrams.tsv` 用於新增缺詞與補充讀音；`explicit.tsv` 用於取代特定 qstring 權重修正，例如為 neutral-tone `ㄍㄜ˙` / `ek7` 提升 `個`。
+
+`reading-supplements.tsv` 補既有詞缺漏的破音字讀音，是通用機制（不限來源），目前內容全部重製自教育部《重編國語辭典修訂本》（透過 `g0v/moedict-data` 查閱、比對後產生）。這部分適用教育部自己的授權，不是 Chiaki.C 的 CC BY-NC 4.0：
+
+- 授權：創用CC－姓名標示－禁止改作 3.0 台灣（<https://ti-wb.github.io/creativecommon-tw/index.html>）
+- 署名：教育部（終身教育司）
+- 條款要點：允許重製、散布（含商業性利用），不得改作
+- 再散布決策：納入公開 release——僅重製讀音本身（詞、qstring），未改作，屬授權允許範圍；moedict-data 本身不 vendor、release 時也不讀取，見下方「未納入」一節
+
+詳細格式、產生流程與匯入規則見 [sources/chiaki-modern-overlay/README.md](../sources/chiaki-modern-overlay/README.md)。
 
 ## 自 2026.06.3 起納入
 
@@ -73,10 +84,7 @@ release builder 匯入這些 pinned files：
 
 `tsi.csv` 與 `alt.csv` 會作為主要現代詞彙層匯入，因為它們包含明確注音讀音。對 libchewing-data 中存在的詞，builder 會用 libchewing 的明確讀音取代 bootstrap database 中較舊的推導讀音。`word.csv` 只用來補缺少的單字讀音。
 
-自 `2026.06.5` 起，`tsi.csv` 中的單字 rows 也會匯入作為 character-frequency correction layer。這讓 `我` 等常用字保留 libchewing 頻率，而不是與 bootstrap database 中同讀音的罕用字 tie。
-character-frequency mapping 會保留一個小型 single-character segmentation penalty，避免常用字意外超過同讀音的明確詞彙 rows。
-較低排序的 libchewing 多字 rows 也會取得 bounded segment bonus，讓 `地基`、`權重` 這類已知詞能高於同讀音的逐字切分，同時不把原本已強的詞推過 phrase scale 的上緣。
-當多個高頻 libchewing phrase 都以同一個字與同一讀音開頭時，weak single-character readings 也可被提升。這能讓 `數` / `ㄕㄨˋ` 這類讀音依據 `數位`、`數學`、`數量`、`數字` 等詞的證據出現在候選列表，同時仍保持在最強 phrase evidence 之下。
+自 `2026.06.5` 起，`tsi.csv` 中的單字 rows 也會匯入作為 character-frequency correction layer。這讓 `我` 等常用字保留 libchewing 頻率，而不是與 bootstrap database 中同讀音的罕用字 tie。character-frequency mapping 會保留一個小型 single-character segmentation penalty，避免常用字意外超過同讀音的明確詞彙 rows。較低排序的 libchewing 多字 rows 也會取得 bounded segment bonus，讓 `地基`、`權重` 這類已知詞能高於同讀音的逐字切分，同時不把原本已強的詞推過 phrase scale 的上緣。當多個高頻 libchewing phrase 都以同一個字與同一讀音開頭時，weak single-character readings 也可被提升。這能讓 `數` / `ㄕㄨˋ` 這類讀音依據 `數位`、`數學`、`數量`、`數字` 等詞的證據出現在候選列表，同時仍保持在最強 phrase evidence 之下。
 
 最終 release database 也會從組裝完成的 `unigrams` table 派生 `associated_phrases`，供 runtime associated-phrase module 使用。每列會把已 commit 的 head character 映射到 comma-separated phrase tails，所以 commit `我` 後可以提示 `們`、`的` 等 tails。這張表會在所有 lexical imports 與 policy layers 套用後產生，release 完成前也會驗證代表性 rows。
 
@@ -252,14 +260,9 @@ sources/keykey-module-cin/source-inventory.sha256
 - 署名：Chiaki.C
 - 再散布決策：納入公開 release
 
-這個來源是自動維護的短期熱詞補充層。Google Trends 只作為 discovery signal；
-daily collector 會查詢 24 小時、48 小時與 7 天 trending windows，並把最小化、
-正規化後的 observations 存成 GitHub Actions artifacts。weekly refresh 才會彙整狀態
-並寫出本 repository 自有的 `phrases.tsv`。
+這個來源是自動維護的短期熱詞補充層。Google Trends 只作為 discovery signal；daily collector 會查詢 24 小時、48 小時與 7 天 trending windows，並把最小化、正規化後的 observations 存成 GitHub Actions artifacts。weekly refresh 才會彙整狀態並寫出本 repository 自有的 `phrases.tsv`。
 
-repository 不保存 Google Trends 的原始 CSV、排名表、新聞摘要或完整 related queries。
-`state.json` 只保存每個候選詞的最小聚合狀態，例如 `first_seen`、`last_seen`、
-`seen_dates` 與 `max_traffic`，用於自動權重與過期清理。
+repository 不保存 Google Trends 的原始 CSV、排名表、新聞摘要或完整 related queries。`state.json` 只保存每個候選詞的最小聚合狀態，例如 `first_seen`、`last_seen`、`seen_dates` 與 `max_traffic`，用於自動權重與過期清理。
 
 自動收詞規則刻意保守：
 
@@ -346,32 +349,6 @@ release builder 會在 `chiaki-modern-overlay` 之後匯入 unigram rows，並�
 sources/chiaki-web-overlay/source-inventory.sha256
 ```
 
-### chiaki-synthetic-overlay
-
-- 名稱：Chiaki.C synthetic Taiwan internet usage overlay
-- 本地來源：
-  - `sources/chiaki-synthetic-overlay/unigrams.tsv`
-  - `sources/chiaki-synthetic-overlay/bigrams.tsv`
-- 來源材料：由 GPT-5.5 與 Gemma 4 產生大量的合成語料，指示大語言模型產生虛擬的聊天記錄、文章、社群留言等，並進行詞彙提煉。
-- 授權：CC BY-NC 4.0；商用需取得 Chiaki.C 許可
-- 署名：Chiaki.C
-- 再散布決策：納入公開 source review、open-source project use 與 non-commercial release builds
-
-這個來源包含 Chiaki.C 維護的合成台灣語料庫。原始語料不在這個 repository 再散布；這裡只保留最終提煉的詞彙庫：
-
-```text
-qstring<TAB>phrase<TAB>weight<TAB>tags
-qstring<TAB>previous<TAB>current<TAB>probability
-```
-
-bigram file 會先依 release unigram table 做預先篩選，並可包含使用 `!` / `$` qstring markers 的 sentence-boundary rows。
-
-產生的 source inventory 存放於：
-
-```text
-sources/chiaki-synthetic-overlay/source-inventory.sha256
-```
-
 ### openformosa-common-voice-25-zh-tw
 
 - 名稱：OpenFormosa Common Voice 25 zh-TW bigram overlay
@@ -390,6 +367,42 @@ sources/chiaki-synthetic-overlay/source-inventory.sha256
 sources/openformosa-common-voice-25-zh-tw/source-inventory.sha256
 ```
 
+### chiaki-tw-homophone-bigram
+
+- 名稱：台灣同音消歧 full bigram overlay
+- 本地來源：`sources/chiaki-tw-homophone-bigram/bigrams.tsv`
+- 來源材料：政府機關新聞、立法院公報詢答逐字稿、PTT 公開貼文、經 Plurk 官方 API 取得的公開貼文、正體轉換後的中文維基百科條文
+- 授權：CC BY-NC 4.0
+- 署名：Chiaki.C；並保留來源目錄 `LICENSE` 所列的上游來源資訊
+- 再散布決策：納入公開 release，限非商業用途；不提供商業例外
+
+這個來源只散布詞對、輸入碼與統計強度，不散布任何上游文本或中間語料。完整來源記錄與建置方法見 `sources/chiaki-tw-homophone-bigram/`。
+
+### chiaki-tw-homophone-bigram-clean
+
+- 名稱：台灣同音消歧 clean bigram add-on
+- 本地來源：`sources/chiaki-tw-homophone-bigram-clean/bigrams.tsv`
+- 來源材料：政府機關新聞與立法院公報詢答逐字稿
+- 授權：ODbL 1.0
+- 署名：依來源目錄 `LICENSE` 的 ODbL 與上游來源標示
+- 再散布決策：作為獨立 add-on 公開發布；不由正式 release 預設匯入
+
+這份 add-on 的來源範圍、格式、重建程序與品質量測見 `sources/chiaki-tw-homophone-bigram-clean/`。
+
+### tw-ly-transcript
+
+- 名稱：立法院公報詢答語料覆蓋層
+- 本地來源：`sources/tw-ly-transcript/bigrams.tsv`
+- 來源材料：立法院公報第 10、11 屆議程之詢答段落逐字稿
+- 上游 API：<https://ly.govapi.tw/v2/>（g0v 維護，資料源自立法院議事暨公報資訊網）
+- 授權：立法院網站資料開放宣告（無償、非專屬、可再授權，得重製改作，需標示來源）
+- 署名：立法院議事暨公報資訊網／g0v ly.govapi.tw
+- 再散布決策：以萃取並複核後的 runtime bigram rows 納入公開 release
+
+這個來源只貢獻選出的 runtime bigram rows。raw 公報文字不在這個 repository 再散布。人工複核紀錄保存於 `sources/tw-ly-transcript/review-decisions.tsv`，供重新產生時沿用。
+
+萃取與過濾方法、語域偏誤分析與品質評估見 `sources/tw-ly-transcript/README.md` 的研究附錄。
+
 ## 未納入
 
 這些來源可作為有用參考，但第一版 release artifacts 不會把它們當作 raw sources 納入：
@@ -397,7 +410,8 @@ sources/openformosa-common-voice-25-zh-tw/source-inventory.sha256
 - 歷史資料包中的 Yahoo search terms。
 - Sinica Corpus raw material。
 - Commercial CEROD / SQLite extension assets。
-- CC-CEDICT、moedict、Wikimedia、Tatoeba、wordfreq、SUBTLEX-CH、Google Books Ngram、Google Chinese Web 5-gram。
+- CC-CEDICT、Wikimedia、Tatoeba、wordfreq、SUBTLEX-CH、Google Books Ngram、Google Chinese Web 5-gram。
+- moedict-data（`g0v/moedict-data`）本身不 vendor、release 也不讀取，但自 `chiaki-modern-overlay/reading-supplements.tsv` 起，其收錄的教育部《重編國語辭典修訂本》讀音資料依教育部自己的「創用CC－姓名標示－禁止改作 3.0 台灣」授權條款被重製進該表，詳見上方 `chiaki-modern-overlay` 條目。
 
 部分繼承自開放 KeyKey Boneyard tree 的 bootstrap files 有 `Yahoo.txt` 或 `SinicaCorpusOverrides.txt` 這類歷史名稱。因授權問題，本專案無法獲取、也不會複製私有 raw Yahoo search logs、Sinica corpus files 或 CEROD binaries。
 

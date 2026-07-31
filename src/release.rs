@@ -85,13 +85,6 @@ pub fn run() -> Result<()> {
         &mut source_keys,
         &mut import_results,
     )?;
-    import_explicit_overlay(
-        &mut conn,
-        &cfg,
-        &paths,
-        &mut source_keys,
-        &mut import_results,
-    )?;
     import_chiaki_web_overlay(
         &mut conn,
         &cfg,
@@ -99,7 +92,7 @@ pub fn run() -> Result<()> {
         &mut source_keys,
         &mut import_results,
     )?;
-    import_chiaki_synthetic_overlay(
+    import_modern_unigrams(
         &mut conn,
         &cfg,
         &paths,
@@ -132,6 +125,20 @@ pub fn run() -> Result<()> {
         &mut source_keys,
         &mut import_results,
     )?;
+    import_explicit_overlay(
+        &mut conn,
+        &cfg,
+        &paths,
+        &mut source_keys,
+        &mut import_results,
+    )?;
+    import_reading_supplements(
+        &mut conn,
+        &cfg,
+        &paths,
+        &mut source_keys,
+        &mut import_results,
+    )?;
     // Retired: superseded by the engine length prior (Node::c_phraseLengthBonus).
     // import_phrase_split_rerank(&mut conn, &mut source_keys, &mut import_results)?;
     import_fragment_demotions(
@@ -141,8 +148,12 @@ pub fn run() -> Result<()> {
         &mut source_keys,
         &mut import_results,
     )?;
-    import_chiaki_synthetic_bigrams(&mut conn, &cfg, &paths, &mut import_results)?;
     import_openformosa_common_voice_bigrams(&mut conn, &cfg, &paths, &mut import_results)?;
+    // tw-ly-transcript bigrams are retired: after removing its 65 nq-bound 得/部份
+    // rows the layer still adds nothing over chiaki-tw-homophone-bigram (+0.07% on
+    // written, -0.5% on the other three registers). The source directory and its
+    // research notes are kept for provenance.
+    import_chiaki_tw_homophone_bigrams(&mut conn, &cfg, &paths, &mut import_results)?;
     import_chiaki_web_bigrams(
         &mut conn,
         &cfg,
@@ -227,12 +238,12 @@ fn verify_inputs(
         paths.mozc_emoticon_categorized.clone(),
         paths.mozc_emoticon_tsv.clone(),
         paths.bpmf_ext_cin.clone(),
+        paths.overlay_unigrams.clone(),
         paths.overlay_explicit.clone(),
         paths.overlay_bigrams.clone(),
+        paths.overlay_reading_supplements.clone(),
         paths.chiaki_web_overlay_unigrams.clone(),
         paths.chiaki_web_overlay_bigrams.clone(),
-        paths.chiaki_synthetic_unigrams.clone(),
-        paths.chiaki_synthetic_bigrams.clone(),
         paths.chiakey_auto_hotwords_phrases.clone(),
         paths.chiakey_auto_hotwords_state.clone(),
         paths.openformosa_common_voice_bigrams.clone(),
@@ -262,7 +273,6 @@ fn create_output_dirs(cfg: &Config, paths: &ReleasePaths) -> Result<()> {
     fs::create_dir_all(&paths.rime_conversion_source_dir)?;
     fs::create_dir_all(&paths.overlay_source_dir)?;
     fs::create_dir_all(&paths.chiaki_web_overlay_source_dir)?;
-    fs::create_dir_all(&paths.chiaki_synthetic_source_dir)?;
     fs::create_dir_all(&paths.chiakey_auto_hotwords_source_dir)?;
     fs::create_dir_all(&paths.openformosa_common_voice_source_dir)?;
     fs::create_dir_all(&paths.fragment_denylist_source_dir)?;
@@ -899,6 +909,39 @@ fn import_explicit_overlay(
     Ok(())
 }
 
+fn import_reading_supplements(
+    conn: &mut Connection,
+    cfg: &Config,
+    paths: &ReleasePaths,
+    source_keys: &mut HashMap<(String, String), SourceRecord>,
+    import_results: &mut Vec<ImportResult>,
+) -> Result<()> {
+    let (readings, _seen, _skipped) =
+        importers::parse_reading_supplements(&paths.overlay_reading_supplements)?;
+    let existing_exact_keys = db::load_existing_exact_keys(conn)?;
+    let existing_phrase_weights = db::load_best_unigram_weights_by_current(conn)?;
+    let existing_qstring_weights = db::load_best_qstring_weights(conn)?;
+    let (records, seen, skipped) = importers::reading_supplement_records(
+        &readings,
+        &existing_exact_keys,
+        &existing_phrase_weights,
+        &existing_qstring_weights,
+    );
+    let result = db::apply_records(
+        conn,
+        records,
+        &repo_relative(&cfg.root, &paths.overlay_reading_supplements)?,
+        "chiaki-modern-overlay-reading-supplements",
+        &sha256_file(&paths.overlay_reading_supplements)?,
+        seen,
+        skipped,
+        false,
+    )?;
+    remember_records(source_keys, &result);
+    import_results.push(result);
+    Ok(())
+}
+
 fn import_chiaki_web_overlay(
     conn: &mut Connection,
     cfg: &Config,
@@ -923,21 +966,20 @@ fn import_chiaki_web_overlay(
     Ok(())
 }
 
-fn import_chiaki_synthetic_overlay(
+fn import_modern_unigrams(
     conn: &mut Connection,
     cfg: &Config,
     paths: &ReleasePaths,
     source_keys: &mut HashMap<(String, String), SourceRecord>,
     import_results: &mut Vec<ImportResult>,
 ) -> Result<()> {
-    let (records, seen, skipped) =
-        importers::parse_chiaki_synthetic_overlay(&paths.chiaki_synthetic_unigrams, cfg)?;
+    let (records, seen, skipped) = importers::parse_modern_unigrams(&paths.overlay_unigrams, cfg)?;
     let result = db::apply_records(
         conn,
         records,
-        &repo_relative(&cfg.root, &paths.chiaki_synthetic_unigrams)?,
-        "chiaki-synthetic-unigrams",
-        &sha256_file(&paths.chiaki_synthetic_unigrams)?,
+        &repo_relative(&cfg.root, &paths.overlay_unigrams)?,
+        "chiaki-modern-unigrams",
+        &sha256_file(&paths.overlay_unigrams)?,
         seen,
         skipped,
         false,
@@ -1070,29 +1112,6 @@ fn import_chiaki_modern_bigrams(
     Ok(())
 }
 
-fn import_chiaki_synthetic_bigrams(
-    conn: &mut Connection,
-    cfg: &Config,
-    paths: &ReleasePaths,
-    import_results: &mut Vec<ImportResult>,
-) -> Result<()> {
-    let (records, seen, skipped) =
-        importers::parse_bigram_overlay(&paths.chiaki_synthetic_bigrams, cfg)?;
-    let unigrams = db::load_best_unigram_weights_by_current(conn)?;
-    let records = importers::calibrate_bigram_boost(records, cfg.synthetic_bigram_boost, &unigrams);
-    let result = db::apply_bigram_records(
-        conn,
-        &records,
-        &repo_relative(&cfg.root, &paths.chiaki_synthetic_bigrams)?,
-        "chiaki-synthetic-bigrams",
-        &sha256_file(&paths.chiaki_synthetic_bigrams)?,
-        seen,
-        skipped,
-    )?;
-    import_results.push(result);
-    Ok(())
-}
-
 fn import_openformosa_common_voice_bigrams(
     conn: &mut Connection,
     cfg: &Config,
@@ -1101,7 +1120,7 @@ fn import_openformosa_common_voice_bigrams(
 ) -> Result<()> {
     let (records, seen, skipped) =
         importers::parse_bigram_overlay(&paths.openformosa_common_voice_bigrams, cfg)?;
-    let unigrams = db::load_best_unigram_weights_by_current(conn)?;
+    let unigrams = db::load_best_unigram_weights_by_current_and_qstring(conn)?;
     let records =
         importers::calibrate_bigram_boost(records, cfg.commonvoice_bigram_boost, &unigrams);
     let result = db::apply_bigram_records(
@@ -1110,6 +1129,30 @@ fn import_openformosa_common_voice_bigrams(
         &repo_relative(&cfg.root, &paths.openformosa_common_voice_bigrams)?,
         "openformosa-common-voice-bigrams",
         &sha256_file(&paths.openformosa_common_voice_bigrams)?,
+        seen,
+        skipped,
+    )?;
+    import_results.push(result);
+    Ok(())
+}
+
+fn import_chiaki_tw_homophone_bigrams(
+    conn: &mut Connection,
+    cfg: &Config,
+    paths: &ReleasePaths,
+    import_results: &mut Vec<ImportResult>,
+) -> Result<()> {
+    let (records, seen, skipped) =
+        importers::parse_bigram_overlay(&paths.chiaki_tw_homophone_bigrams, cfg)?;
+    let unigrams = db::load_best_unigram_weights_by_current_and_qstring(conn)?;
+    let records =
+        importers::calibrate_bigram_boost(records, cfg.chiaki_tw_homophone_bigram_boost, &unigrams);
+    let result = db::apply_bigram_records(
+        conn,
+        &records,
+        &repo_relative(&cfg.root, &paths.chiaki_tw_homophone_bigrams)?,
+        "chiaki-tw-homophone-bigrams",
+        &sha256_file(&paths.chiaki_tw_homophone_bigrams)?,
         seen,
         skipped,
     )?;

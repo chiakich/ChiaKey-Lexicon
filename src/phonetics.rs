@@ -234,6 +234,61 @@ fn absolute_order_string(components: &[u16]) -> String {
     format!("{first}{second}")
 }
 
+/// Inverse of [`qstring_for_bpmf_sequence`]: decodes a KeyKey qstring back
+/// into a space-separated bopomofo sequence, for audit tooling that needs to
+/// display engine readings in human-readable zhuyin.
+pub fn bpmf_for_qstring(qstring: &str) -> Option<String> {
+    let chars = qstring.chars().collect::<Vec<_>>();
+    if chars.is_empty() || chars.len() % 2 != 0 {
+        return None;
+    }
+    let mut syllables = Vec::new();
+    for pair in chars.chunks(2) {
+        let first = pair[0] as u32;
+        let second = pair[1] as u32;
+        if first < 48 || second < 48 {
+            return None;
+        }
+        let order = (first - 48) + (second - 48) * 79;
+        syllables.push(bpmf_for_order(order)?);
+    }
+    Some(syllables.join(" "))
+}
+
+fn bpmf_for_order(order: u32) -> Option<String> {
+    let tone = order / (22 * 4 * 14);
+    let remainder = order % (22 * 4 * 14);
+    let vowel = remainder / (22 * 4);
+    let remainder = remainder % (22 * 4);
+    let medial = remainder / 22;
+    let consonant = remainder % 22;
+
+    let mut syllable = String::new();
+    if consonant != 0 {
+        syllable.push_str(component_text(consonant as u16)?);
+    }
+    if medial != 0 {
+        syllable.push_str(component_text((medial * 0x20) as u16)?);
+    }
+    if vowel != 0 {
+        syllable.push_str(component_text((vowel * 0x80) as u16)?);
+    }
+    if tone != 0 {
+        syllable.push_str(component_text((tone * 0x800) as u16)?);
+    }
+    if syllable.is_empty() {
+        return None;
+    }
+    Some(syllable)
+}
+
+fn component_text(value: u16) -> Option<&'static str> {
+    COMPONENTS
+        .iter()
+        .find(|item| item.value == value)
+        .map(|item| item.text)
+}
+
 fn is_bopomofo_component(character: char) -> bool {
     let component = character.to_string();
     COMPONENTS.iter().any(|item| item.text == component)
@@ -241,7 +296,7 @@ fn is_bopomofo_component(character: char) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use super::qstring_for_bpmf_sequence;
+    use super::{bpmf_for_qstring, qstring_for_bpmf_sequence};
 
     #[test]
     fn converts_libchewing_zhuyin_to_keykey_qstring() {
@@ -262,5 +317,41 @@ mod tests {
     #[test]
     fn converts_neutral_ge_to_expected_keykey_qstring() {
         assert_eq!(qstring_for_bpmf_sequence("ㄍㄜ˙").unwrap().0, "rq");
+    }
+
+    #[test]
+    fn decodes_qstring_back_to_bpmf() {
+        assert_eq!(bpmf_for_qstring("m0]_").unwrap(), "ㄕㄨ ㄖㄨˋ");
+        assert_eq!(bpmf_for_qstring("Nb0_").unwrap(), "ㄘㄜˋ ㄕˋ");
+        assert_eq!(bpmf_for_qstring("}Q").unwrap(), "ㄨㄛˇ");
+        assert_eq!(bpmf_for_qstring("rq").unwrap(), "ㄍㄜ˙");
+    }
+
+    #[test]
+    fn roundtrips_every_syllable_through_qstring() {
+        let syllables = [
+            "ㄅㄚ",
+            "ㄆㄧˊ",
+            "ㄇㄨˇ",
+            "ㄈㄥˋ",
+            "ㄉㄜ˙",
+            "ㄋㄩˇ",
+            "ㄐㄩㄝˊ",
+            "ㄑㄩㄢˊ",
+            "ㄒㄩㄣ",
+            "ㄓㄨㄥ",
+            "ㄔˇ",
+            "ㄕˋ",
+            "ㄖˋ",
+            "ㄗˇ",
+            "ㄘˋ",
+            "ㄙˋ",
+            "ㄦˊ",
+            "ㄚˋ",
+        ];
+        for syllable in syllables {
+            let (qstring, _) = qstring_for_bpmf_sequence(syllable).unwrap();
+            assert_eq!(bpmf_for_qstring(&qstring).unwrap(), syllable, "{syllable}");
+        }
     }
 }

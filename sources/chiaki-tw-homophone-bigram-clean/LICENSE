@@ -1,0 +1,34 @@
+Open Data Commons Open Database License (ODbL) v1.0
+
+Copyright (c) 2026 Chiaki.C
+
+The database in `bigrams.tsv` is made available under the Open Database License
+(ODbL) v1.0. The complete, authoritative licence text is available at:
+
+https://opendatacommons.org/licenses/odbl/1-0/
+
+Attribution notice
+------------------
+
+When publicly using this database or a produced work from it, attribute it as:
+
+Contains information from ChiaKey Taiwanese homophone-disambiguation clean
+bigram overlay, available under ODbL 1.0:
+https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiaki-tw-homophone-bigram-clean
+
+Upstream attribution
+--------------------
+
+This database is derived only from the sources listed in README.md. Reusers
+must also preserve the following attributions where they apply:
+
+- Executive Yuan, Mainland Affairs Council, Academia Sinica, Hakka Affairs
+  Council, and New Taipei City Government;
+- Legislative Yuan Gazette Information Network.
+
+Scope
+-----
+
+This licence applies only to `chiaki-tw-homophone-bigram-clean/bigrams.tsv`.
+It does not change the licence of any other ChiaKey Lexicon source or of the
+full release database.
