@@ -49,7 +49,8 @@ cd sources/chiaki-tw-homophone-bigram/pipeline && cargo build --release
 # 1. 語料 → 一句一行
 node scripts/build-corpora.mjs --out data --ptt-json path/to/ppt_pretrain.json
 
-# 2. 抽取相鄰詞對（Viterbi 斷詞，詞長加成 +1.0/字，對齊 walker）
+# 2. 抽取相鄰詞對（Viterbi 斷詞；詞長加成 +1.0/字對斷詞選擇無作用，與 walker
+#    不一致，見 ../README.md〈限制〉）
 ./target/release/chiakey-bigram-pipeline extract \
   --lexicon ../../../normalized/smart-mandarin.tsv \
   --out data/pairs-all.tsv \
