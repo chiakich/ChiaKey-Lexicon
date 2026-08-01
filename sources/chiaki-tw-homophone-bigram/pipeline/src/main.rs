@@ -57,6 +57,11 @@ fn is_han(c: char) -> bool {
 }
 
 // Viterbi max-score segmentation over one Han-only run.
+//
+// The length bonus is per EXTRA character, matching Node::lengthPrior() in the
+// engine. A bonus per character would sum to the run length whatever the
+// segmentation and so express no preference at all -- which is what this used
+// to do, leaving the extracted word boundaries misaligned with the walker's.
 fn segment(run: &[char], lexicon: &Lexicon) -> Vec<String> {
     let n = run.len();
     if n == 0 {
@@ -76,7 +81,7 @@ fn segment(run: &[char], lexicon: &Lexicon) -> Vec<String> {
             buffer.clear();
             buffer.extend(&run[i..i + len]);
             let score = match lexicon.words.get(buffer.as_str()) {
-                Some(w) => w + LENGTH_BONUS * len as f64,
+                Some(w) => w + LENGTH_BONUS * (len - 1) as f64,
                 None if len == 1 => UNKNOWN_CHAR_PENALTY,
                 None => continue,
             };
