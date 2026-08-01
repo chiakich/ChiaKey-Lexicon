@@ -895,3 +895,15 @@ zgnq	揍得	-3.662975	chiaki-modern-overlay,generated,compositional-cap,homophon
 ~U?1\y	給他們	-2.930131	chiaki-modern-overlay,generated,compositional-cap,homophone-collision
 ~U?1\y	給她們	-2.930138	chiaki-modern-overlay,generated,compositional-cap,homophone-collision
 ~U?1\y	給它們	-2.930178	chiaki-modern-overlay,generated,compositional-cap,homophone-collision
+# 以下為 audit-unigram-health.mjs 找出的上游讀音錯誤／錯字，來源不可改，於此壓成無效候選。
+nH_MD1	油桐花	-3.5	chiaki-modern-overlay,manual,reading-demote,audit-unigram-health
+3>x7KlzO	功高震主	-3.5	chiaki-modern-overlay,manual,reading-demote,audit-unigram-health
+OOSB	禠奪	-3.5	chiaki-modern-overlay,manual,reading-demote,audit-unigram-health
+tAKM	模稜	-3.5	chiaki-modern-overlay,manual,reading-demote,audit-unigram-health
+6_k@	菎麻	-3.5	chiaki-modern-overlay,manual,reading-demote,audit-unigram-health
+}gI:0J	右邊攔	-3.5	chiaki-modern-overlay,manual,reading-demote,audit-unigram-health
+ARI:0J	左邊攔	-3.5	chiaki-modern-overlay,manual,reading-demote,audit-unigram-health
+0>0>	統統	-3.5	chiaki-modern-overlay,manual,reading-demote,audit-unigram-health
+g6<_	俾倪	-3.5	chiaki-modern-overlay,manual,reading-demote,audit-unigram-health
+6_<_	俾倪	-3.5	chiaki-modern-overlay,manual,reading-demote,audit-unigram-health
+W[N_	栃木	-3.5	chiaki-modern-overlay,manual,reading-demote,audit-unigram-health
