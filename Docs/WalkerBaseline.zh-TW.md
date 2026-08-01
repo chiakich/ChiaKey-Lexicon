@@ -1,0 +1,69 @@
+# Walker 準確率基準線
+
+改動詞庫之前先跑這份，改完再跑一次比對。單一數字沒有意義，**要看的是同一份 gold set 在兩次之間的差**。
+
+工具是 `ChiaKey` repo 的 `WalkerGoldSet --word-level`，方法與取捨寫在該檔案的區塊註解。
+
+## 建立方式
+
+```bash
+# 在 ChiaKey repo
+T=ChiaKey-Source/Frameworks/Manjusri/Tools
+Scripts/eval-walker-goldset.sh \
+  --lexicon ../ChiaKey-Lexicon/dist/dev/ChiaKeySource-dev.db \
+  --corpus  ../ChiaKey-Lexicon/sources/chiaki-tw-homophone-bigram/pipeline/data/<語域>.txt \
+  --out     ../ChiaKey-Lexicon/tmp/goldset/<語域>.tsv \
+  --word-level --pins "$T/goldset-pins.tsv" --variants "$T/goldset-variants.tsv" \
+  --min-chars 4 --max-chars 40 --limit 50000 \
+  --mismatches ../ChiaKey-Lexicon/tmp/goldset/<語域>-miss.tsv
+```
+
+gold set 含語料原文，**不進版控**（`tmp/` 已 gitignore）。要重現得先依 `sources/chiaki-tw-homophone-bigram/pipeline/README.md` 重建語料。
+
+## 基準線（2026-08-02）
+
+詞庫：`dist/dev/ChiaKeySource-dev.db`，即 `fix/rime-variant-policy` 分支重建後的狀態。
+
+| 語域 | 來源 | gold 列 | 逐句正確 | 逐字正確 |
+| --- | --- | --- | --- | --- |
+| written | 新北市新聞（test 半） | 2,684 | 63.38% | 95.25% |
+| spoken | 立法院公報詢答 | 67,018 | 73.22% | 96.92% |
+| forum | PTT | 62,608 | 69.39% | 96.35% |
+| wiki | 中文維基 | 53,029 | 68.64% | 94.98% |
+| casual | Plurk | 13,531 | 72.82% | 95.78% |
+
+合計 198,870 列。
+
+## 錯誤結構
+
+58,399 個錯誤句、89,802 次字級替換、8,158 種混淆對。前 25 種只佔 24.6%，是長尾。
+
+**幾乎沒有斷詞層級的錯誤**：輸出與期望長度不同的只有 1 句（0.0%）。walker 的問題是**同讀音候選選錯**，不是切錯詞。這決定了改善的著力點在候選排序與上下文，不在斷詞。
+
+最大的幾群：
+
+| 混淆 | 次數 | 性質 |
+| --- | --- | --- |
+| 啊→阿、啦→拉、嘛→嗎 | 7,204 | 句末助詞輸給同音實詞。位置訊息強，是上下文層最該修的一群 |
+| 臺→台 | 2,170 | **不是錯誤**，見下 |
+| 再↔在 | 2,723 | 雙向都有，典型需要上下文 |
+| 的→得、得→的、地→的 | 2,367 | 的/地/得。已知待輸入法本體以聲調區分，bigram 層刻意不處理 |
+| 她→他、它→他、他→它 | 2,504 | 人稱/指代。上下文也未必判得出，不宜由 unigram 決定 |
+
+## 讀這份數字時的五個前提
+
+1. **`臺→台` 那 2,170 次不是 walker 錯誤，是政策生效。** gold set 的期望文字取自語料原文，維基與公報原文寫「臺」，而本專案政策選「台」。集中在 wiki（1,067／16,630 錯誤）與 spoken（1,035／17,945），其餘語域極少。
+   附帶暴露一個真實問題：整詞在詞庫裡的機構名（`臺灣師範大學`）保住「臺」，但組合出來的（`國立臺北大學法律學院`）會被拆成 `臺北`→`台北`。專有名詞未完全豁免。
+
+2. **bigram 層是用這些語料訓練的**，所以這份基準線對 `chiaki-tw-homophone-bigram` 而言是 in-sample，絕對值偏高。用於比較改動前後仍然有效（偏差在兩側相同），但不可當作對外的準確率。
+
+3. **written 只有 2,684 列**，比其他語域小一到兩個數量級。新聞句子長，落在 4–40 字範圍的本來就少。該語域的差異要大於約 ±1% 才有意義。
+
+4. **gold set 本身有取材偏差**。含上下文才能定讀音的多音詞（`數`、`更`、`曲`、`得`）整句排除，共 18,185 個詞條落在 reject 桶。這是明說的取捨，不是疏漏。
+
+5. **讀音來自詞庫本身**，不是 moedict。這是刻意的：教育部標準讀音與台灣實際讀音有系統性差異（`tmp/moedict-mismatches.tsv` 記錄 8,820 筆），拿標準讀音當標籤會在 walker 其實答對的位置判它錯。代價是標註與受測對象共用同一份讀音資料。
+
+## 已知會影響下次比對的待辦
+
+- `sources/chiaki-tw-homophone-bigram/pipeline` 的斷詞詞長加成與 walker 不一致，修正後需重產 bigram（見該來源 README〈限制〉）
+- unigram 權重不是機率分布，Katz backoff 無法直接套用
