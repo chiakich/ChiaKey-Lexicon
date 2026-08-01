@@ -804,10 +804,15 @@ fn import_single_char_homophone_rerank(
     import_results: &mut Vec<ImportResult>,
 ) -> Result<()> {
     let existing_records = db::load_existing_phrase_weights(conn)?;
+    // Same conversion policy as the main rime import: this path reads the raw
+    // essay, so without it the policy-rejected variant gets reranked back up.
+    let (conversion_rules, _, _) =
+        importers::parse_conversion_rules(&paths.rime_conversion_replacements)?;
     let (records, seen, skipped) = importers::parse_single_char_homophone_reranks(
         &paths.rime_essay_raw,
         &existing_records,
         cfg.homophone_rerank_min_ratio,
+        &conversion_rules,
     )?;
     let result = db::apply_records(
         conn,

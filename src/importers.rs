@@ -293,6 +293,7 @@ pub fn parse_single_char_homophone_reranks(
     path: &Path,
     existing_records: &[(String, String, f64)],
     min_ratio: f64,
+    conversion_rules: &[ConversionRule],
 ) -> Result<(Vec<SourceRecord>, usize, usize)> {
     let file = File::open(path).with_context(|| format!("read {}", path.display()))?;
     let reader = BufReader::new(file);
@@ -308,8 +309,17 @@ pub fn parse_single_char_homophone_reranks(
         if phrase.chars().count() != 1 {
             continue;
         }
+        // This path reads the raw essay, so the conversion policy has to be
+        // applied here too. Without it the essay's count for a variant the
+        // policy rejects reranks that variant back above the form we chose --
+        // `臺` (11268 in the essay) would keep winning over `台`. Counts merge
+        // into the target so the rejected variant's evidence is not lost.
+        let (phrase, _) = apply_conversion_rules(phrase, conversion_rules);
         if let Some(score) = parse_i64(score_text) {
-            essay_freq.insert(phrase.to_string(), score);
+            essay_freq
+                .entry(phrase)
+                .and_modify(|total| *total += score)
+                .or_insert(score);
         }
     }
 
@@ -2594,6 +2604,41 @@ mod tests {
         let _ = fs::remove_file(path);
     }
 
+    // The rerank reads the raw essay, so a variant the conversion policy rejects
+    // would otherwise be reranked straight back above the form we chose: the
+    // essay counts 臺 far more often than 台, which is exactly the opposite of
+    // the policy. Its count has to land on the target instead.
+    #[test]
+    fn single_char_rerank_moves_rejected_variant_count_onto_its_target() {
+        let path = temp_file(
+            "single-char-homophone-rerank-conversion",
+            "臺\t11268\n台\t900\n抬\t1000\n",
+        );
+        // 臺 is not in the lexicon on its own: the essay is where it comes from.
+        let existing = vec![
+            ("CE".to_string(), "台".to_string(), -0.918000),
+            ("CE".to_string(), "抬".to_string(), -0.917000),
+        ];
+        let rules = vec![ConversionRule {
+            from: "臺".to_string(),
+            to: "台".to_string(),
+            tags: "test".to_string(),
+        }];
+
+        // 臺's 11268 merges into 台's 900, clearing the ratio over 抬's 1000.
+        let (records, _, _) =
+            parse_single_char_homophone_reranks(&path, &existing, 5.0, &rules).unwrap();
+        assert_eq!(records.len(), 1);
+        assert_eq!(records[0].phrase, "台");
+
+        // Without the rules 台 only has its own 900 and stays below 抬.
+        let (bare, _, _) =
+            parse_single_char_homophone_reranks(&path, &existing, 5.0, &[]).unwrap();
+        assert!(bare.is_empty());
+
+        let _ = fs::remove_file(path);
+    }
+
     #[test]
     fn reranks_single_char_homophones_when_rime_winner_is_confident() {
         let path = temp_file(
@@ -2608,7 +2653,7 @@ mod tests {
         ];
 
         let (records, seen, skipped) =
-            parse_single_char_homophone_reranks(&path, &existing, 5.0).unwrap();
+            parse_single_char_homophone_reranks(&path, &existing, 5.0, &[]).unwrap();
 
         assert_eq!(seen, 1);
         assert_eq!(skipped, 0);
@@ -2636,7 +2681,7 @@ mod tests {
         ];
 
         let (records, seen, skipped) =
-            parse_single_char_homophone_reranks(&path, &existing, 5.0).unwrap();
+            parse_single_char_homophone_reranks(&path, &existing, 5.0, &[]).unwrap();
 
         assert_eq!(seen, 1);
         assert_eq!(skipped, 1);
@@ -2659,7 +2704,7 @@ mod tests {
         ];
 
         let (records, seen, skipped) =
-            parse_single_char_homophone_reranks(&path, &existing, 2.5).unwrap();
+            parse_single_char_homophone_reranks(&path, &existing, 2.5, &[]).unwrap();
 
         assert_eq!(seen, 1);
         assert_eq!(skipped, 0);
@@ -2692,7 +2737,7 @@ mod tests {
         ];
 
         let (records, seen, skipped) =
-            parse_single_char_homophone_reranks(&path, &existing, 2.5).unwrap();
+            parse_single_char_homophone_reranks(&path, &existing, 2.5, &[]).unwrap();
 
         assert_eq!(seen, 1);
         assert_eq!(skipped, 0);
@@ -2723,7 +2768,7 @@ mod tests {
         ];
 
         let (records, seen, skipped) =
-            parse_single_char_homophone_reranks(&path, &existing, 2.5).unwrap();
+            parse_single_char_homophone_reranks(&path, &existing, 2.5, &[]).unwrap();
 
         assert_eq!(seen, 1);
         assert_eq!(skipped, 1);
@@ -2745,7 +2790,7 @@ mod tests {
         ];
 
         let (records, seen, skipped) =
-            parse_single_char_homophone_reranks(&path, &existing, 2.5).unwrap();
+            parse_single_char_homophone_reranks(&path, &existing, 2.5, &[]).unwrap();
 
         assert_eq!(seen, 1);
         assert_eq!(skipped, 1);
@@ -2766,7 +2811,7 @@ mod tests {
         ];
 
         let (records, seen, skipped) =
-            parse_single_char_homophone_reranks(&path, &existing, 5.0).unwrap();
+            parse_single_char_homophone_reranks(&path, &existing, 5.0, &[]).unwrap();
 
         assert_eq!(seen, 1);
         assert_eq!(skipped, 1);
