@@ -116,7 +116,12 @@ node scripts/audit/audit-unigram-health.mjs --missing-out tmp/missing-readings.t
 
 排頭的判定與走訪器一致：`m_unigramCurrents` 由 `findUnigrams()` 撈出後跑 `stable_sort` 依權重排序，而 `stable_sort` 保留輸入順序，輸入順序就是 SQLite 沒有 `ORDER BY` 時的 rowid 順序。所以排頭等於 `ORDER BY probability DESC, rowid ASC` 的第一列——`db::reorder_unigrams` 正是靠重寫實體順序來決定並列時誰在前。
 
-輸出依**翻轉所需的權重差**由小到大排序。並列（差距小於 `--tie-epsilon`，預設 `1e-5`）的位置排頭完全由實體順序決定，只要有任何正向差距就能穩定翻轉，是成本最低的目標。
+排序依**國教院詞頻的方向**，不是翻轉成本。便宜翻轉不等於值得翻轉——翻轉是雙向的，現在的排頭永遠不會錯，翻過去之後換它每次都錯。`嘛`／`嗎` 差 0.000008 極易翻轉，但 `嗎` 在真實語料裡比 `嘛` 常用四倍以上，翻過去是淨損失。所以只有「輸的那方在國教院詞頻裡反而更常用」的位置才標為值得考慮（`worth_flipping` 欄）。翻轉成本仍然輸出，當次要排序。
+
+方向判準有兩個已知盲點，都會高估：
+
+- **詞頻分不出讀音**（見 `sources/naer-word-frequency/README.md`）。`嗎` 的詞頻由輕聲ㄇㄚ˙貢獻，卻會被算進它在ㄇㄚˇ上的競爭。多音字的判斷要人工複核。
+- **詞頻不知道該字多半被更長的詞吸收**。`阿` 大量出現在 `阿姨`、`阿公` 裡，那些以整詞路徑勝出，不受單字排頭影響。
 
 兩件要注意的事：
 

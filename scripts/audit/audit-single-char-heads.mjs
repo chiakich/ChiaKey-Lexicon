@@ -14,12 +14,19 @@
 // ORDER BY 時的 rowid 順序，所以排頭 = `ORDER BY probability DESC, rowid ASC`
 // 的第一列。`db::reorder_unigrams` 正是靠重寫實體順序來決定並列時誰在前。
 //
-// 判準：某個語氣詞／結構助詞在該讀音上存在，但不是排頭。輸出翻轉所需的權重差
-// （margin），由小到大排序——並列與微差最該優先看，因為翻轉成本最低。
+// 判準：某個語氣詞／結構助詞在該讀音上存在，但不是排頭。
 //
-// 這裡刻意不引用 gold set 或任何語料來挑候選：語料只用來事後量測改動效果
-// （見 Docs/WalkerBaseline.zh-TW.md），拿它挑候選再拿它驗收就是 in-sample。
-// 本工具的輸出是**假設**，要不要調整必須用 gold set 前後比對來決定。
+// 只看「翻轉成本」（權重差）排序是錯的——便宜翻轉不等於值得翻轉。翻轉是雙向的：
+// 現在的排頭永遠不會錯，翻過去之後換它每次都錯。`嘛`／`嗎` 差 0.000008 極易翻轉，
+// 但 `嗎` 在真實語料裡比 `嘛` 常用四倍以上，翻過去是淨損失。
+//
+// 所以再加一道方向判準：國教院詞頻（`sources/naer-word-frequency`）認為輸的那方
+// 比排頭更常用時，才標記為值得考慮。這份詞頻與 gold set 相互獨立，用它挑候選、
+// 用 gold set 驗收不構成 in-sample。
+//
+// 它不是充分條件：詞頻不知道該字是否多半被更長的詞吸收（`阿姨`、`阿公` 會以整詞
+// 路徑勝出），也不知道該字常用的是不是這個讀音（`吧` 多半是輕聲 ㄅㄚ˙，根本不參與
+// ㄅㄚ 的競爭）。所以輸出仍是假設，仍要靠 gold set 前後比對驗收。
 //
 // 本工具只讀不寫，不會改動 DB、來源檔或任何權重。
 //
@@ -30,13 +37,14 @@
 //   node scripts/audit/audit-single-char-heads.mjs --ties --top 30
 
 import { DatabaseSync } from "node:sqlite";
-import { existsSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 
 const DEFAULTS = {
   db: "dist/dev/ChiaKeySource-dev.db",
   bin: "target/release/chiakey-lexicon",
   sourcesDir: "sources",
+  frequency: "sources/naer-word-frequency/frequency.tsv",
   out: null,
   tiesOut: null,
   cls: null,
@@ -72,6 +80,7 @@ function parseArgs(argv) {
       case "--db": cfg.db = next(); break;
       case "--bin": cfg.bin = next(); break;
       case "--sources-dir": cfg.sourcesDir = next(); break;
+      case "--frequency": cfg.frequency = next(); break;
       case "--out": cfg.out = next(); break;
       case "--ties-out": cfg.tiesOut = next(); break;
       case "--class": cfg.cls = next(); break;
@@ -86,6 +95,7 @@ function parseArgs(argv) {
           "",
           "  --db <path>          release DB，預設 dist/dev/ChiaKeySource-dev.db",
           "  --bin <path>         Rust CLI（qstring 解回注音），預設 target/release/chiakey-lexicon",
+          "  --frequency <path>   國教院詞頻，預設 sources/naer-word-frequency/frequency.tsv",
           "  --out <file>         輸出完整清單 TSV",
           "  --ties <n>           另外列出所有前二名並列的讀音（排頭由實體順序決定）",
           "  --ties-out <file>    並列清單輸出 TSV",
@@ -120,6 +130,19 @@ function newestSourceMtime(dir) {
     }
   }
   return newest;
+}
+
+// 國教院詞頻只是方向判準，讀不到就退回單純依翻轉成本排序。
+function loadFrequency(path) {
+  const map = new Map();
+  if (!existsSync(path)) return map;
+  for (const line of readFileSync(path, "utf8").split(/\r?\n/)) {
+    if (!line || line.startsWith("#")) continue;
+    const [word, perMillion] = line.split("\t");
+    const value = Number.parseFloat(perMillion);
+    if (word && Number.isFinite(value)) map.set(word, value);
+  }
+  return map;
 }
 
 function decodeBopomofo(bin, qstrings) {
@@ -158,6 +181,11 @@ function main() {
     console.error("  先跑：cargo run --release -- prepare-release");
     if (!cfg.allowStale) process.exit(1);
     console.error("  （--allow-stale 已指定，繼續。）\n");
+  }
+
+  const frequency = loadFrequency(cfg.frequency);
+  if (!frequency.size) {
+    console.error(`  （找不到 ${cfg.frequency}，方向判準停用，只依翻轉成本排序。）`);
   }
 
   const db = new DatabaseSync(cfg.db, { readOnly: true });
@@ -202,6 +230,8 @@ function main() {
         // 翻轉所需的最小提升。並列時走訪器靠實體順序決勝，需要的是「嚴格大於」，
         // 所以這裡的 0 代表「只要有任何正向差距就會翻轉」。
         margin: head.weight - cand.weight,
+        particleFreq: frequency.get(cand.char) ?? null,
+        headFreq: frequency.get(head.char) ?? null,
         cls,
         candidates,
       });
@@ -213,7 +243,13 @@ function main() {
     new Set([...findings.map((f) => f.qstring), ...ties.map((t) => t.qstring)]),
   );
 
-  findings.sort((a, b) => a.margin - b.margin || a.qstring.localeCompare(b.qstring));
+  // 值得考慮的是「輸的那方在國教院詞頻裡反而更常用」的位置——那代表排序可能真的
+  // 反了。其餘的即使翻轉成本是零也不該動。
+  const worthFlipping = (f) =>
+    f.particleFreq !== null && f.headFreq !== null && f.particleFreq > f.headFreq;
+  const ratio = (f) =>
+    worthFlipping(f) ? f.particleFreq / Math.max(f.headFreq, 1e-9) : 0;
+  findings.sort((a, b) => ratio(b) - ratio(a) || a.margin - b.margin);
 
   console.log(`=== 單音節讀音的排頭（DB: ${cfg.db}）===`);
   console.log(`  受檢讀音：${nodes.size.toLocaleString()} 個（有兩個以上單字候選者）`);
@@ -223,14 +259,18 @@ function main() {
     if (cfg.cls && cfg.cls !== cls) continue;
     const list = findings.filter((f) => f.cls === cls);
     if (!list.length) continue;
-    console.log(`=== ${cls}（${list.length} 個位置，依翻轉成本由低到高）===`);
+    const worth = list.filter(worthFlipping).length;
+    console.log(`=== ${cls}（${list.length} 個位置，其中 ${worth} 個詞頻方向相反）===`);
     for (const f of list.slice(0, cfg.top)) {
       const reading = bpmf.get(f.qstring) || f.qstring;
-      const tie = f.margin <= cfg.tieEpsilon ? " ← 並列，排頭由實體順序決定" : "";
-      const others = f.candidates.slice(0, 3).map((c) => c.char).join("");
+      const tie = f.margin <= cfg.tieEpsilon ? " 並列" : "";
+      const freq = f.particleFreq === null || f.headFreq === null
+        ? "詞頻不明"
+        : `詞頻 ${f.particleFreq.toFixed(1)} vs ${f.headFreq.toFixed(1)}`;
+      const verdict = worthFlipping(f) ? "  ← 值得考慮" : "";
       console.log(
-        `  ${reading.padEnd(8)} ${f.particle} ${fmt(f.particleWeight)}  輸給 ${f.head} ${fmt(f.headWeight)}` +
-        `  差 ${fmt(f.margin)}  第 ${f.rank} 名／${f.candidates.length}  前三:${others}${tie}`,
+        `  ${reading.padEnd(8)} ${f.particle} 輸給 ${f.head}  差 ${fmt(f.margin)}${tie}` +
+        `  ${freq}${verdict}`,
       );
     }
     if (list.length > cfg.top) console.log(`  …其餘 ${list.length - cfg.top} 個見 --out 輸出。`);
@@ -255,7 +295,7 @@ function main() {
   console.log("  見 Docs/WalkerBaseline.zh-TW.md。");
 
   if (cfg.out) {
-    const header = "# class\treading\tqstring\tparticle\tparticle_weight\trank\tcandidate_count\thead\thead_weight\tmargin\tcandidates";
+    const header = "# class\treading\tqstring\tparticle\tparticle_weight\trank\tcandidate_count\thead\thead_weight\tmargin\tparticle_freq\thead_freq\tworth_flipping\tcandidates";
     const body = findings
       .filter((f) => !cfg.cls || f.cls === cfg.cls)
       .map((f) => [
@@ -269,6 +309,9 @@ function main() {
         f.head,
         fmt(f.headWeight),
         fmt(f.margin),
+        f.particleFreq === null ? "" : f.particleFreq.toFixed(4),
+        f.headFreq === null ? "" : f.headFreq.toFixed(4),
+        worthFlipping(f) ? "1" : "0",
         f.candidates.slice(0, 8).map((c) => c.char).join(""),
       ].join("\t"))
       .join("\n");
