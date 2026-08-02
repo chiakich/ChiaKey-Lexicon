@@ -83,7 +83,7 @@ gold set 含語料原文，**不進版控**（`tmp/` 已 gitignore）。要重�
 
 ### 2026-08-02　權重相同的候選改由國教院詞頻決定順序
 
-`db::reorder_unigrams`，見 `sources/moe-word-frequency/README.md`。權重完全不動。
+`db::reorder_unigrams`，見 `sources/naer-word-frequency/README.md`。權重完全不動。
 
 | 語域 | 逐句正確 | Δ |
 | --- | --- | --- |

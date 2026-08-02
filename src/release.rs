@@ -1149,7 +1149,7 @@ fn reorder_unigrams_by_frequency(
     paths: &ReleasePaths,
     import_results: &mut Vec<ImportResult>,
 ) -> Result<()> {
-    let path = &paths.moe_word_frequency;
+    let path = &paths.naer_word_frequency;
     if !path.exists() {
         return Ok(());
     }

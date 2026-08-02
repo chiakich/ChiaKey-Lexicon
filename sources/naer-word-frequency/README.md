@@ -1,8 +1,8 @@
-# 國教院通用詞頻表（排序依據）
+# 國家教育研究院通用詞頻表（排序依據）
 
 ## 來源代號
 
-`moe-word-frequency`
+`naer-word-frequency`
 
 ## 資料層
 
