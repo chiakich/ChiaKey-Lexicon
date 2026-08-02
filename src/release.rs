@@ -178,6 +178,8 @@ pub fn run() -> Result<()> {
     )?;
     import_prepopulated_service_data(&mut conn, &cfg, &paths, &mut import_results)?;
     import_module_cin_tables(&mut conn, &cfg, &paths, &mut import_results)?;
+    // Before the cin reorder, which reads unigram order back out.
+    reorder_unigrams_by_frequency(&mut conn, &cfg, &paths, &mut import_results)?;
     db::reorder_mandarin_bpmf_candidates(&mut conn)?;
     import_associated_phrases(&mut conn, &mut import_results)?;
 
@@ -1138,6 +1140,29 @@ fn import_openformosa_common_voice_bigrams(
         skipped,
     )?;
     import_results.push(result);
+    Ok(())
+}
+
+fn reorder_unigrams_by_frequency(
+    conn: &mut Connection,
+    cfg: &Config,
+    paths: &ReleasePaths,
+    import_results: &mut Vec<ImportResult>,
+) -> Result<()> {
+    let path = &paths.moe_word_frequency;
+    if !path.exists() {
+        return Ok(());
+    }
+    let (frequency, seen, skipped) = importers::parse_word_frequency(path)?;
+    let reordered = db::reorder_unigrams(conn, &frequency)?;
+    import_results.push(ImportResult {
+        source_path: repo_relative(&cfg.root, path)?,
+        seen,
+        added: reordered,
+        skipped,
+        records: Vec::new(),
+    });
+
     Ok(())
 }
 

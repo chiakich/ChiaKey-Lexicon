@@ -868,6 +868,42 @@ pub fn parse_bigram_overlay(
 // only at the node its cur_code encodes, so a row bound to a polyphonic word's
 // secondary reading must be measured against that reading's unigram. Keying by text
 // would anchor every reading to the strongest one and over-boost the rest.
+/// Word frequencies from the 國教院 通用詞頻表, used only to order candidates
+/// that share a weight (see `db::reorder_unigrams`). Words absent from the
+/// table are treated as zero: it covers 163,701 words, so not being in it is
+/// itself evidence of rarity.
+pub fn parse_word_frequency(path: &Path) -> Result<(Vec<(String, f64)>, usize, usize)> {
+    let file = File::open(path).with_context(|| format!("read {}", path.display()))?;
+    let reader = BufReader::new(file);
+    let mut records = Vec::new();
+    let mut seen = 0;
+    let mut skipped = 0;
+
+    for line in reader.lines() {
+        let line = line?;
+        if line.trim().is_empty() || line.starts_with('#') {
+            continue;
+        }
+        seen += 1;
+        let mut fields = line.split('\t');
+        let (Some(word), Some(value)) = (fields.next(), fields.next()) else {
+            skipped += 1;
+            continue;
+        };
+        let Ok(per_million) = value.parse::<f64>() else {
+            skipped += 1;
+            continue;
+        };
+        if word.is_empty() || per_million < 0.0 {
+            skipped += 1;
+            continue;
+        }
+        records.push((word.to_string(), per_million));
+    }
+
+    Ok((records, seen, skipped))
+}
+
 pub fn calibrate_bigram_boost(
     mut records: Vec<BigramRecord>,
     boost: f64,
