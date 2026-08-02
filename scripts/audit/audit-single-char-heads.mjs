@@ -56,15 +56,38 @@ const DEFAULTS = {
   allowStale: false,
 };
 
-// 語氣詞是封閉類，位置訊息強（幾乎只出現在句末或句中停頓），unigram 權重壓不住
-// 同音實詞時就會整批出錯。結構助詞另外分一類：`的`／`地`／`得` 依 WalkerBaseline
-// 的說明要等輸入法本體以聲調區分，bigram 層刻意不處理，不該混進來一起看。
+// 類別表必須連讀音一起指定，只列字會產生大量假訊號。
+//
+// 這些字多半是多音字，而它們「當語氣詞用」時只讀其中一個音：`呢` 當語氣詞是ㄋㄜ˙，
+// 在ㄋㄧˊ上（`呢絨`、`呢喃`）跟 `泥` 競爭時，使用者要的本來就是 `泥`；`吧` 當語氣詞
+// 是ㄅㄚ˙，不是ㄅㄚ；`喔` 是ㄛ，不是ㄨㄛˋ。若只比對字，國教院詞頻（它分不出讀音，
+// 見 sources/naer-word-frequency/README.md）會把語氣詞用法的高頻記到這些邊緣讀音頭上，
+// 把 `哪`／`挪`、`喔`／`握`、`囉`／`羅` 這些完全不該動的位置排到清單最前面。
+//
+// key 是「字 + 該字當這個類別使用時的注音」。
 const PARTICLES = new Map([
-  ...[..."啊呀哇哪啦嘞咧唄嘛嗎呢吧喔噢哦唷喲耶欸誒囉嘍咯嗯哼哎唉呦嘿"].map((c) => [c, "語氣詞"]),
-  ...[..."的地得了著過們"].map((c) => [c, "結構助詞"]),
+  // 語氣詞：位置訊息強（幾乎只出現在句末或句中停頓），unigram 權重壓不住同音實詞
+  // 時就會整批出錯。
+  ...[
+    ["啊", "ㄚ"], ["啊", "ㄚ˙"], ["呀", "ㄧㄚ˙"], ["哇", "ㄨㄚ˙"], ["哪", "ㄋㄚ˙"],
+    ["啦", "ㄌㄚ"], ["啦", "ㄌㄚ˙"], ["咧", "ㄌㄧㄝ˙"], ["唄", "ㄅㄟ˙"],
+    ["嘛", "ㄇㄚ˙"], ["嗎", "ㄇㄚ˙"], ["呢", "ㄋㄜ˙"], ["吧", "ㄅㄚ˙"],
+    ["喔", "ㄛ"], ["喔", "ㄛ˙"], ["哦", "ㄛˊ"], ["哦", "ㄛ˙"],
+    ["唷", "ㄧㄛ"], ["喲", "ㄧㄛ"], ["耶", "ㄧㄝ"], ["欸", "ㄟ"],
+    ["囉", "ㄌㄨㄛ"], ["囉", "ㄌㄡ˙"], ["嘍", "ㄌㄡ˙"], ["咯", "ㄌㄡ˙"],
+    ["嗯", "ㄣˋ"], ["嗯", "ㄣ"], ["哎", "ㄞ"], ["唉", "ㄞ"],
+    ["呦", "ㄧㄡ"], ["嘿", "ㄏㄟ"], ["哼", "ㄏㄥ"],
+  ].map(([c, r]) => [`${c}\t${r}`, "語氣詞"]),
+  // 結構助詞：`的`／`地`／`得` 依 WalkerBaseline 的說明要等輸入法本體以聲調區分，
+  // bigram 層刻意不處理，不該跟語氣詞混在一起看。
+  ...[
+    ["的", "ㄉㄜ˙"], ["地", "ㄉㄜ˙"], ["得", "ㄉㄜ˙"], ["了", "ㄌㄜ˙"],
+    ["著", "ㄓㄜ˙"], ["過", "ㄍㄨㄛ˙"], ["們", "ㄇㄣ˙"],
+  ].map(([c, r]) => [`${c}\t${r}`, "結構助詞"]),
 ]);
 
 const CLASSES = ["語氣詞", "結構助詞"];
+const PARTICLE_CHARS = new Set([...PARTICLES.keys()].map((k) => k.split("\t")[0]));
 
 function parseArgs(argv) {
   const cfg = { ...DEFAULTS };
@@ -218,8 +241,9 @@ function main() {
 
     for (let rank = 1; rank < candidates.length; rank += 1) {
       const cand = candidates[rank];
-      const cls = PARTICLES.get(cand.char);
-      if (!cls) continue;
+      // 讀音要先解碼才比對得了，所以這一輪只挑出「字在表上」的候選，
+      // 讀音的比對留到拿到注音之後（見下方 filter）。
+      if (!PARTICLE_CHARS.has(cand.char)) continue;
       findings.push({
         qstring,
         particle: cand.char,
@@ -232,7 +256,6 @@ function main() {
         margin: head.weight - cand.weight,
         particleFreq: frequency.get(cand.char) ?? null,
         headFreq: frequency.get(head.char) ?? null,
-        cls,
         candidates,
       });
     }
@@ -249,6 +272,18 @@ function main() {
     f.particleFreq !== null && f.headFreq !== null && f.particleFreq > f.headFreq;
   const ratio = (f) =>
     worthFlipping(f) ? f.particleFreq / Math.max(f.headFreq, 1e-9) : 0;
+  // 讀音解碼完成後才能判斷類別：同一個字在不同讀音下未必是語氣詞。
+  const kept = [];
+  for (const f of findings) {
+    const reading = bpmf.get(f.qstring);
+    const cls = reading ? PARTICLES.get(`${f.particle}\t${reading}`) : undefined;
+    if (!cls) continue;
+    f.cls = cls;
+    kept.push(f);
+  }
+  findings.length = 0;
+  findings.push(...kept);
+
   findings.sort((a, b) => ratio(b) - ratio(a) || a.margin - b.margin);
 
   console.log(`=== 單音節讀音的排頭（DB: ${cfg.db}）===`);
