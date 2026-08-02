@@ -5,106 +5,11 @@ use std::{
     io::{self, BufRead, BufReader, BufWriter, Write},
 };
 
-// Mimics the walker's preference for longer words (see ChiaKey Node.cpp +1.0/syllable).
-const LENGTH_BONUS: f64 = 1.0;
-const UNKNOWN_CHAR_PENALTY: f64 = -9.0;
-const MAX_WORD_CHARS: usize = 8;
+mod lexicon;
+mod reweight;
+mod unigram_counts;
 
-struct Lexicon {
-    // phrase -> best (highest) weight across readings
-    words: HashMap<String, f64>,
-    max_len: usize,
-}
-
-fn load_lexicon(path: &str) -> io::Result<Lexicon> {
-    let reader = BufReader::new(File::open(path)?);
-    let mut words = HashMap::<String, f64>::new();
-    let mut max_len = 1;
-    for line in reader.lines() {
-        let line = line?;
-        if line.starts_with('#') {
-            continue;
-        }
-        let mut fields = line.split('\t');
-        let _code = fields.next();
-        let phrase = match fields.next() {
-            Some(p) if !p.is_empty() => p,
-            _ => continue,
-        };
-        let weight: f64 = match fields.next().and_then(|w| w.parse().ok()) {
-            Some(w) => w,
-            None => continue,
-        };
-        let chars = phrase.chars().count();
-        if chars == 0 || chars > MAX_WORD_CHARS || !phrase.chars().all(is_han) {
-            continue;
-        }
-        max_len = max_len.max(chars);
-        words
-            .entry(phrase.to_string())
-            .and_modify(|w| {
-                if weight > *w {
-                    *w = weight;
-                }
-            })
-            .or_insert(weight);
-    }
-    Ok(Lexicon { words, max_len })
-}
-
-fn is_han(c: char) -> bool {
-    matches!(c as u32, 0x3400..=0x4DBF | 0x4E00..=0x9FFF | 0xF900..=0xFAFF)
-}
-
-// Viterbi max-score segmentation over one Han-only run.
-//
-// The length bonus is per EXTRA character, matching Node::lengthPrior() in the
-// engine. A bonus per character would sum to the run length whatever the
-// segmentation and so express no preference at all -- which is what this used
-// to do, leaving the extracted word boundaries misaligned with the walker's.
-fn segment(run: &[char], lexicon: &Lexicon) -> Vec<String> {
-    let n = run.len();
-    if n == 0 {
-        return Vec::new();
-    }
-    // best[i] = (score up to i, backpointer word length)
-    let mut best = vec![(f64::NEG_INFINITY, 0usize); n + 1];
-    best[0] = (0.0, 0);
-    let mut buffer = String::new();
-    for i in 0..n {
-        let (base, _) = best[i];
-        if base == f64::NEG_INFINITY {
-            continue;
-        }
-        let limit = lexicon.max_len.min(n - i);
-        for len in 1..=limit {
-            buffer.clear();
-            buffer.extend(&run[i..i + len]);
-            let score = match lexicon.words.get(buffer.as_str()) {
-                Some(w) => w + LENGTH_BONUS * (len - 1) as f64,
-                None if len == 1 => UNKNOWN_CHAR_PENALTY,
-                None => continue,
-            };
-            let candidate = base + score;
-            if candidate > best[i + len].0 {
-                best[i + len] = (candidate, len);
-            }
-        }
-    }
-    let mut words = Vec::new();
-    let mut pos = n;
-    while pos > 0 {
-        let len = best[pos].1;
-        if len == 0 {
-            // unreachable in practice: single chars always score
-            break;
-        }
-        words.push(run[pos - len..pos].iter().collect::<String>());
-        pos -= len;
-    }
-    words.reverse();
-    words
-}
+use lexicon::{is_han, load_lexicon, segment};
 
 fn extract(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
     let mut lexicon_path = None;
@@ -379,6 +284,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().skip(1).collect();
     match args.first().map(String::as_str) {
         Some("extract") => extract(&args[1..]),
+        Some("unigrams") => unigram_counts::unigrams(&args[1..]),
+        Some("reweight") => reweight::reweight(&args[1..]),
         Some("coverage") => coverage(&args[1..]),
         Some("collision") => collision(&args[1..]),
         Some("candidates") => candidates(&args[1..]),
@@ -386,7 +293,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Some("emit") => emit(&args[1..]),
         _ => {
             eprintln!(
-                "Usage:\n  extract --lexicon L --out OUT [--min-count N] CORPUS...\n  coverage --lexicon L --target T [--extracted F]... [--overlay F]... [--split dev|test|all] [--out-gaps G]"
+                "Usage:\n  extract --lexicon L --out OUT [--min-count N] CORPUS...\n  unigrams --lexicon L --out OUT CORPUS...\n  coverage --lexicon L --target T [--extracted F]... [--overlay F]... [--split dev|test|all] [--out-gaps G]"
             );
             Ok(())
         }
