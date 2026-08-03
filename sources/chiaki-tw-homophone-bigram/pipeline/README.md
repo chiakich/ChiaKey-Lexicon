@@ -87,7 +87,7 @@ awk -F'\t' 'NR>1 && $4>=3 && NF==4' data/pairs-all.tsv > data/pairs-eligible.tsv
 
 ## 幾件要知道的事
 
-- **重產不會得到一樣的 394,196 列**，因為詞庫已經變了（撞碼判定與斷詞都跟著變），這也正是重產的目的。`evaluate` 的數字要重新量，不要沿用 [../README.md](../README.md) 附錄裡的數值。
+- **重產不會得到一樣的 394,267 列**，因為詞庫已經變了（撞碼判定與斷詞都跟著變），這也正是重產的目的。`evaluate` 的數字要重新量，不要沿用 [../README.md](../README.md) 附錄裡的數值。
 - `--all-prev-readings`（每個讀音各發一列）已量測，未採用：淨值與 `--prev-primary-reading` 完全相同，列數卻多 27%。相同不是巧合——`evaluate` 不看 `previous` 的讀音，多出來的列剛好全部落在它的盲區，所以那 27% 的風險是未量測的。
 - `evaluate` 的 key 是 `(previous 文字, current, current 讀音)`。要比較兩種 `previous` 讀音政策，這個工具量不出來，得先讓它知道使用者打的是哪個讀音。
 - repo 根目錄的 `src/bigram.rs`（`build-bigram-stats`）是另一個較舊的實作，缺步驟 7 與步驟 10，沒有產生過出貨資料，不要誤改那一份。
