@@ -9,7 +9,7 @@ ChiaKey Lexicon is the Traditional Chinese / bopomofo lexicon-data project for [
 The project addresses more than word frequency—"which word is more common"—by tackling a problem with an outsized effect on bopomofo input: choosing the right word among homophones.
 
 - Extracts Taiwan-context data from about 460 million characters of real text, including government news, Legislative Yuan gazettes, PTT, Plurk, and Traditional Chinese Wikipedia.
-- Its primary layer contains 394,363 homophone-disambiguation bigrams, all targeting cases where a user's usual reading can change the selection result.
+- Its primary layer contains 394,196 homophone-disambiguation bigrams, all targeting cases where a user's usual reading can change the selection result.
 - Uses held-out tests across four domains—written prose, formal speech, forums, and messages—to measure both corrected selections and incorrect candidate takeovers, rather than judging quality by row count alone.
 - Records the source, license, and integration history for every data layer; releases can be rebuilt and traced from reviewed inputs.
 
@@ -49,7 +49,7 @@ The primary bigram layer is now `chiaki-tw-homophone-bigram`, extracted directly
 
 This research found that a bigram has only one role in a bopomofo input method: at the reading a user actually types, promote a homophone candidate that would otherwise lose. If a word already has the highest weight at its usual reading, the walker already selects it; a bigram for that word adds size but cannot change any outcome.
 
-Under this criterion, only 11.6% of the 46,822 rows in the older synthetic layer could change a result. The new layer enforces the condition during generation: all 394,363 rows occur at colliding positions where the desired candidate loses without context.
+Under this criterion, only 11.6% of the 46,822 rows in the older synthetic layer could change a result. The new layer enforces the condition during generation: all 394,196 rows occur at colliding positions where the desired candidate loses without context.
 
 #### Gating on real input accuracy
 
