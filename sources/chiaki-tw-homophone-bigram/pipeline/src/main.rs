@@ -767,14 +767,15 @@ fn evaluate(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-// Emit runtime rows in the repo's overlay format. A row is only safe when both
-// sides have an unambiguous reading: `previous` must have exactly one code, and
-// `current` is pinned to the code where its rival lives.
+// Emit runtime rows in the repo's overlay format. Both sides are pinned to one code:
+// `current` to the code where its rival lives, `previous` to its own code, or under
+// --prev-primary-reading to its usual reading when it is polyphonic.
 fn emit(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
     let mut lexicon_path = None;
     let mut input = None;
     let mut out_path = None;
     let mut all_readings = false;
+    let mut prev_primary_reading = false;
     let mut all_cur_readings = false;
     let mut rival_evidence = None;
     let mut iter = args.iter();
@@ -786,8 +787,12 @@ fn emit(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
             // full (unthresholded) pair table, used to compare a candidate against
             // its homophone rivals after the same previous word
             "--rival-evidence" => rival_evidence = iter.next().cloned(),
-            // a polyphonic previous is not wrong, it just needs one row per reading
+            // one row per reading. Measured to be worth nothing over
+            // --prev-primary-reading, and evaluate cannot see the difference — see the
+            // step 9 section of ../README.md
             "--all-prev-readings" => all_readings = true,
+            // keep a polyphonic previous, but only at its usual reading
+            "--prev-primary-reading" => prev_primary_reading = true,
             // opt-in, measured as a regression — see contested_codes
             "--all-cur-readings" => all_cur_readings = true,
             other => return Err(format!("unexpected emit argument: {other}").into()),
@@ -835,17 +840,29 @@ fn emit(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
         }
         let (prev, cur) = (f[0], f[1]);
         let docfreq: f64 = f.get(3).and_then(|v| v.parse().ok()).unwrap_or(1.0);
-        // previous must have exactly one reading, or the qstring would be a guess
         let prev_codes = match index.phrase_codes.get(prev) {
             Some(codes) => codes,
             None => continue,
         };
-        let mut unique_prev: Vec<&String> = prev_codes.iter().collect();
+        let mut unique_prev: Vec<String> = prev_codes.iter().cloned().collect();
         unique_prev.sort();
         unique_prev.dedup();
-        if unique_prev.len() != 1 && !all_readings {
-            ambiguous_prev += 1;
-            continue;
+        if unique_prev.len() != 1 {
+            // The corpus only shows characters, so it cannot say which reading of a
+            // polyphonic previous was meant. Keeping just the usual reading spends the
+            // ambiguity on the reading the user is most likely to have typed.
+            if prev_primary_reading {
+                match primary_code(&index, prev) {
+                    Some((code, _)) => unique_prev = vec![code],
+                    None => {
+                        ambiguous_prev += 1;
+                        continue;
+                    }
+                }
+            } else if !all_readings {
+                ambiguous_prev += 1;
+                continue;
+            }
         }
         // 的/地/得 are being separated by tone in the IME itself (ㄉㄜ˙ -> 的,
         // ㄉㄜˊ -> 得), so bigram rows for them are dead weight and currently
