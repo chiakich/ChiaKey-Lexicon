@@ -14,6 +14,7 @@ gg	噢	-2.5	chiaki-modern-overlay,manual,homophone-order,colloquial
 vHwT	瀏海	-1.25	chiaki-modern-overlay,manual,tw-usage,variant-rerank
 O_U3	復刻	-1.05408	chiaki-modern-overlay,manual,upstream-freq-fix,rime-supported,homophone-rerank
 F0m_	一句	-1.2	chiaki-modern-overlay,manual,tone-sandhi,demote-uninflected-reading
+B8|J	教人	-1.85	chiaki-modern-overlay,manual,polyphone,missing-reading,homophone-order
 0Jml	連動	-2.040361	chiaki-modern-overlay,manual,boneyard-legacy-fix
 0_?0	豉汁	-2.45423	chiaki-modern-overlay,manual,boneyard-legacy-fix
 0_n:	市川	-1.446913	chiaki-modern-overlay,manual,boneyard-legacy-fix
