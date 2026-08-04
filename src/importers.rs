@@ -2668,8 +2668,7 @@ mod tests {
         assert_eq!(records[0].phrase, "台");
 
         // Without the rules 台 only has its own 900 and stays below 抬.
-        let (bare, _, _) =
-            parse_single_char_homophone_reranks(&path, &existing, 5.0, &[]).unwrap();
+        let (bare, _, _) = parse_single_char_homophone_reranks(&path, &existing, 5.0, &[]).unwrap();
         assert!(bare.is_empty());
 
         let _ = fs::remove_file(path);
