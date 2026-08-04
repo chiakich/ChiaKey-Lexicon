@@ -173,7 +173,7 @@ function collectPttObservations(file, observedOn, lexicon) {
   }
   for (const candidate of Array.isArray(payload.comment_terms) ? payload.comment_terms : []) {
     const term = normalizeTerm(candidate.term);
-    if (!isPttCommentCandidate(term, candidate, source)) continue;
+    if (!isPttCommentCandidate(term, candidate, source) || lexicon.byPhrase.has(term)) continue;
     const value = candidates.get(term) || { titleIds: new Set(), maxTraffic: 0, kinds: new Set() };
     value.maxTraffic = Math.max(value.maxTraffic, numberOrNull(candidate.max_net_push) || 0);
     value.kinds.add("comment");

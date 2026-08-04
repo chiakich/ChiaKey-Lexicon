@@ -54,7 +54,13 @@ def main():
     latest_page = get_latest_page(session)
     candidates = []
     pages_scanned = 0
-    skipped = {"missing_date": 0, "outside_window": 0, "missing_title": 0, "net_push_below_threshold": 0}
+    skipped = {
+        "missing_date": 0,
+        "outside_window": 0,
+        "missing_title": 0,
+        "net_push_below_threshold": 0,
+        "parse_failed": 0,
+    }
 
     for page in range(latest_page, max(0, latest_page - INDEX_PAGE_LIMIT), -1):
         pages_scanned += 1
@@ -70,7 +76,9 @@ def main():
     articles = []
     comment_terms = {}
     for candidate in candidates:
-        parsed = json.loads(PttWebCrawler.parse(candidate["url"], candidate["article_id"], BOARD))
+        parsed = parse_article(PttWebCrawler, candidate, skipped)
+        if parsed is None:
+            continue
         published_at = parse_article_date(parsed.get("date"))
         net_push = parsed.get("message_count", {}).get("count", 0)
         if not published_at:
@@ -117,6 +125,22 @@ def main():
     }
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
     Path(args.output).write_text(json.dumps(output, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def parse_article(ptt_web_crawler, candidate, skipped):
+    """Parse one article without letting malformed pushes abort the collection.
+
+    Some PTT pushes omit ``push-ipdatetime``.  The pinned upstream crawler assumes
+    the field is always present and raises ``AttributeError`` in that case.  Treat
+    the affected article as unusable rather than discarding all observations for
+    the board.
+    """
+    try:
+        return json.loads(ptt_web_crawler.parse(candidate["url"], candidate["article_id"], BOARD))
+    except (AttributeError, KeyError, TypeError, ValueError, json.JSONDecodeError) as error:
+        skipped["parse_failed"] += 1
+        print(f"Skipping unparseable article {candidate['article_id']}: {error}", file=sys.stderr)
+        return None
 
 
 def create_session():

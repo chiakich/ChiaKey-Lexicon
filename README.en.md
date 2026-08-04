@@ -9,7 +9,7 @@ ChiaKey Lexicon is the Traditional Chinese / bopomofo lexicon-data project for [
 The project addresses more than word frequency—"which word is more common"—by tackling a problem with an outsized effect on bopomofo input: choosing the right word among homophones.
 
 - Extracts Taiwan-context data from about 460 million characters of real text, including government news, Legislative Yuan gazettes, PTT, Plurk, and Traditional Chinese Wikipedia.
-- Its primary layer contains 292,639 homophone-disambiguation bigrams, all targeting cases where a user's usual reading can change the selection result.
+- Its primary layer contains 394,267 homophone-disambiguation bigrams, all targeting cases where a user's usual reading can change the selection result.
 - Uses held-out tests across four domains—written prose, formal speech, forums, and messages—to measure both corrected selections and incorrect candidate takeovers, rather than judging quality by row count alone.
 - Records the source, license, and integration history for every data layer; releases can be rebuilt and traced from reviewed inputs.
 
@@ -49,7 +49,7 @@ The primary bigram layer is now `chiaki-tw-homophone-bigram`, extracted directly
 
 This research found that a bigram has only one role in a bopomofo input method: at the reading a user actually types, promote a homophone candidate that would otherwise lose. If a word already has the highest weight at its usual reading, the walker already selects it; a bigram for that word adds size but cannot change any outcome.
 
-Under this criterion, only 11.6% of the 46,822 rows in the older synthetic layer could change a result. The new layer enforces the condition during generation: all 292,639 rows occur at colliding positions where the desired candidate loses without context.
+Under this criterion, only 11.6% of the 46,822 rows in the older synthetic layer could change a result. The new layer enforces the condition during generation: all 394,267 rows occur at colliding positions where the desired candidate loses without context.
 
 #### Gating on real input accuracy
 
@@ -83,6 +83,8 @@ This project builds on years of work by excellent open-source lexicons and commu
 - **Legislative Yuan Gazette Information Network / g0v `ly.govapi.tw`**: Q&A transcripts that provide spontaneous spoken-language bigram material.
 - **The Executive Yuan, Mainland Affairs Council, Academia Sinica, Hakka Affairs Council, and New Taipei City Government**: government news releases under the Government Open Data License, providing written-language bigram material.
 - **PTT, Plurk, and Traditional Chinese Wikipedia**: forum, public-post, and encyclopedia-text sources for the primary bigram layer; each source's details are recorded in its source-specific license notice.
+- **vChewing / Vanguard Corpus** (`vChewing/KeyKey-Boneyard`, `vChewing/libvchewing-data`): this project's compatibility base lexicon, `bpmf-ext.cin`, and punctuation data all come from their curated archive of the Yahoo! KeyKey sources; the multi-syllable health-check classification in `scripts/audit/audit-unigram-health.mjs` follows the approach of the Vanguard Corpus's `Collector_HealthCheck.swift`. Their data curation is of high quality — clearly structured and traceable — and this project has drawn heavily on their build and verification practices.
+- **National Academy for Educational Research, General Word Frequency List**: the frequency data behind `sources/naer-word-frequency`, used to order candidates that share a weight. The statistics are open and free of charge to the general public for education, research, and other non-profit purposes.
 - **Mozc**: preloaded emoticon-category data.
 - **Ministry of Education Revised Mandarin Chinese Dictionary / `g0v/moedict-data`**: source for heteronym reading supplements in `chiaki-modern-overlay/reading-supplements.tsv`, reproduced under the Ministry's CC BY-ND 3.0 Taiwan terms; attribution: Ministry of Education, Republic of China (Lifelong Education Administration).
 - **G.yu, Attorney**: for legal discussion and feedback. This acknowledgment does not constitute formal legal advice, legal representation, or any warranty by G.yu; G.yu assumes no responsibility for this project's data, licensing, or use.

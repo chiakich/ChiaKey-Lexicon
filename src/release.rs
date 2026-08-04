@@ -178,6 +178,8 @@ pub fn run() -> Result<()> {
     )?;
     import_prepopulated_service_data(&mut conn, &cfg, &paths, &mut import_results)?;
     import_module_cin_tables(&mut conn, &cfg, &paths, &mut import_results)?;
+    // Before the cin reorder, which reads unigram order back out.
+    reorder_unigrams_by_frequency(&mut conn, &cfg, &paths, &mut import_results)?;
     db::reorder_mandarin_bpmf_candidates(&mut conn)?;
     import_associated_phrases(&mut conn, &mut import_results)?;
 
@@ -804,10 +806,15 @@ fn import_single_char_homophone_rerank(
     import_results: &mut Vec<ImportResult>,
 ) -> Result<()> {
     let existing_records = db::load_existing_phrase_weights(conn)?;
+    // Same conversion policy as the main rime import: this path reads the raw
+    // essay, so without it the policy-rejected variant gets reranked back up.
+    let (conversion_rules, _, _) =
+        importers::parse_conversion_rules(&paths.rime_conversion_replacements)?;
     let (records, seen, skipped) = importers::parse_single_char_homophone_reranks(
         &paths.rime_essay_raw,
         &existing_records,
         cfg.homophone_rerank_min_ratio,
+        &conversion_rules,
     )?;
     let result = db::apply_records(
         conn,
@@ -1133,6 +1140,29 @@ fn import_openformosa_common_voice_bigrams(
         skipped,
     )?;
     import_results.push(result);
+    Ok(())
+}
+
+fn reorder_unigrams_by_frequency(
+    conn: &mut Connection,
+    cfg: &Config,
+    paths: &ReleasePaths,
+    import_results: &mut Vec<ImportResult>,
+) -> Result<()> {
+    let path = &paths.naer_word_frequency;
+    if !path.exists() {
+        return Ok(());
+    }
+    let (frequency, seen, skipped) = importers::parse_word_frequency(path)?;
+    let reordered = db::reorder_unigrams(conn, &frequency)?;
+    import_results.push(ImportResult {
+        source_path: repo_relative(&cfg.root, path)?,
+        seen,
+        added: reordered,
+        skipped,
+        records: Vec::new(),
+    });
+
     Ok(())
 }
 
