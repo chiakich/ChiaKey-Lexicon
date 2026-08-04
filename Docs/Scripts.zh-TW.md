@@ -59,6 +59,7 @@ ACTIVE_ROOT=/tmp/ChiaKey-Lexicons SLOT=test-dev scripts/release/uninstall-dev-le
 | --- | --- | --- |
 | `audit-bigram-effectiveness.mjs` | 依走訪器可達性把 DB 中每筆 bigram 分成 A/B/C/D 四類，並輸出可剪除清單與並列讀音清單。判準見 [WalkerScoring.zh-TW.md](WalkerScoring.zh-TW.md)，操作流程見 [BigramPruning.zh-TW.md](BigramPruning.zh-TW.md)。 | `node scripts/audit/audit-bigram-effectiveness.mjs --prune-out tmp/prunable.tsv` |
 | `audit-unigram-health.mjs` | 把 DB 中每筆多字 unigram 分成八類讀音／可達性狀態，並依來源層彙總。作法取自唯音輸入法先鋒語料庫的 `Collector_HealthCheck.swift`，判準換成本專案走訪器的有效分數（`weight + 1.0 ×(音節數−1)`）。 | `node scripts/audit/audit-unigram-health.mjs --out tmp/unigram-health.tsv` |
+| `audit-single-char-heads.mjs` | 找出單音節讀音上語氣詞／結構助詞輸給同音實詞的位置，依翻轉所需的權重差排序；另可列出前二名並列的讀音。針對 [WalkerBaseline.zh-TW.md](WalkerBaseline.zh-TW.md) 指出的最大宗字級錯誤。 | `node scripts/audit/audit-single-char-heads.mjs --out tmp/single-char-heads.tsv` |
 | `explain-weight.mjs` | 顯示詞條在正規化結果及各原始來源中的權重／頻率，協助判斷來源與勝出原因。 | `node scripts/audit/explain-weight.mjs 童音 同音` |
 | `audit-boneyard-legacy-weights.mjs` | 找出 KeyKey boneyard 舊資料中，可能因舊權重而壓過現代語料同音候選的項目；結果僅供人工審查。 | `node scripts/audit/audit-boneyard-legacy-weights.mjs --top 50 --min-ratio 3` |
 | `audit-rime-rerank-variants.mjs` | 找出 Rime 重排後值得以台灣用語檢視的候選差異。 | `node scripts/audit/audit-rime-rerank-variants.mjs --top 100 --max-gap 0.35 --min-tsi-ratio 1` |
@@ -103,11 +104,30 @@ node scripts/audit/audit-unigram-health.mjs --missing-out tmp/missing-readings.t
 
 - **DB 必須比 `sources/` 新**。腳本會比對兩者的 mtime，DB 較舊時直接中止——否則報表反映的是上一版狀況，已經補好的東西會被重報（實際發生過：`丼` 的讀音已進 `reading-supplements`，舊 DB 仍說它缺）。確定要用舊 DB 時加 `--allow-stale`。
 - 有效分數的換算依 [WalkerScoring.zh-TW.md](WalkerScoring.zh-TW.md)〈詞長加分〉。逐字路徑的每個單字節點加分為 0，所以整詞必須滿足 `weight + 1.0 ×(音節數−1) > Σ 各音節最佳單字 weight` 才贏得過逐字。
-- 路徑比較會帶入 `unigrams.backoff`，且**不需要句子脈絡**。走訪器的 unigram path 是 `unigram[0] + backoff(previous)`，整句分數沿路累加，所以展開後：整詞是 `weight(W) + backoff(P) + 1.0×(N−1)`，逐字是 `Σ weight(ci) + backoff(P) + backoff(c1) + … + backoff(c_{N−1})`。`backoff(P)` 兩邊各一次而相消，span 外面接什麼不影響勝負；span 內部的 backoff 則從各單字自己那列取得。目前 backoff 欄全為 0，這幾項都消失。
+- 路徑比較會帶入 `unigrams.backoff`，且**不需要句子脈絡**。走訪器的 unigram path 是 `unigram[0] + backoff(previous)`，整句分數沿路累加，所以展開後：整詞是 `weight(W) + backoff(P) + 1.0×(N−1)`，逐字是 `Σ weight(ci) + backoff(P) + backoff(c1) + … + backoff(c_{N−1})`。`backoff(P)` 兩邊各一次而相消，span 外面接什麼不影響勝負；span 內部的 backoff 則從各單字自己那列取得。**目前 backoff 欄恆為 0，而且已經定案**——依 [WalkerBaseline.zh-TW.md](WalkerBaseline.zh-TW.md) 的實測，填入語料算出的 Katz 權重對輸出毫無影響，實作已撤除。程式裡的 backoff 項因此永遠是 0，留著只是讓判準完整。
 - 逐字是**最弱的競爭者**。贏不了逐字的列一定也贏不了任何更好的拆詞路徑，所以 `indifferent` / `insufficient` 報出來的都是確定有問題的列；但沒被報出來不代表一定會贏，那要另外用完整 walker 檢查。
 - `neutral-tone` 與 `tone-mismatch` 的細分需要把 qstring 解回注音，會呼叫 `target/release/chiakey-lexicon qstring-to-bpmf`。沒有先 `cargo build --release` 時，這兩類會全部併回 `reading-mismatch`，`--missing-out` 也會因此混入輕聲而失準。
 - 來源層彙總讀 `normalized/smart-mandarin.tsv`（`prepare-release` 產生、不進版控）；沒有這個檔就只是來源欄留空。
 - 本工具只讀不寫，不會改動 DB、來源檔或任何權重。
+
+### audit-single-char-heads.mjs
+
+`audit-unigram-health.mjs` 只看多字詞條，而 [WalkerBaseline.zh-TW.md](WalkerBaseline.zh-TW.md) 的錯誤結構分析指出，最大的幾群字級錯誤全部是單字之間的競爭（`啊`→`阿`、`嘛`→`嗎`），完全落在那支工具的視野外。這支補上這一塊。
+
+排頭的判定與走訪器一致：`m_unigramCurrents` 由 `findUnigrams()` 撈出後跑 `stable_sort` 依權重排序，而 `stable_sort` 保留輸入順序，輸入順序就是 SQLite 沒有 `ORDER BY` 時的 rowid 順序。所以排頭等於 `ORDER BY probability DESC, rowid ASC` 的第一列——`db::reorder_unigrams` 正是靠重寫實體順序來決定並列時誰在前。
+
+排序依**國教院詞頻的方向**，不是翻轉成本。便宜翻轉不等於值得翻轉——翻轉是雙向的，現在的排頭永遠不會錯，翻過去之後換它每次都錯。`嘛`／`嗎` 差 0.000008 極易翻轉，但 `嗎` 在真實語料裡比 `嘛` 常用四倍以上，翻過去是淨損失。所以只有「輸的那方在國教院詞頻裡反而更常用」的位置才標為值得考慮（`worth_flipping` 欄）。翻轉成本仍然輸出，當次要排序。
+
+類別表以 **(字, 讀音)** 為 key，不是只列字。這些字多半是多音字，而「當語氣詞用」時只讀其中一個音：`呢` 當語氣詞是ㄋㄜ˙，在ㄋㄧˊ上（`呢絨`、`呢喃`）跟 `泥` 競爭時使用者要的本來就是 `泥`；`吧` 是ㄅㄚ˙不是ㄅㄚ；`喔` 是ㄛ不是ㄨㄛˋ。
+
+只列字會產生大量假訊號，因為國教院詞頻分不出讀音（見 `sources/naer-word-frequency/README.md`），會把語氣詞用法的高頻記到這些邊緣讀音頭上。實測：只列字時 48 個位置、12 個「詞頻方向相反」，其中 `哪`／`挪`、`喔`／`握`、`囉`／`羅` 的語氣詞側權重都是 −3.094 地板值，全部是假訊號；改成 (字, 讀音) 後降到 7 個位置、0 個方向相反。
+
+還有一個判準管不到的盲點：**詞頻不知道該字多半被更長的詞吸收**。`阿` 大量出現在 `阿姨`、`阿公` 裡，那些以整詞路徑勝出，不受單字排頭影響——所以事前依出現次數估的翻轉代價會嚴重高估（`啊` 那次估 659，實際 12）。
+
+兩件要注意的事：
+
+- **輸出是假設，不是結論。** 這支工具刻意不引用 gold set 或任何語料來挑候選——語料只用來事後量測效果，拿它挑候選再拿它驗收就是 in-sample。要不要調某個權重，必須用 [WalkerBaseline.zh-TW.md](WalkerBaseline.zh-TW.md) 的前後比對來決定，並遵守該文件〈量測方法的陷阱〉的要求。
+- **`的`／`地`／`得` 歸在結構助詞類**，依 WalkerBaseline 的說明要等輸入法本體以聲調區分，bigram 層刻意不處理。它們會被列出來，但不該當成待修項目；用 `--class 語氣詞` 可以濾掉。
 
 ## 外部語料
 

@@ -2,7 +2,7 @@
 埔裡社撫墾局	埔里社撫墾局	rime-conversion,modern-zh-tw,toponym-normalization
 湖裡區	湖里區	rime-conversion,modern-zh-tw,toponym-normalization
 道裡區	道里區	rime-conversion,modern-zh-tw,toponym-normalization
-胡裡山炮臺	胡里山炮臺	rime-conversion,modern-zh-tw,toponym-normalization
+胡裡山炮臺	胡里山炮台	rime-conversion,modern-zh-tw,toponym-normalization
 裡肌	里肌	rime-conversion,modern-zh-tw,food-term-normalization
 裡肌肉	里肌肉	rime-conversion,modern-zh-tw,food-term-normalization
 裡脊	里肌	rime-conversion,modern-zh-tw,food-term-normalization
@@ -12,3 +12,7 @@
 軟炸裡脊	軟炸里肌	rime-conversion,modern-zh-tw,food-term-normalization
 豬裡脊肉	豬里肌肉	rime-conversion,modern-zh-tw,food-term-normalization
 粘	黏	rime-conversion,modern-zh-tw,variant-normalization
+想象	想像	rime-conversion,modern-zh-tw,variant-normalization
+# 單字整族規則，必須排在所有片語規則之後：規則依檔案順序做子字串取代，若這條
+# 先跑，含「臺」的片語 from 就再也匹配不到。
+臺	台	rime-conversion,modern-zh-tw,variant-normalization

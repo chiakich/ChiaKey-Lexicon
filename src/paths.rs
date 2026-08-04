@@ -44,6 +44,7 @@ pub struct ReleasePaths {
     #[allow(dead_code)]
     pub tw_ly_transcript_bigrams: PathBuf,
     pub chiaki_tw_homophone_bigrams: PathBuf,
+    pub naer_word_frequency: PathBuf,
     pub boneyard_inventory: PathBuf,
     pub punctuation_inventory: PathBuf,
     pub punctuation_cin: PathBuf,
@@ -122,6 +123,11 @@ impl ReleasePaths {
                 .join("bigrams.tsv"),
             tw_ly_transcript_bigrams: tw_ly_transcript_source_dir.join("bigrams.tsv"),
             chiaki_tw_homophone_bigrams: chiaki_tw_homophone_source_dir.join("bigrams.tsv"),
+            naer_word_frequency: cfg
+                .root
+                .join("sources")
+                .join("naer-word-frequency")
+                .join("frequency.tsv"),
             boneyard_inventory: boneyard_source_dir.join("source-inventory.sha256"),
             punctuation_inventory: punctuation_source_dir.join("source-inventory.sha256"),
             punctuation_cin: cfg.root.join(PUNCTUATION_VENDOR_PATH),
