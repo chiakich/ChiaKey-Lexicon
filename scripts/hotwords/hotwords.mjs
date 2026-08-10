@@ -3,6 +3,7 @@
 import fs from "node:fs";
 import { execFileSync } from "node:child_process";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 const DEFAULT_SOURCE_ID = "chiaki-auto-hotwords-overlay";
 const DEFAULT_GEO = "TW";
@@ -15,6 +16,7 @@ const MAX_SEGMENT_DERIVATION_SURFACE_LENGTH = 8;
 const DEFAULT_OPENCC_BINARY = "opencc";
 const DEFAULT_OPENCC_CONFIG = "s2tw.json";
 const PR_CHANGE_TABLE_LIMIT = 50;
+const PTT_MIN_TWO_DAY_TRAFFIC = 60;
 
 const WINDOWS = [
   { label: "24h", hours: 24, score: 1 },
@@ -122,12 +124,14 @@ async function collect(options) {
     const pttLexicon = loadLexicon(String(options.normalized || "normalized/smart-mandarin.tsv"), DEFAULT_SOURCE_ID);
     for (const file of String(options["ptt-input"]).split(",").filter(Boolean)) {
       const pttObservations = collectPttObservations(file, observedOn, pttLexicon);
-      observations.push(...pttObservations.observations);
+      const filteredPttObservations = filterShiftedPttFragments(pttObservations.observations);
+      observations.push(...filteredPttObservations);
       fetchedRows[pttObservations.source] = pttObservations.fetchedArticleCount;
       sourceStats[pttObservations.source] = {
         articles_fetched: pttObservations.fetchedArticleCount,
         articles_accepted: pttObservations.articleCount,
-        observations: pttObservations.observations.length,
+        observations: filteredPttObservations.length,
+        shifted_fragments_filtered: pttObservations.observations.length - filteredPttObservations.length,
         articles_skipped: pttObservations.skipped,
       };
     }
@@ -300,7 +304,9 @@ async function refresh(options) {
     config: String(options["opencc-config"] || DEFAULT_OPENCC_CONFIG),
   });
 
-  const observations = canonicalizeObservations(loadObservations(observationsDir), canonicalize);
+  const observations = filterShiftedPttFragments(
+    canonicalizeObservations(loadObservations(observationsDir), canonicalize),
+  );
   const state = canonicalizeState(loadState(statePath), canonicalize);
   const lexicon = loadLexicon(normalizedPath, sourceId);
   const aggregate = mergeState(state, observations, today, lexicon);
@@ -661,7 +667,7 @@ function buildOverlayRows(state, lexicon, today, sourceId) {
       continue;
     }
     const signal = signalFor(entry, today);
-    const newlyEligible = shouldEmitSignal(signal);
+    const newlyEligible = shouldEmitSignal(signal, entry);
     if (!entry.admitted && !newlyEligible) {
       filtered.weak_signal.push(formatWeakSignal(term, signal));
       continue;
@@ -827,11 +833,48 @@ function shouldKeepInState(signal) {
   return signal.hasShortWindow14 || signal.windows14.length >= 2 || signal.seenDays14 >= 2;
 }
 
-function shouldEmitSignal(signal) {
+function shouldEmitSignal(signal, entry) {
   return (
     (signal.hasShortWindow14 && signal.windows14.length >= 2 && signal.score14 >= MIN_EMIT_SIGNAL) ||
-    (signal.seenDays14 >= 3 && signal.score14 >= MIN_EMIT_SIGNAL)
+    (signal.seenDays14 >= 3 && signal.score14 >= MIN_EMIT_SIGNAL) ||
+    (isPttOnlyEntry(entry) && signal.seenDays14 >= 2 && entry.max_traffic >= PTT_MIN_TWO_DAY_TRAFFIC)
   );
+}
+
+function isPttOnlyEntry(entry) {
+  const sources = [...(entry.sources || [])];
+  return sources.length > 0 && sources.every((source) => source.startsWith("ptt-"));
+}
+
+function filterShiftedPttFragments(observations) {
+  const groups = new Map();
+  for (const observation of observations) {
+    if (!String(observation.source || "").startsWith("ptt-")) continue;
+    const traffic = numberOrNull(observation.traffic);
+    if (!traffic || traffic <= 0) continue;
+    const key = [observation.source, observation.observed_on, traffic].join("\0");
+    const group = groups.get(key) || [];
+    group.push(observation);
+    groups.set(key, group);
+  }
+
+  const rejected = new Set();
+  for (const group of groups.values()) {
+    const fourCharacterTerms = group.filter((observation) => Array.from(observation.term).length === 4);
+    for (let leftIndex = 0; leftIndex < fourCharacterTerms.length; leftIndex += 1) {
+      const left = Array.from(fourCharacterTerms[leftIndex].term);
+      for (let rightIndex = leftIndex + 1; rightIndex < fourCharacterTerms.length; rightIndex += 1) {
+        const right = Array.from(fourCharacterTerms[rightIndex].term);
+        const shifted =
+          left.slice(1).join("") === right.slice(0, 3).join("") ||
+          right.slice(1).join("") === left.slice(0, 3).join("");
+        if (!shifted) continue;
+        rejected.add(fourCharacterTerms[leftIndex]);
+        rejected.add(fourCharacterTerms[rightIndex]);
+      }
+    }
+  }
+  return observations.filter((observation) => !rejected.has(observation));
 }
 
 function formatWeakSignal(term, signal) {
@@ -958,6 +1001,8 @@ function buildSummary({ today, observations, rows, previousRows, filtered, state
   );
   lines.push("");
 
+  appendSourceSummary(lines, observations, rows);
+
   appendDetails(
     lines,
     `僅更新觀測資料、排序不變 (${changes.metadataChanged.length})`,
@@ -979,6 +1024,36 @@ function buildSummary({ today, observations, rows, previousRows, filtered, state
 
   lines.push("");
   return `${lines.join("\n")}\n`;
+}
+
+function appendSourceSummary(lines, observations, rows) {
+  const observationsBySource = new Map();
+  for (const observation of observations) {
+    const source = String(observation.source || "unknown");
+    const entry = observationsBySource.get(source) || { observations: 0, terms: new Set() };
+    entry.observations += 1;
+    entry.terms.add(observation.term);
+    observationsBySource.set(source, entry);
+  }
+
+  const rowsBySource = new Map();
+  for (const row of rows) {
+    const sourceTag = row.tags.split(",").find((tag) => tag.startsWith("source="));
+    for (const source of sourceTag?.slice("source=".length).split("+").filter(Boolean) || []) {
+      rowsBySource.set(source, (rowsBySource.get(source) || 0) + 1);
+    }
+  }
+
+  lines.push("## 來源摘要");
+  lines.push("");
+  lines.push("| 來源 | 載入觀測 | 不重複候選 | 覆蓋層詞數 | 覆蓋層占比 |");
+  lines.push("| --- | ---: | ---: | ---: | ---: |");
+  for (const [source, entry] of [...observationsBySource.entries()].sort(([left], [right]) => left.localeCompare(right))) {
+    const rowCount = rowsBySource.get(source) || 0;
+    const share = rows.length > 0 ? `${((rowCount / rows.length) * 100).toFixed(1)}%` : "0.0%";
+    lines.push(`| ${source} | ${entry.observations} | ${entry.terms.size} | ${rowCount} | ${share} |`);
+  }
+  lines.push("");
 }
 
 function loadOverlayRows(file) {
@@ -1359,7 +1434,11 @@ function countSeenSince(seenDates, cutoff) {
   return [...seenDates].filter((date) => date >= cutoff).length;
 }
 
-main().catch((error) => {
-  console.error(error?.stack || error);
-  process.exit(1);
-});
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  main().catch((error) => {
+    console.error(error?.stack || error);
+    process.exit(1);
+  });
+}
+
+export { filterShiftedPttFragments, shouldEmitSignal };
