@@ -83,8 +83,8 @@ stored = min( unigram(current) + boost + (raw − raw_max_of_source), −0.05 )
 - **立法院議事暨公報資訊網 / g0v `ly.govapi.tw`**：公報詢答逐字稿，bigram 的即席口語語料來源。
 - **行政院、大陸委員會、中央研究院、客家委員會、新北市政府**：依政府資料開放授權條款釋出的新聞發布，bigram 的書面語料來源。
 - **PTT、Plurk 與中文維基百科**：bigram 主力層使用的論壇、公開貼文與百科文本來源；各來源資訊見其專屬授權聲明。
-- **唯音輸入法 / 先鋒語料庫**（`vChewing/KeyKey-Boneyard`、`vChewing/libvchewing-data`）：本專案的相容性基底詞庫、`bpmf-ext.cin` 與標點資料，都來自他們整理保存的 Yahoo! KeyKey 原始碼封存；`scripts/audit/audit-unigram-health.mjs` 的多字詞健檢分類作法取自先鋒語料庫的 `Collector_HealthCheck.swift`。他們的資料整理品質很高，體例清楚、可追溯，本專案在建置與驗證方法上參考甚多。
-- **國家教育研究院《通用詞頻表》**：`sources/naer-word-frequency` 的詞頻資料來源，用於在權重相同的候選之間決定順序。該統計於教育、研究等非營利用途對全體民眾開放及免費使用。
+- **唯音輸入法 / 先鋒語料庫**（`vChewing/KeyKey-Boneyard`、`vChewing/libvchewing-data`）：本專案的相容性基底詞庫、`bpmf-ext.cin` 與標點資料，都來自該專案整理保存的 Yahoo! KeyKey 原始碼封存；`scripts/audit/audit-unigram-health.mjs` 的多字詞健檢分類作法取自先鋒語料庫的 `Collector_HealthCheck.swift`。該專案資料整理品質很高，體例清楚、可追溯，本專案在建置與驗證方法上參考甚多。
+- **國家教育研究院《通用詞頻表》**：`sources/naer-word-frequency` 本專案之詞頻排序參考資料來⾃國家教育研究院《通⽤詞頻表》(定稿1141208)，特此致謝。該表用於在權重相同的候選之間決定順序。依國教院教研語譯字第 1150001412 號函之書面確認，該資料集採 CC BY 4.0；姓名標示與本專案的資料處理方式見其[來源說明](sources/naer-word-frequency/README.md)。
 - **Mozc**：顏文字預載分類資料。
 - **教育部《重編國語辭典修訂本》／`g0v/moedict-data`**：`chiaki-modern-overlay/reading-supplements.tsv` 破音字讀音補充的資料來源，依教育部「創用CC－姓名標示－禁止改作 3.0 台灣」授權條款重製讀音；姓名標示：中華民國教育部（終身教育司）。
 - **金妤律師**：提供法律交流與意見。惟本致謝不構成其對本專案的正式法律意見、法律代理或任何擔保；本專案資料、授權與使用所生責任均不由其承擔。
@@ -206,4 +206,3 @@ Rust release tooling 與 repository scripts 使用 MIT License；見 [LICENSE](L
 - 依實際缺漏加入台灣現代用語。
 - 依真實打字測試調整跨來源權重映射。
 - 若外部詞庫變動時，需重新檢查 LGPL 再散布要求。
-- 研究是否有辦法納入如教育部、國教院等詞庫。
