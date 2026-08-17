@@ -1,6 +1,6 @@
 # 來源審查
 
-最後審查日期：2026-06-23
+最後審查日期：2026-08-11
 
 ## v1 已納入
 
@@ -402,6 +402,22 @@ sources/openformosa-common-voice-25-zh-tw/source-inventory.sha256
 這個來源只貢獻選出的 runtime bigram rows。raw 公報文字不在這個 repository 再散布。人工複核紀錄保存於 `sources/tw-ly-transcript/review-decisions.tsv`，供重新產生時沿用。
 
 萃取與過濾方法、語域偏誤分析與品質評估見 `sources/tw-ly-transcript/README.md` 的研究附錄。
+
+## 自 2026.08.2 起納入
+
+### naer-word-frequency
+
+- 名稱：國家教育研究院《通用詞頻表》
+- 本地來源：`sources/naer-word-frequency/frequency.tsv`
+- 上游下載頁：<https://coct.naer.edu.tw/page.jsp?ID=41>
+- 上游版本：定稿 1141208
+- 授權：CC BY 4.0；以國家教育研究院教研語譯字第 1150001412 號函（115 年 8 月 11 日）書面確認
+- 姓名標示：國家教育研究院，《通用詞頻表》（定稿 1141208）
+- 再散布決策：納入公開 release；以 CC BY 4.0 姓名標示、授權連結及變更說明
+
+本來源不增加或調整 unigram 權重，僅在候選的 `probability` 相同時，以每百萬詞頻（平均）決定實體列順序。`frequency.tsv` 為原表的衍生子集：只保留同時存在於本專案詞庫與原表的詞，並只保留排序所需的平均詞頻欄位；建置後會以 `qstring, probability DESC, per_million DESC, current` 重排 `unigrams`。
+
+本項授權以權利人的書面確認為準。函覆 PDF 以 [`LICENSE-CONFIRMATION-1150001412.pdf`](../sources/naer-word-frequency/LICENSE-CONFIRMATION-1150001412.pdf) 保存於來源目錄；詳細姓名標示、授權連結與變更說明見其 [`LICENSE`](../sources/naer-word-frequency/LICENSE)。
 
 ## 未納入
 
