@@ -66,15 +66,11 @@ qstring<TAB>phrase<TAB>tags
 
 帶 `bu-tone-coverage` tag 的列補「不」的本調讀音。「不」在四聲前變調成 ㄅㄨˊ、在正反問句與補語結構中弱化成 ㄅㄨ˙，但使用者輸入時幾乎一律打本調 ㄅㄨˋ；語料統計只會記下變調後的讀音，於是「吃不下」只有 `=@`／`{n`、沒有 `L_`，`ㄔ ㄅㄨˋ ㄒㄧㄚˋ` 只能走「吃＋部下」。這批列由 `scripts/audit/audit-bu-tone-readings.mjs` 從詞庫機械列舉：含「不」且缺對應 `L_` 讀音的既有詞，把每個 `=@`／`{n` 音節換成 `L_` 當補充讀音。因為原讀音不會被動到，變調讀音仍然照舊可打。
 
-這張表本身不隨這個檔案內嵌字典原文（釋義、例句等），只有讀音；release 匯入時也不會讀取moedict-data 本身。`moedict-reviewed` 的部分可用以下流程重新產生（重跑會覆寫整份檔案，人工複核的列需另外保留）：
+這張表本身不隨這個檔案內嵌字典原文（釋義、例句等），只有讀音；release 匯入時也不會讀取moedict-data 本身。
 
-```sh
-node scripts/audit/audit-moedict-readings.mjs
-cargo build --release
-node scripts/lexicon/generate-moedict-readings.mjs
-```
+`moedict-reviewed` 的列仍然是這張表的主力，每次 release 照常匯入；**功臣身退的是產生流程，不是資料**。`scripts/audit/audit-moedict-readings.mjs` 與`scripts/lexicon/generate-moedict-readings.mjs` 只保留作為當初產生過程的紀錄，**不要再重跑**：generator 會覆寫整份檔案，而這張表現在有 6,951 列不是 moedict 來的（`bu-tone-coverage`、`reviewed-reading`、`tw-usage-reading` 等），重跑會全部清掉。要調整 moedict 那批讀音，直接改這張表的對應列。
 
-`audit-moedict-readings.mjs` 需要本機另外準備 moedict-data 的 `dict-revised.json`（不隨本 repo 提供，見該腳本檔頭說明）；`generate-moedict-readings.mjs` 直接把比對結果轉成qstring 寫回這張表，可以直接 commit。未來若加入其他複核來源（非 moedict），沿用同一份`reading-supplements.tsv`，只要在 `tags` 欄位標示清楚來源即可。
+未來若加入其他複核來源（非 moedict），沿用同一份 `reading-supplements.tsv`，只要在 `tags`欄位標示清楚來源、並自備只追加不覆寫的產生腳本即可（見`scripts/audit/audit-bu-tone-readings.mjs`）。
 
 ## Release 匯入規則
 
