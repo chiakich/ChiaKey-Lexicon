@@ -280,3 +280,7 @@
 愣得	-3.699700	chiaki-fragment-denylist,fragment-demote,homophone-collision
 糗得	-3.780400	chiaki-fragment-denylist,fragment-demote,homophone-collision
 拐得	-3.882600	chiaki-fragment-denylist,fragment-demote,homophone-collision
+# rime-essay 的文言條目「喫布 261」經 opencc 喫→吃 變成現代詞條，實際不是台灣
+# 用詞，卻靠 +1.0 詞長加分在 ㄔ ㄅㄨˋ 開頭的句子偷走一個音節（吃不起 → 吃布起）。
+# 上限 = w(吃) + w(布) - 1.0 詞長加分 - 0.3 margin。
+吃布	-3.790379	chiaki-fragment-denylist,fragment-demote,rime-conversion-artifact
