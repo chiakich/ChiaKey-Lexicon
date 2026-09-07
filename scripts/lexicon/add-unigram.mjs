@@ -131,7 +131,12 @@ async function main() {
   const existingUnigram = unigramRows.find(
     (row) => row.qstring === qstring && row.phrase === options.phrase,
   );
-  const suggested = options.weight ?? suggestWeight(qstring, options.phrase, lexicon);
+  // suggestWeight returns {weight, reason}; an explicit --weight/positional
+  // value is a bare number and has to be wrapped to match.
+  const suggested =
+    options.weight === null
+      ? suggestWeight(qstring, options.phrase, lexicon)
+      : { weight: options.weight, reason: "explicit" };
   const tags = buildTags(options);
   const line = `${qstring}\t${options.phrase}\t${formatWeight(suggested.weight)}\t${tags}`;
 
