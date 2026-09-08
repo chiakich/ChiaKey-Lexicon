@@ -233,7 +233,7 @@ pub fn manifest(
         manifest_source_from_files(
             SYMBOL_OVERLAY_SOURCE_ID,
             SYMBOL_OVERLAY_SOURCE_NAME,
-            "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiaki-symbols-overlay",
+            "https://github.com/chiakich/ChiaKey-Lexicon/tree/main/sources/chiaki-symbols-overlay",
             "tsv",
             "CC0-1.0",
             "ChiaKey Lexicon maintainers",
@@ -307,7 +307,7 @@ pub fn manifest(
         manifest_source_from_files(
             RIME_CONVERSION_SOURCE_ID,
             RIME_CONVERSION_SOURCE_NAME,
-            "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiaki-rime-conversion-policy",
+            "https://github.com/chiakich/ChiaKey-Lexicon/tree/main/sources/chiaki-rime-conversion-policy",
             "tsv",
             "CC0-1.0",
             "ChiaKey Lexicon maintainers",
@@ -318,7 +318,7 @@ pub fn manifest(
         manifest_source_from_files(
             OVERLAY_SOURCE_ID,
             OVERLAY_SOURCE_NAME,
-            "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiaki-modern-overlay",
+            "https://github.com/chiakich/ChiaKey-Lexicon/tree/main/sources/chiaki-modern-overlay",
             "tsv",
             "CC BY-NC 4.0; commercial use requires permission from Chiaki.C",
             "Chiaki.C",
@@ -329,7 +329,7 @@ pub fn manifest(
         manifest_source_from_files(
             CHIAKI_WEB_OVERLAY_SOURCE_ID,
             CHIAKI_WEB_OVERLAY_SOURCE_NAME,
-            "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiaki-web-overlay",
+            "https://github.com/chiakich/ChiaKey-Lexicon/tree/main/sources/chiaki-web-overlay",
             "tsv",
             "CC BY-NC 4.0; commercial use requires permission from Chiaki.C",
             "Chiaki.C",
@@ -340,7 +340,7 @@ pub fn manifest(
         manifest_source_from_files(
             CHIAKEY_AUTO_HOTWORDS_SOURCE_ID,
             CHIAKEY_AUTO_HOTWORDS_SOURCE_NAME,
-            "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiaki-auto-hotwords-overlay",
+            "https://github.com/chiakich/ChiaKey-Lexicon/tree/main/sources/chiaki-auto-hotwords-overlay",
             "tsv",
             "CC0-1.0",
             "ChiaKey Lexicon maintainers",
@@ -362,7 +362,7 @@ pub fn manifest(
                 manifest_source_from_files(
             CHIAKI_TW_HOMOPHONE_SOURCE_ID,
             CHIAKI_TW_HOMOPHONE_SOURCE_NAME,
-            "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiaki-tw-homophone-bigram",
+            "https://github.com/chiakich/ChiaKey-Lexicon/tree/main/sources/chiaki-tw-homophone-bigram",
             "tsv",
             "CC BY-NC 4.0; commercial use requires permission from Chiaki.C",
             "Chiaki.C",

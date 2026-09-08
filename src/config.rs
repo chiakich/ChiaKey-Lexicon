@@ -156,7 +156,7 @@ pub fn load() -> Result<Config> {
         .unwrap_or_else(|_| chrono::Utc::now().to_rfc3339_opts(SecondsFormat::Secs, true));
     let release_base_url = env_or(
         "RELEASE_BASE_URL",
-        format!("https://github.com/akira02/ChiaKey-Lexicon/releases/download/{release_version}"),
+        format!("https://github.com/chiakich/ChiaKey-Lexicon/releases/download/{release_version}"),
     );
     let max_phrase_codepoints = env_or("MAX_PHRASE_CODEPOINTS", "7")
         .parse()

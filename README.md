@@ -25,8 +25,8 @@
 
 ## 回報詞庫問題
 
-- [缺詞回報](https://github.com/akira02/ChiaKey-Lexicon/issues/new?template=add-unigram.yml)：回報一個應作為單獨詞語、但目前詞庫缺少的詞，例如「泳鏡」。
-- [長句選字錯誤](https://github.com/akira02/ChiaKey-Lexicon/issues/new?template=add-bigram.yml)：回報兩個已存在詞前後組合時，在長句中選錯字。例如想輸入「天意難測」卻出現「天意南側」。
+- [缺詞回報](https://github.com/chiakich/ChiaKey-Lexicon/issues/new?template=add-unigram.yml)：回報一個應作為單獨詞語、但目前詞庫缺少的詞，例如「泳鏡」。
+- [長句選字錯誤](https://github.com/chiakich/ChiaKey-Lexicon/issues/new?template=add-bigram.yml)：回報兩個已存在詞前後組合時，在長句中選錯字。例如想輸入「天意難測」卻出現「天意南側」。
 
 ## 為什麼有這個專案
 
