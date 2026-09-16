@@ -352,14 +352,49 @@ function suggestWeight(qstring, phrase, lexicon) {
     };
   }
 
-  // The new phrase must out-score the walker's current best path for this
-  // qstring. Compare effective scores, then convert back to a raw weight.
-  const path = bestPath(qstring, lexicon.bestByQstring);
-  if (path) {
-    const required = path.score - lengthPrior(qstring.length / 2) + SPLIT_MARGIN;
+  // The new phrase must out-score the walker's best *split* path, but a rival
+  // phrase already occupying the whole qstring is a homophone, not a path to
+  // beat: promoting above it would demote an established word on no evidence.
+  const split = bestPath(qstring, lexicon.bestByQstring, new Map(), true);
+  const prior = lengthPrior(qstring.length / 2);
+  const required = split ? split.score - prior + SPLIT_MARGIN : null;
+  // byQstring groups are sorted by descending weight, so the last row is the
+  // weakest homophone. Same qstring means the same length bonus, so raw
+  // weights compare directly. Without corpus evidence the new phrase has no
+  // claim to outrank any of them, so it goes below the weakest.
+  const rivals = lexicon.byQstring.get(qstring) ?? [];
+  const weakest = rivals.length > 0 ? rivals[rivals.length - 1] : null;
+  const cap = weakest ? weakest.weight - SPLIT_MARGIN : null;
+
+  if (required !== null && cap !== null) {
+    if (cap < required) {
+      return {
+        weight: round6(cap),
+        reason:
+          `below every homophone, weakest is ${weakest.phrase} (${formatWeight(weakest.weight)}) - ${SPLIT_MARGIN}; ` +
+          `will not beat split path ${describePath(split)} (needs ${formatWeight(required)}); ` +
+          `pass --weight if corpus evidence says this phrase outranks a homophone`,
+      };
+    }
     return {
       weight: round6(required),
-      reason: `best path ${describePath(path)} (effective ${formatWeight(path.score)}) + ${SPLIT_MARGIN}`,
+      reason:
+        `best split path ${describePath(split)} (effective ${formatWeight(split.score)}) + ${SPLIT_MARGIN}, ` +
+        `below every homophone (weakest ${weakest.phrase} at ${formatWeight(weakest.weight)})`,
+    };
+  }
+
+  if (cap !== null) {
+    return {
+      weight: round6(cap),
+      reason: `below every homophone, weakest is ${weakest.phrase} (${formatWeight(weakest.weight)}) - ${SPLIT_MARGIN}`,
+    };
+  }
+
+  if (required !== null) {
+    return {
+      weight: round6(required),
+      reason: `best split path ${describePath(split)} (effective ${formatWeight(split.score)}) + ${SPLIT_MARGIN}`,
     };
   }
 
@@ -382,18 +417,19 @@ function nodeScore(row) {
   return row.weight + lengthPrior(row.qstring.length / 2);
 }
 
-// Best effective score over every segmentation of `qstring`, including the
-// single-node one when another phrase already occupies the whole qstring.
-// Scores are walker-effective (`weight + 1.0 x (syllables - 1)` per node), so
-// they can be compared against a candidate phrase's own effective score.
-function bestPath(qstring, bestByQstring, memo = new Map()) {
+// Best effective score over every segmentation of `qstring`. Scores are
+// walker-effective (`weight + 1.0 x (syllables - 1)` per node), so they can be
+// compared against a candidate phrase's own effective score. `requireSplit`
+// excludes the single-node path, i.e. an existing whole-qstring homophone.
+function bestPath(qstring, bestByQstring, memo = new Map(), requireSplit = false) {
   const syllableCount = qstring.length / 2;
   if (!Number.isInteger(syllableCount) || syllableCount < 1) return null;
-  const cached = memo.get(qstring);
+  const cached = requireSplit ? undefined : memo.get(qstring);
   if (cached !== undefined) return cached;
 
   let best = null;
-  const whole = bestByQstring.get(qstring);
+  // Top level only; nested calls still use whole-qstring nodes inside a split.
+  const whole = requireSplit ? null : bestByQstring.get(qstring);
   if (whole) best = { score: nodeScore(whole), parts: [whole] };
 
   for (let splitSyllable = 1; splitSyllable < syllableCount; splitSyllable += 1) {
@@ -407,7 +443,7 @@ function bestPath(qstring, bestByQstring, memo = new Map()) {
     }
   }
 
-  memo.set(qstring, best);
+  if (!requireSplit) memo.set(qstring, best);
   return best;
 }
 

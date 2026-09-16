@@ -9,7 +9,7 @@
 - 名稱：KeyKey Boneyard bootstrap data
 - 本地 release input：`sources/keykey-boneyard-bootstrap/vendor/KeyKeySource.db`
 - 上游封存：<https://github.com/vChewing/KeyKey-Boneyard>
-- 目前 fork 註記：<https://github.com/akira02/ChiaKey>
+- 目前 fork 註記：<https://github.com/chiakich/ChiaKey>
 - 授權：BSD-3-Clause 風格的 Yahoo! KeyKey 上游授權
 - 署名：Yahoo! Inc., OpenVanilla contributors, KeyKey Boneyard / ChiaKey maintainers
 - 再散布決策：納入第一版公開 seed release

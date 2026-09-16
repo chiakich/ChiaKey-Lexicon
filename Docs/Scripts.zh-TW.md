@@ -49,6 +49,8 @@ ACTIVE_ROOT=/tmp/ChiaKey-Lexicons SLOT=test-dev scripts/release/uninstall-dev-le
 | `process-missing-word-issue.mjs` | GitHub Actions 用：讀取 `ISSUE_BODY` 等環境變數，驗證缺詞回報、寫出回覆及 PR 資料。通常不需在本機直接執行。 | 由 `.github/workflows/add-unigram.yml` 呼叫 |
 | `process-bigram-issue.mjs` | GitHub Actions 用：讀取 issue 環境變數，驗證並建立 bigram 變更資料。通常不需在本機直接執行。 | 由 `.github/workflows/add-bigram.yml` 呼叫 |
 
+`add-unigram.mjs` 推算權重時，只以「拆字路徑」為要超越的對手，並保證新詞排在該讀音**每一個**既有同音詞之下；若兩者衝突，會以同音詞為準並提示改用 `--weight`。`audit-reduplication-gaps.mjs` 用同一套規則賦權。
+
 `add-unigram.mjs` 可用 `--weight` 指定權重、`--tag` 重複新增 tag、或 `--tags` 指定 tag 字串；`add-bigram.mjs` 可用 `--probability` 指定機率。兩者先使用 `--dry-run` 檢查，遇到重複資料時只有在確認合理後才使用 `--force`。
 
 ## 資料品質稽核

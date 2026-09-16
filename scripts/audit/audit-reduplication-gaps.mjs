@@ -47,7 +47,7 @@ async function main() {
     const best = bestPath(c.qstring, lexicon);
     if (!best) return false;
     c.currentPath = best.parts.map((row) => row.phrase).join("");
-    c.weight = round6(best.score - lengthPrior(c.qstring.length / 2) + SPLIT_MARGIN);
+    c.weight = suggestWeight(c.qstring, lexicon);
     return c.currentPath !== c.phrase;
   });
   console.error(`walker already correct: ${candidates.length - broken.length}`);
@@ -98,6 +98,7 @@ function parseArgs(argv) {
 
 async function loadLexicon(filePath) {
   const bestByQstring = new Map();
+  const byQstring = new Map();
   const phrases = new Set();
   const known = new Set();
   // X + reading(X) -> reduplicated row / list of XY rows
@@ -117,6 +118,8 @@ async function loadLexicon(filePath) {
     known.add(`${qstring}\t${phrase}`);
     const incumbent = bestByQstring.get(qstring);
     if (!incumbent || row.weight > incumbent.weight) bestByQstring.set(qstring, row);
+    if (!byQstring.has(qstring)) byQstring.set(qstring, []);
+    byQstring.get(qstring).push(row);
 
     const chars = [...phrase];
     const readings = qstring.match(/../g) ?? [];
@@ -130,7 +133,8 @@ async function loadLexicon(filePath) {
       verbObject.get(key).push(row);
     }
   }
-  return { bestByQstring, phrases, known, dup, verbObject, pathMemo: new Map() };
+  for (const group of byQstring.values()) group.sort((left, right) => right.weight - left.weight);
+  return { bestByQstring, byQstring, phrases, known, dup, verbObject, pathMemo: new Map() };
 }
 
 function enumerate(lexicon) {
@@ -154,14 +158,28 @@ function nodeScore(row) {
   return row.weight + lengthPrior(row.qstring.length / 2);
 }
 
-// Walker 的最佳路徑分數（有效分數，含長度加分），含整個 qstring 被別的詞佔用的單節點路徑。
-function bestPath(qstring, lexicon) {
-  const cached = lexicon.pathMemo.get(qstring);
+// 候選詞要贏的是「拆字路徑」；佔住整段 qstring 的同音詞是對手而非路徑，賦權時只能
+// 排在它下面，否則沒有語料證據就把既有詞壓下去。
+function suggestWeight(qstring, lexicon) {
+  const split = bestPath(qstring, lexicon, true);
+  const rivals = lexicon.byQstring.get(qstring) ?? [];
+  const weakest = rivals.length > 0 ? rivals[rivals.length - 1] : null;
+  const required = split ? split.score - lengthPrior(qstring.length / 2) + SPLIT_MARGIN : null;
+  const cap = weakest ? weakest.weight - SPLIT_MARGIN : null;
+  if (required === null) return cap === null ? null : round6(cap);
+  if (cap === null) return round6(required);
+  return round6(Math.min(required, cap));
+}
+
+// requireSplit 排除單節點路徑，也就是佔住整段 qstring 的同音詞；只作用於最上層，
+// 巢狀呼叫仍可把整詞當作拆解的右半。
+function bestPath(qstring, lexicon, requireSplit = false) {
+  const cached = requireSplit ? undefined : lexicon.pathMemo.get(qstring);
   if (cached !== undefined) return cached;
   const syllableCount = qstring.length / 2;
 
   let best = null;
-  const whole = lexicon.bestByQstring.get(qstring);
+  const whole = requireSplit ? null : lexicon.bestByQstring.get(qstring);
   if (whole) best = { score: nodeScore(whole), parts: [whole] };
   for (let at = 1; at < syllableCount; at += 1) {
     const left = lexicon.bestByQstring.get(qstring.slice(0, at * 2));
@@ -171,7 +189,7 @@ function bestPath(qstring, lexicon) {
     if (!best || score > best.score) best = { score, parts: [left, ...right.parts] };
   }
 
-  lexicon.pathMemo.set(qstring, best);
+  if (!requireSplit) lexicon.pathMemo.set(qstring, best);
   return best;
 }
 
