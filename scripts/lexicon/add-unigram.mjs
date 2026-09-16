@@ -356,34 +356,38 @@ function suggestWeight(qstring, phrase, lexicon) {
   // phrase already occupying the whole qstring is a homophone, not a path to
   // beat: promoting above it would demote an established word on no evidence.
   const split = bestPath(qstring, lexicon.bestByQstring, new Map(), true);
-  const rival = lexicon.bestByQstring.get(qstring);
   const prior = lengthPrior(qstring.length / 2);
   const required = split ? split.score - prior + SPLIT_MARGIN : null;
-  // Same qstring, so same length bonus: raw weights compare directly.
-  const cap = rival ? rival.weight - SPLIT_MARGIN : null;
+  // byQstring groups are sorted by descending weight, so the last row is the
+  // weakest homophone. Same qstring means the same length bonus, so raw
+  // weights compare directly. Without corpus evidence the new phrase has no
+  // claim to outrank any of them, so it goes below the weakest.
+  const rivals = lexicon.byQstring.get(qstring) ?? [];
+  const weakest = rivals.length > 0 ? rivals[rivals.length - 1] : null;
+  const cap = weakest ? weakest.weight - SPLIT_MARGIN : null;
 
   if (required !== null && cap !== null) {
     if (cap < required) {
       return {
         weight: round6(cap),
         reason:
-          `below homophone ${rival.phrase} (${formatWeight(rival.weight)}) - ${SPLIT_MARGIN}; ` +
+          `below every homophone, weakest is ${weakest.phrase} (${formatWeight(weakest.weight)}) - ${SPLIT_MARGIN}; ` +
           `will not beat split path ${describePath(split)} (needs ${formatWeight(required)}); ` +
-          `pass --weight if this phrase really is the more common reading`,
+          `pass --weight if corpus evidence says this phrase outranks a homophone`,
       };
     }
     return {
       weight: round6(required),
       reason:
         `best split path ${describePath(split)} (effective ${formatWeight(split.score)}) + ${SPLIT_MARGIN}, ` +
-        `below homophone ${rival.phrase} (${formatWeight(rival.weight)})`,
+        `below every homophone (weakest ${weakest.phrase} at ${formatWeight(weakest.weight)})`,
     };
   }
 
   if (cap !== null) {
     return {
       weight: round6(cap),
-      reason: `below homophone ${rival.phrase} (${formatWeight(rival.weight)}) - ${SPLIT_MARGIN}`,
+      reason: `below every homophone, weakest is ${weakest.phrase} (${formatWeight(weakest.weight)}) - ${SPLIT_MARGIN}`,
     };
   }
 
