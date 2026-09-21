@@ -130,15 +130,15 @@ jobs:
             exit 1
           fi
 
-          cin_punctuation="$(sqlite3 "$db_name" "select value from 'Mandarin-bpmf-cin' where key = '_punctuation_<' order by value limit 1;")"
-          if [[ "$cin_punctuation" != "，" ]]; then
-            echo "Missing _punctuation_< full-width comma in Mandarin-bpmf-cin: ${cin_punctuation}" >&2
+          cin_punctuation="$(sqlite3 "$db_name" "select count(*) from 'Mandarin-bpmf-cin' where key = '_punctuation_<' and value = '，';")"
+          if [[ "$cin_punctuation" -lt 1 ]]; then
+            echo "Missing _punctuation_< full-width comma in Mandarin-bpmf-cin" >&2
             exit 1
           fi
 
-          cin_standard_punctuation="$(sqlite3 "$db_name" "select value from 'Mandarin-bpmf-cin' where key = '_punctuation_Standard_<' order by value limit 1;")"
-          if [[ "$cin_standard_punctuation" != "，" ]]; then
-            echo "Missing _punctuation_Standard_< full-width comma in Mandarin-bpmf-cin: ${cin_standard_punctuation}" >&2
+          cin_standard_punctuation="$(sqlite3 "$db_name" "select count(*) from 'Mandarin-bpmf-cin' where key = '_punctuation_Standard_<' and value = '，';")"
+          if [[ "$cin_standard_punctuation" -lt 1 ]]; then
+            echo "Missing _punctuation_Standard_< full-width comma in Mandarin-bpmf-cin" >&2
             exit 1
           fi
 
