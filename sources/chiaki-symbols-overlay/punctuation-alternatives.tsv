@@ -36,3 +36,4 @@ _punctuation_(	︵	punctuation,bracket,opening,vertical
 _punctuation_(	(	punctuation,bracket,opening,halfwidth
 _punctuation_)	︶	punctuation,bracket,closing,vertical
 _punctuation_)	)	punctuation,bracket,closing,halfwidth
+_punctuation_|	、	punctuation,comma,ideographic,primary

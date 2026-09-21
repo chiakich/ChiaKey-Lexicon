@@ -40,6 +40,8 @@ _punctuation_list<TAB>symbol
 
 `punctuation-alternatives.tsv` 會補充既有 runtime 標點 key 的候選符號，例如在`_punctuation_[` 原本輸出 `「` 之後，追加 `『`、`《`、`﹁` 等同族開符號候選。若 exact key/value 已存在，則跳過以維持 Yahoo 原始資料的排序與相容性。
 
+tags 若含 `primary`，該列權重會高於 Yahoo 基底列（基底為 `0.0`），成為該按鍵的首選候選，原本的基底符號退居選單。例如 `_punctuation_|` 以 `、` 為首選、`｜` 退為第二候選，與其他注音輸入法的慣例一致。沒有 `primary` 的列一律排在基底列之後。
+
 ## 上游與授權
 
 此層為專案自有資料。
