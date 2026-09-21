@@ -1087,3 +1087,15 @@ o=Ci	驚見	-0.970000	chiaki-modern-overlay,manual,homophone-order,upstream-freq
 3:3:	斑斑	-1.240000	chiaki-modern-overlay,manual,homophone-order,upstream-freq-fix
 PM:i	情面	-1.270000	chiaki-modern-overlay,manual,homophone-order,upstream-freq-fix
 Ml\Y	盛典	-1.300000	chiaki-modern-overlay,manual,homophone-order,upstream-freq-fix
+010\	區網	-1.900000	chiaki-modern-overlay,manual,homophone-order,tw-usage
+010\	屈枉	-2.200000	chiaki-modern-overlay,manual,demote,homophone-order,tw-usage
+=_11	吏胥	-3.490000	chiaki-modern-overlay,manual,demote,rare-word-cap
+_d5W^j	在討論	-2.700000	chiaki-modern-overlay,manual,compositional-cap
+_d5W^j9>	在討論中	-4.280000	chiaki-modern-overlay,manual,compositional-cap
+O_Bk	付帳	-1.300000	chiaki-modern-overlay,manual,homophone-order,tw-usage
+O_Bk	付賬	-1.650000	chiaki-modern-overlay,manual,demote,variant-normalization,tw-usage
+:CBk	折賬	-2.730000	chiaki-modern-overlay,manual,demote,variant-normalization,tw-usage
+A1Bk	拉賬	-2.750000	chiaki-modern-overlay,manual,demote,variant-normalization,tw-usage
+W7Bk7:	催賬單	-2.710000	chiaki-modern-overlay,manual,demote,variant-normalization,tw-usage
+cIBk	盤賬	-2.690000	chiaki-modern-overlay,manual,demote,variant-normalization,tw-usage
+xhBk	爛賬	-3.300000	chiaki-modern-overlay,manual,demote,variant-normalization,tw-usage
