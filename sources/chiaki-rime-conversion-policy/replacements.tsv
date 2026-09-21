@@ -16,3 +16,5 @@
 # 單字整族規則，必須排在所有片語規則之後：規則依檔案順序做子字串取代，若這條
 # 先跑，含「臺」的片語 from 就再也匹配不到。
 臺	台	rime-conversion,modern-zh-tw,variant-normalization
+賬	帳	rime-conversion,modern-zh-tw,variant-normalization
+酰	醯	rime-conversion,modern-zh-tw,variant-normalization
