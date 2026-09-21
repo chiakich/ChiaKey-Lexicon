@@ -62,3 +62,4 @@ _punctuation_HanyuPinyin_,	,	punctuation,comma,halfwidth
 _punctuation_HanyuPinyin_.	．	punctuation,period,alternative
 _punctuation_HanyuPinyin_.	.	punctuation,period,halfwidth
 _punctuation_HanyuPinyin_.	‧	punctuation,dot,interpunct
+_punctuation_\	、	punctuation,comma,ideographic,primary
