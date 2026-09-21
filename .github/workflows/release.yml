@@ -130,15 +130,15 @@ jobs:
             exit 1
           fi
 
-          cin_punctuation="$(sqlite3 "$db_name" "select value from 'Mandarin-bpmf-cin' where key = '_punctuation_<' order by value limit 1;")"
-          if [[ "$cin_punctuation" != "，" ]]; then
-            echo "Missing _punctuation_< full-width comma in Mandarin-bpmf-cin: ${cin_punctuation}" >&2
+          cin_punctuation="$(sqlite3 "$db_name" "select count(*) from 'Mandarin-bpmf-cin' where key = '_punctuation_<' and value = '，';")"
+          if [[ "$cin_punctuation" -lt 1 ]]; then
+            echo "Missing _punctuation_< full-width comma in Mandarin-bpmf-cin" >&2
             exit 1
           fi
 
-          cin_standard_punctuation="$(sqlite3 "$db_name" "select value from 'Mandarin-bpmf-cin' where key = '_punctuation_Standard_<' order by value limit 1;")"
-          if [[ "$cin_standard_punctuation" != "，" ]]; then
-            echo "Missing _punctuation_Standard_< full-width comma in Mandarin-bpmf-cin: ${cin_standard_punctuation}" >&2
+          cin_standard_punctuation="$(sqlite3 "$db_name" "select count(*) from 'Mandarin-bpmf-cin' where key = '_punctuation_Standard_<' and value = '，';")"
+          if [[ "$cin_standard_punctuation" -lt 1 ]]; then
+            echo "Missing _punctuation_Standard_< full-width comma in Mandarin-bpmf-cin" >&2
             exit 1
           fi
 
@@ -403,6 +403,50 @@ jobs:
 
           notes_path.write_text("\n".join(lines) + "\n")
           PY
+
+          # Assembled as a file rather than an action input: commit subjects are
+          # author-controlled, and this way they never pass through a shell or a
+          # workflow expression. The instructions live in their own file so
+          # tuning the wording does not mean editing YAML.
+          {
+            cat .github/release-notes-prompt.txt
+            (cut -f2 "${release_dir}/commit-summary.tsv" \
+              | grep -Ev '^(docs|ci)(\([^)]*\))?!?: ' \
+              | grep -v '^Merge ' \
+              | sed 's/^/- /') || true
+            printf '</changes>\n'
+          } > notes-prompt.txt
+
+      # Commit subjects describe mechanisms; users need what changes when they
+      # type. The model rewrites them, and the generated notes stay below so
+      # nothing is lost if it guesses wrong. The script never fails: on any
+      # error summary-zh.md is empty and the notes are published unchanged.
+      - name: Write user-facing notes in Chinese
+        continue-on-error: true
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: bash scripts/release/gemini-summarize.sh notes-prompt.txt summary-zh.md
+
+      - name: Prepend the Chinese summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${{ steps.version.outputs.version }}"
+          notes="dist/${version}/RELEASE_NOTES.md"
+          summary="$(cat summary-zh.md 2>/dev/null || true)"
+
+          if [[ -z "${summary//[[:space:]]/}" ]]; then
+            echo "::warning::No Chinese summary was produced; publishing the generated notes only."
+            exit 0
+          fi
+
+          { printf '## 這次更新\n\n%s\n\n' "${summary}"; cat "${notes}"; } >notes-with-summary.md
+          mv notes-with-summary.md "${notes}"
+
+          {
+            echo "## Release notes preview (${version})"
+            cat "${notes}"
+          } >>"$GITHUB_STEP_SUMMARY"
 
       - name: Publish GitHub Release
         env:

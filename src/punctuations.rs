@@ -8,6 +8,9 @@ use std::path::Path;
 
 const BASE_WEIGHT: f64 = 0.0;
 const SYMBOL_OVERLAY_BASE_WEIGHT: f64 = -0.001;
+// Rows tagged `primary` must outrank the vendor cin default, which sits at 0.0.
+const SYMBOL_OVERLAY_PRIMARY_WEIGHT: f64 = 0.001;
+const PRIMARY_TAG: &str = "primary";
 const RANK_STEP: f64 = 0.000001;
 const PUNCTUATION_LIST_KEY: &str = "_punctuation_list";
 
@@ -157,10 +160,15 @@ pub fn parse_symbol_alternatives(
             .map(|tags| tags.trim())
             .filter(|tags| !tags.is_empty())
             .unwrap_or("punctuation-alternative");
+        let base_weight = if has_primary_tag(tag_suffix) {
+            SYMBOL_OVERLAY_PRIMARY_WEIGHT
+        } else {
+            SYMBOL_OVERLAY_BASE_WEIGHT
+        };
         records.push(SourceRecord {
             qstring: qstring.to_string(),
             phrase: symbol.to_string(),
-            weight: SYMBOL_OVERLAY_BASE_WEIGHT - (*rank as f64 * RANK_STEP),
+            weight: base_weight - (*rank as f64 * RANK_STEP),
             source_id: SYMBOL_OVERLAY_SOURCE_ID,
             tags: format!("unigram,{SYMBOL_OVERLAY_SOURCE_ID},{tag_suffix}"),
         });
@@ -168,6 +176,10 @@ pub fn parse_symbol_alternatives(
     }
 
     Ok((records, seen, skipped))
+}
+
+fn has_primary_tag(tags: &str) -> bool {
+    tags.split(',').any(|tag| tag.trim() == PRIMARY_TAG)
 }
 
 fn parse_chardef_line(line: &str, ranks: &mut HashMap<String, usize>) -> Option<SourceRecord> {
@@ -265,6 +277,26 @@ mod tests {
         assert_eq!(records[0].qstring, "_punctuation_[");
         assert_eq!(records[0].phrase, "『");
         assert_eq!(records[0].tags, "unigram,chiaki-symbols-overlay,quote");
+
+        let _ = fs::remove_file(path);
+    }
+
+    #[test]
+    fn primary_tag_outranks_vendor_cin_default() {
+        let path = temp_file(
+            "symbol-primary",
+            "_punctuation_|\t、\tpunctuation,primary\n_punctuation_|\t‧\tpunctuation,dot\n",
+        );
+        let existing_exact_keys = HashSet::from([("_punctuation_|".to_string(), "｜".to_string())]);
+
+        let (records, _, _) = parse_symbol_alternatives(&path, &existing_exact_keys).unwrap();
+
+        assert_eq!(records.len(), 2);
+        assert!(
+            records[0].weight > 0.0,
+            "primary must beat the 0.0 base row"
+        );
+        assert!(records[1].weight < 0.0);
 
         let _ = fs::remove_file(path);
     }
