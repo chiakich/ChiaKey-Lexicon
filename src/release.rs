@@ -2,6 +2,7 @@ use crate::associated_phrases;
 use crate::bpmf_ext;
 use crate::config::{self, Config};
 use crate::db;
+use crate::exclusions;
 use crate::files::{
     file_info, repo_relative, sha256_bytes, sha256_file, verify_required_files, write_inventory,
     write_json, write_text,
@@ -178,6 +179,13 @@ pub fn run() -> Result<()> {
     )?;
     import_prepopulated_service_data(&mut conn, &cfg, &paths, &mut import_results)?;
     import_module_cin_tables(&mut conn, &cfg, &paths, &mut import_results)?;
+    apply_unigram_exclusions(
+        &mut conn,
+        &cfg,
+        &paths,
+        &mut source_keys,
+        &mut import_results,
+    )?;
     // Before the cin reorder, which reads unigram order back out.
     reorder_unigrams_by_frequency(&mut conn, &cfg, &paths, &mut import_results)?;
     db::reorder_mandarin_bpmf_candidates(&mut conn)?;
@@ -250,6 +258,7 @@ fn verify_inputs(
         paths.chiakey_auto_hotwords_state.clone(),
         paths.openformosa_common_voice_bigrams.clone(),
         paths.fragment_demotions.clone(),
+        paths.unigram_exclusions.clone(),
         paths.rime_essay_raw.clone(),
         paths.rime_conversion_replacements.clone(),
     ];
@@ -278,6 +287,7 @@ fn create_output_dirs(cfg: &Config, paths: &ReleasePaths) -> Result<()> {
     fs::create_dir_all(&paths.chiakey_auto_hotwords_source_dir)?;
     fs::create_dir_all(&paths.openformosa_common_voice_source_dir)?;
     fs::create_dir_all(&paths.fragment_denylist_source_dir)?;
+    fs::create_dir_all(&paths.unigram_exclusions_source_dir)?;
     Ok(())
 }
 
@@ -854,6 +864,24 @@ fn import_fragment_demotions(
     )?;
     remember_records(source_keys, &result);
     import_results.push(result);
+    Ok(())
+}
+
+fn apply_unigram_exclusions(
+    conn: &mut Connection,
+    cfg: &Config,
+    paths: &ReleasePaths,
+    source_keys: &mut HashMap<(String, String), SourceRecord>,
+    import_results: &mut Vec<ImportResult>,
+) -> Result<()> {
+    let exclusions = exclusions::parse(&paths.unigram_exclusions)?;
+    import_results.push(exclusions::apply(
+        conn,
+        &exclusions,
+        source_keys,
+        &repo_relative(&cfg.root, &paths.unigram_exclusions)?,
+        &sha256_file(&paths.unigram_exclusions)?,
+    )?);
     Ok(())
 }
 

@@ -157,6 +157,7 @@ stored = min( unigram(current) + boost + (raw − raw_max_of_source), −0.05 )
 
 - `chiaki-rime-conversion-policy`：OpenCC `t2tw` 後的 Rime 例外規則，只保留地名 `里`、食物詞 `里肌` 等 `t2tw` 無法安全判斷的專案偏好。
 - `chiaki-fragment-denylist`：句段碎片權重上限（降低偷字造成的錯誤斷詞），在 explicit overlay 後最後套用並優先於一般排序調整。
+- `chiaki-unigram-exclusions`：以精確的 `(qstring, 詞語)` 排除錯音或錯詞，在所有來源匯入後套用。
 
 ## 整合方式
 
@@ -172,11 +173,12 @@ Release builder 的整合流程是具有確定性的：
 7. 匯入 `chiaki-web-overlay/unigrams.tsv`、`chiaki-modern-overlay/unigrams.tsv` 與 auto-hotwords，並以 phrase evidence 補強單字讀音。
 8. 由 OpenCC `t2tw` 產生同 qstring variant 權重上限，並套用 Rime 單字同音 rerank。
 9. 匯入 `chiaki-modern-overlay/explicit.tsv`，處理專案自有且需要指定 qstring 或排序的精準修正；它覆蓋所有一般 unigram 來源與前述校正。
-10. 最後套用 `chiaki-fragment-denylist`，把偷字的非詞彙碎片壓到安全界；這個安全上限優先於 explicit overlay。
+10. 套用 `chiaki-fragment-denylist`，把偷字的非詞彙碎片壓到安全界；這個安全上限優先於 explicit overlay。
 11. 依序匯入 bigram 來源：`openformosa-common-voice-25-zh-tw`、`chiaki-tw-homophone-bigram`、`chiaki-web-overlay`、`chiaki-modern-overlay`。後匯入者覆蓋前者的重疊 rows，因此人工審查過的 web overlay 與人工修正 overlay 位於語料統計來源之上。
 12. 補入 runtime compatibility data：BPMF 標點、ChiaKey supplemental symbol list、canned messages、Mozc 顏文字、module CIN tables。
-13. 從最終 `unigrams` 派生 `associated_phrases`，供聯想詞提示使用。
-14. 執行 runtime-required validations，寫出 normalized TSV、release metadata、manifest 與 checksums。
+13. 套用 `chiaki-unigram-exclusions`，移除經人工確認的精確錯誤讀音配對與其相關 bigram。
+14. 從最終 `unigrams` 派生 `associated_phrases`，供聯想詞提示使用。
+15. 執行 runtime-required validations，寫出 normalized TSV、release metadata、manifest 與 checksums。
 
 另外，release builder 會從整合完成的 `unigrams` 派生 `associated_phrases` runtime table。這張表不是獨立詞源，而是提供「聯想詞提示」使用的 head-character -> phrase-tail 候選，例如輸出 `我` 後可提示 `們`、`的` 等詞尾。
 

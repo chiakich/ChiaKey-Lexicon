@@ -1,0 +1,6 @@
+# qstring<TAB>phrase<TAB>reason
+# Issue #31: reject exact wrong readings without changing the upstream source files.
+nqzh	得看	modal 得 reads ㄉㄟˇ, not ㄉㄜ˙
+nqvf	得票	得票 reads ㄉㄜˊ ㄆㄧㄠˋ
+nq0_	的士	的士 reads ㄉㄧˊ ㄕˋ
+N_nq	目地	spurious Rime entry; retain 目的地

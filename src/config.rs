@@ -65,6 +65,8 @@ pub const OPENFORMOSA_COMMON_VOICE_SOURCE_NAME: &str =
 pub const OPENCC_VARIANT_SOURCE_ID: &str = "opencc-variant-policy";
 pub const FRAGMENT_DENYLIST_SOURCE_ID: &str = "chiaki-fragment-denylist";
 pub const FRAGMENT_DENYLIST_SOURCE_NAME: &str = "ChiaKey non-lexical fragment weight caps";
+pub const UNIGRAM_EXCLUSIONS_SOURCE_ID: &str = "chiaki-unigram-exclusions";
+pub const UNIGRAM_EXCLUSIONS_SOURCE_NAME: &str = "ChiaKey exact unigram exclusions";
 pub const DATABASE_SCHEMA_VERSION: i64 = 1;
 pub const DEFAULT_RELEASE_VERSION: &str = "dev";
 
