@@ -9,6 +9,7 @@ use crate::config::{
     PUNCTUATION_SOURCE_ID, PUNCTUATION_VENDOR_PATH, RIME_CONVERSION_SOURCE_ID,
     RIME_ESSAY_SOURCE_ID, SIMPLEX_EXT_VENDOR_PATH, SYMBOL_OVERLAY_ALTERNATIVES_PATH,
     SYMBOL_OVERLAY_PATH, SYMBOL_OVERLAY_SOURCE_ID, TW_LY_TRANSCRIPT_SOURCE_ID,
+    UNIGRAM_EXCLUSIONS_SOURCE_ID,
 };
 use std::path::PathBuf;
 
@@ -32,6 +33,7 @@ pub struct ReleasePaths {
     pub tw_ly_transcript_source_dir: PathBuf,
     pub chiaki_tw_homophone_source_dir: PathBuf,
     pub fragment_denylist_source_dir: PathBuf,
+    pub unigram_exclusions_source_dir: PathBuf,
     pub overlay_unigrams: PathBuf,
     pub overlay_explicit: PathBuf,
     pub overlay_bigrams: PathBuf,
@@ -68,6 +70,7 @@ pub struct ReleasePaths {
     pub rime_essay_raw: PathBuf,
     pub rime_conversion_replacements: PathBuf,
     pub fragment_demotions: PathBuf,
+    pub unigram_exclusions: PathBuf,
     pub db_filename: String,
     pub metadata_filename: String,
     pub db: PathBuf,
@@ -107,6 +110,8 @@ impl ReleasePaths {
             cfg.root.join("sources").join(CHIAKI_TW_HOMOPHONE_SOURCE_ID);
         let fragment_denylist_source_dir =
             cfg.root.join("sources").join(FRAGMENT_DENYLIST_SOURCE_ID);
+        let unigram_exclusions_source_dir =
+            cfg.root.join("sources").join(UNIGRAM_EXCLUSIONS_SOURCE_ID);
         let db_filename = format!("ChiaKeySource-{}.db", cfg.release_version);
         let metadata_filename = format!("ChiaKeySource-{}.json", cfg.release_version);
 
@@ -152,6 +157,7 @@ impl ReleasePaths {
             rime_essay_raw: rime_essay_source_dir.join("raw/essay.txt"),
             rime_conversion_replacements: rime_conversion_source_dir.join("replacements.tsv"),
             fragment_demotions: fragment_denylist_source_dir.join("fragment-demotions.tsv"),
+            unigram_exclusions: unigram_exclusions_source_dir.join("exclusions.tsv"),
             db: cfg.dist_dir.join(&db_filename),
             metadata: cfg.dist_dir.join(&metadata_filename),
             checksum: cfg.dist_dir.join("SHA256SUMS"),
@@ -173,6 +179,7 @@ impl ReleasePaths {
             tw_ly_transcript_source_dir,
             chiaki_tw_homophone_source_dir,
             fragment_denylist_source_dir,
+            unigram_exclusions_source_dir,
             db_filename,
             metadata_filename,
         }

@@ -417,8 +417,8 @@ jobs:
             printf '</changes>\n'
           } > notes-prompt.txt
 
-      # Commit subjects describe mechanisms; users need what changes when they
-      # type. The model rewrites them, and the generated notes stay below so
+      # Commit subjects describe what changes when users type. The model groups
+      # and rewrites them, and the generated notes stay below so
       # nothing is lost if it guesses wrong. The script never fails: on any
       # error summary-zh.md is empty and the notes are published unchanged.
       - name: Write user-facing notes in Chinese

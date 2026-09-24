@@ -1,7 +1,7 @@
 use crate::config::{
     Config, CHIAKEY_AUTO_HOTWORDS_SOURCE_ID, CHIAKI_WEB_OVERLAY_SOURCE_ID,
-    GENERATED_CHARACTER_EVIDENCE_SOURCE_ID, LIBCHEWING_SOURCE_ID, OPENCC_VARIANT_SOURCE_ID,
-    OVERLAY_SOURCE_ID, RIME_ESSAY_SOURCE_ID,
+    GENERATED_CHARACTER_EVIDENCE_SOURCE_ID, LIBCHEWING_SOURCE_ID, NI_GENDER_VARIANT_SOURCE_ID,
+    OPENCC_VARIANT_SOURCE_ID, OVERLAY_SOURCE_ID, RIME_ESSAY_SOURCE_ID,
 };
 use crate::opencc;
 use crate::phonetics::{phrase_candidate, qstring_for_bpmf_sequence};
@@ -53,6 +53,7 @@ const SINGLE_CHAR_HOMOPHONE_RERANK_PHRASE_EVIDENCE_MIN_RATIO: f64 = 2.0;
 const SINGLE_CHAR_HOMOPHONE_RERANK_PHRASE_EVIDENCE_MIN_SUPPORT: usize = 3;
 const SINGLE_CHAR_HOMOPHONE_RERANK_PHRASE_EVIDENCE_MIN_WEIGHT: f64 = -1.35;
 const OPENCC_VARIANT_DEMOTION_MARGIN: f64 = 0.01;
+const NI_GENDER_VARIANT_DEMOTION_MARGIN: f64 = 0.01;
 // A reading-supplements alternate reading whose qstring is already occupied
 // by a different, already-established phrase must stay strictly below that
 // phrase's weight — it should be reachable by cycling, never win by default.
@@ -1216,6 +1217,65 @@ pub fn generate_opencc_variant_demotions(
     Ok((records, best_weight_by_key.len(), skipped))
 }
 
+// 妳 isn't an opencc t2tw orthography variant of 你 (opencc leaves it
+// untouched), so generate_opencc_variant_demotions never catches it. Without
+// this, later per-phrase overlays/denylist edits that only ever target the
+// 你-form (e.g. fragment-demotions) can leave a 妳-phrase outranking its own
+// 你-counterpart. Run this last among unigram-weight imports so it always
+// caps against each counterpart's final weight.
+pub fn generate_ni_gender_variant_demotions(
+    unigram_rows: &[(String, String, f64)],
+) -> (Vec<SourceRecord>, usize, usize) {
+    let mut best_weight_by_key: HashMap<(String, String), f64> = HashMap::new();
+    for (qstring, phrase, weight) in unigram_rows {
+        best_weight_by_key
+            .entry((qstring.clone(), phrase.clone()))
+            .and_modify(|existing| *existing = existing.max(*weight))
+            .or_insert(*weight);
+    }
+
+    let mut records_by_key: HashMap<(String, String), SourceRecord> = HashMap::new();
+    let mut skipped = 0;
+    for ((qstring, phrase), weight) in &best_weight_by_key {
+        if !phrase.contains('妳') {
+            continue;
+        }
+        let counterpart = phrase.replace('妳', "你");
+        let Some(counterpart_weight) =
+            best_weight_by_key.get(&(qstring.clone(), counterpart.clone()))
+        else {
+            skipped += 1;
+            continue;
+        };
+        let max_weight = round6(counterpart_weight - NI_GENDER_VARIANT_DEMOTION_MARGIN);
+        if *weight <= max_weight {
+            skipped += 1;
+            continue;
+        }
+        records_by_key.insert(
+            (qstring.clone(), phrase.clone()),
+            SourceRecord {
+                qstring: qstring.clone(),
+                phrase: phrase.clone(),
+                weight: max_weight,
+                source_id: NI_GENDER_VARIANT_SOURCE_ID,
+                tags: format!(
+                    "unigram,{NI_GENDER_VARIANT_SOURCE_ID},ni-gender-counterpart,{counterpart}"
+                ),
+            },
+        );
+    }
+
+    let mut records = records_by_key.into_values().collect::<Vec<_>>();
+    records.sort_by(|left, right| {
+        left.qstring
+            .cmp(&right.qstring)
+            .then_with(|| left.phrase.cmp(&right.phrase))
+    });
+    let seen = best_weight_by_key.len();
+    (records, seen, skipped)
+}
+
 // Same shape as parse_variant_demotions but for multi-character fragment caps
 // (variant demotions are single-character only). Reuses VariantDemotionRecord
 // and db::apply_variant_demotions for the phrase-level weight cap.
@@ -1633,9 +1693,10 @@ fn round6(value: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::{
-        calibrate_bigram_boost, joined_phrase_records_from_bigrams, libchewing_weight,
-        parse_bigram_overlay, parse_conversion_rules, parse_explicit_overlay,
-        parse_fragment_demotions, parse_reading_supplements, parse_rime_essay,
+        calibrate_bigram_boost, generate_ni_gender_variant_demotions,
+        joined_phrase_records_from_bigrams, libchewing_weight, parse_bigram_overlay,
+        parse_conversion_rules, parse_explicit_overlay, parse_fragment_demotions,
+        parse_reading_supplements, parse_rime_essay,
         parse_rime_existing_phrase_reranks, parse_rime_overlap_reranks,
         parse_single_char_homophone_reranks, parse_variant_demotions,
         phrase_evidence_character_records, phrase_split_rerank_records,
@@ -2860,6 +2921,43 @@ mod tests {
             std::env::temp_dir().join(format!("chiakey-lexicon-{name}-{}.tsv", std::process::id()));
         fs::write(&path, content).unwrap();
         path
+    }
+
+    #[test]
+    fn caps_ni_gender_variant_below_its_counterpart_final_weight() {
+        let rows = vec![
+            ("w[\\O".to_string(), "想你".to_string(), -1.632809),
+            ("w[\\O".to_string(), "想妳".to_string(), -1.063396),
+            ("gcgc\\O".to_string(), "謝謝你".to_string(), -0.955768),
+            ("gcgc\\O".to_string(), "謝謝妳".to_string(), -0.655768),
+            // No 你-counterpart present: must be skipped, not demoted.
+            ("abcd".to_string(), "某妳".to_string(), -1.0),
+        ];
+
+        let (records, _seen, skipped) = generate_ni_gender_variant_demotions(&rows);
+
+        assert_eq!(skipped, 1);
+        assert_eq!(records.len(), 2);
+        let by_phrase: HashMap<_, _> = records
+            .iter()
+            .map(|record| (record.phrase.clone(), record))
+            .collect();
+        assert_eq!(by_phrase["想妳"].weight, -1.642809);
+        assert_eq!(by_phrase["謝謝妳"].weight, -0.965768);
+        assert!(by_phrase["想妳"].tags.contains("ni-gender-counterpart"));
+    }
+
+    #[test]
+    fn skips_ni_gender_variant_already_below_counterpart() {
+        let rows = vec![
+            ("w[\\O".to_string(), "想你".to_string(), -1.632809),
+            ("w[\\O".to_string(), "想妳".to_string(), -5.0),
+        ];
+
+        let (records, _seen, skipped) = generate_ni_gender_variant_demotions(&rows);
+
+        assert_eq!(records.len(), 0);
+        assert_eq!(skipped, 1);
     }
 
     fn test_config() -> Config {
