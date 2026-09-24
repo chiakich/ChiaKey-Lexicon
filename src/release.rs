@@ -149,6 +149,15 @@ pub fn run() -> Result<()> {
         &mut source_keys,
         &mut import_results,
     )?;
+    // Last unigram-weight import: caps every 妳-phrase against its 你-counterpart's
+    // final weight, after fragment-demotions and all other overlays have settled.
+    import_ni_gender_variant_policy(
+        &mut conn,
+        &cfg,
+        &paths,
+        &mut source_keys,
+        &mut import_results,
+    )?;
     import_openformosa_common_voice_bigrams(&mut conn, &cfg, &paths, &mut import_results)?;
     // tw-ly-transcript bigrams are retired: after removing its 65 nq-bound 得/部份
     // rows the layer still adds nothing over chiaki-tw-homophone-bigram (+0.07% on
@@ -799,6 +808,31 @@ fn import_opencc_variant_policy(
         &records,
         source_path,
         "opencc-variant-demotion",
+        &source_sha256,
+        seen,
+        skipped,
+    )?;
+    remember_records(source_keys, &result);
+    import_results.push(result);
+    Ok(())
+}
+
+fn import_ni_gender_variant_policy(
+    conn: &mut Connection,
+    _cfg: &Config,
+    _paths: &ReleasePaths,
+    source_keys: &mut HashMap<(String, String), SourceRecord>,
+    import_results: &mut Vec<ImportResult>,
+) -> Result<()> {
+    let rows = db::load_unigram_rows(conn)?;
+    let (records, seen, skipped) = importers::generate_ni_gender_variant_demotions(&rows);
+    let source_path = "generated/ni-gender-variant-demotions";
+    let source_sha256 = sha256_bytes(b"ni-gender qstring variant demotions v1");
+    let result = db::apply_qstring_variant_demotions(
+        conn,
+        &records,
+        source_path,
+        "ni-gender-variant-demotion",
         &source_sha256,
         seen,
         skipped,
