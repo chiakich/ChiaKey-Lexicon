@@ -3,6 +3,7 @@ mod bigram;
 mod bpmf_ext;
 mod config;
 mod db;
+mod exclusions;
 mod fetch;
 mod files;
 mod importers;

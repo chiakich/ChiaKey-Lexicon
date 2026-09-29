@@ -96,10 +96,23 @@ workflow 會做：
 4. 執行 `cargo run --release -- prepare-release`。
 5. 驗證 `SHA256SUMS`。
 6. 用 SQLite smoke tests 確認 release DB 符合 app 端需要的基本合約。
-7. 從 commit log、release metadata 與 checksum 自動產生 release notes；長清單用 GitHub Markdown `<details>` 收合。
+7. 從 commit log、release metadata 與 checksum 自動產生 release notes；中文摘要只讀取 commit 標題，長清單用 GitHub Markdown `<details>` 收合。
 8. 建立 GitHub Release 並上傳 DB、metadata、manifest、checksum。
 
 `dist/` 是本機與 CI 的 staging 目錄，不 commit 進 git。公開 artifacts 以 GitHub Release 為準。
+
+### Commit 標題與中文更新摘要
+
+中文更新摘要只會讀取這次發版的 commit 標題，不會讀取 diff。手動提交影響選字的變更時，請使用**單行 Conventional Commit**，在標題中寫出具體詞彙及使用者可感受到的結果。尤其是候選順位調整，應指出哪些詞會更早或更晚出現；排除某讀音的候選時，應說清楚限制的是該讀音，而非整個詞。避免只寫 `add overlay`、`demote colliding phrases` 等實作描述。
+
+例如：
+
+```text
+fix: 降低「契友」與「滿場」在易誤選讀音中的順位
+fix: 排除「得看」在錯誤讀音下的候選
+```
+
+若同一個提交包含多種獨立的選字效果，盡量拆成各自可描述的提交。純內部變更可照常描述技術內容；中文摘要會略過使用者感受不到的調整。自動產生的大批詞彙更新則應在標題寫出來源及整體效果，不能只寫更新了資料檔。
 
 ### Auto Hotwords workflow
 

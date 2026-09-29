@@ -1099,3 +1099,10 @@ A1Bk	拉賬	-2.750000	chiaki-modern-overlay,manual,demote,variant-normalization,
 W7Bk7:	催賬單	-2.710000	chiaki-modern-overlay,manual,demote,variant-normalization,tw-usage
 cIBk	盤賬	-2.690000	chiaki-modern-overlay,manual,demote,variant-normalization,tw-usage
 xhBk	爛賬	-3.300000	chiaki-modern-overlay,manual,demote,variant-normalization,tw-usage
+
+# Issue #33: keep valid words available, but prevent them from stealing common splits.
+# 這|台積|契友 beats 這台|機器|有 by ~0.066; this gives the latter ~0.22 margin.
+B_NX	契友	-1.700000	chiaki-modern-overlay,manual,demote,segmentation-order,issue-33
+# ㄇㄢˇ ㄔㄤˊ: place sense usually uses ㄔㄤˇ. Let 滿|常 win on the second-tone code.
+# Its split score is -2.114, so a two-syllable phrase needs raw weight < -3.114.
+DY4L	滿場	-3.350000	chiaki-modern-overlay,manual,reading-demote,segmentation-order,issue-33

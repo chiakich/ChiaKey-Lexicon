@@ -10,7 +10,7 @@ use crate::config::{
     PREPOPULATED_SERVICE_SOURCE_ID, PREPOPULATED_SERVICE_SOURCE_NAME, PUNCTUATION_SOURCE_ID,
     PUNCTUATION_SOURCE_NAME, RIME_CONVERSION_SOURCE_ID, RIME_CONVERSION_SOURCE_NAME,
     RIME_ESSAY_SOURCE_ID, RIME_ESSAY_SOURCE_NAME, SYMBOL_OVERLAY_SOURCE_ID,
-    SYMBOL_OVERLAY_SOURCE_NAME,
+    SYMBOL_OVERLAY_SOURCE_NAME, UNIGRAM_EXCLUSIONS_SOURCE_ID, UNIGRAM_EXCLUSIONS_SOURCE_NAME,
 };
 use crate::db;
 use crate::files::{file_info, relative_to, sha256_bytes, sha256_file};
@@ -175,6 +175,15 @@ pub fn release_metadata(
             &paths.fragment_denylist_source_dir,
             &[&paths.fragment_demotions],
             db::stats_for_source_rows(source_rows, "sources/chiaki-fragment-denylist/"),
+        )?,
+        release_source_from_files(
+            UNIGRAM_EXCLUSIONS_SOURCE_ID,
+            UNIGRAM_EXCLUSIONS_SOURCE_NAME,
+            "CC BY-NC 4.0; commercial use requires permission from Chiaki.C",
+            "Chiaki.C",
+            &paths.unigram_exclusions_source_dir,
+            &[&paths.unigram_exclusions],
+            db::stats_for_source_rows(source_rows, "sources/chiaki-unigram-exclusions/"),
         )?,
     ];
 
@@ -380,6 +389,17 @@ pub fn manifest(
             &paths.fragment_denylist_source_dir,
             &[&paths.fragment_demotions],
             311,
+        )?,
+        manifest_source_from_files(
+            UNIGRAM_EXCLUSIONS_SOURCE_ID,
+            UNIGRAM_EXCLUSIONS_SOURCE_NAME,
+            "https://github.com/chiakich/ChiaKey-Lexicon/tree/main/sources/chiaki-unigram-exclusions",
+            "tsv",
+            "CC BY-NC 4.0; commercial use requires permission from Chiaki.C",
+            "Chiaki.C",
+            &paths.unigram_exclusions_source_dir,
+            &[&paths.unigram_exclusions],
+            312,
         )?,
     ];
 
