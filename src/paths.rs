@@ -52,6 +52,7 @@ pub struct ReleasePaths {
     pub punctuation_cin: PathBuf,
     pub symbol_overlay_symbols: PathBuf,
     pub symbol_overlay_alternatives: PathBuf,
+    pub symbol_metadata: PathBuf,
     pub prepopulated_service_inventory: PathBuf,
     pub canned_messages_plist: PathBuf,
     pub mozc_emoticon_inventory: PathBuf,
@@ -136,6 +137,9 @@ impl ReleasePaths {
             boneyard_inventory: boneyard_source_dir.join("source-inventory.sha256"),
             punctuation_inventory: punctuation_source_dir.join("source-inventory.sha256"),
             punctuation_cin: cfg.root.join(PUNCTUATION_VENDOR_PATH),
+            symbol_metadata: cfg
+                .root
+                .join("sources/chiaki-symbols-overlay/symbol-metadata.json"),
             symbol_overlay_symbols: cfg.root.join(SYMBOL_OVERLAY_PATH),
             symbol_overlay_alternatives: cfg.root.join(SYMBOL_OVERLAY_ALTERNATIVES_PATH),
             prepopulated_service_inventory: prepopulated_service_source_dir

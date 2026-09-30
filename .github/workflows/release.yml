@@ -60,7 +60,7 @@ jobs:
           echo "LEXICON_VERSION=${version}" >> "$GITHUB_ENV"
           echo "RELEASE_BASE_URL=https://github.com/${GITHUB_REPOSITORY}/releases/download/${version}" >> "$GITHUB_ENV"
 
-      - name: Run tests
+      - name: Run tests including symbol metadata compatibility
         run: cargo test
 
       - name: Build release artifacts
