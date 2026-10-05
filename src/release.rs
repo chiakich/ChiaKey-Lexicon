@@ -253,6 +253,7 @@ fn verify_inputs(
         paths.punctuation_cin.clone(),
         paths.symbol_overlay_symbols.clone(),
         paths.symbol_overlay_alternatives.clone(),
+        paths.symbol_metadata.clone(),
         paths.canned_messages_plist.clone(),
         paths.mozc_emoticon_categorized.clone(),
         paths.mozc_emoticon_tsv.clone(),
@@ -436,6 +437,7 @@ fn import_prepopulated_service_data(
 ) -> Result<()> {
     let data = prepopulated::load(
         &paths.canned_messages_plist,
+        &paths.symbol_metadata,
         &paths.symbol_overlay_symbols,
         &paths.mozc_emoticon_categorized,
         &paths.mozc_emoticon_tsv,
@@ -444,6 +446,11 @@ fn import_prepopulated_service_data(
     prepopulated::validate_payload(&data)?;
 
     let source_rows = vec![
+        (
+            repo_relative(&cfg.root, &paths.symbol_metadata)?,
+            "chiaki-symbol-metadata".to_string(),
+            sha256_file(&paths.symbol_metadata)?,
+        ),
         (
             repo_relative(&cfg.root, &paths.canned_messages_plist)?,
             prepopulated::source_kind().to_string(),
