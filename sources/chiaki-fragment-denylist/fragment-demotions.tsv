@@ -284,3 +284,19 @@
 # 用詞，卻靠 +1.0 詞長加分在 ㄔ ㄅㄨˋ 開頭的句子偷走一個音節（吃不起 → 吃布起）。
 # 上限 = w(吃) + w(布) - 1.0 詞長加分 - 0.3 margin。
 吃布	-3.790379	chiaki-fragment-denylist,fragment-demote,rime-conversion-artifact
+# Reviewed V了 fragments, 了 = ˙ㄌㄜ only; retain lexical and risky homophone entries.
+# cap = w(V at the same reading) + w(了 qq) - 1.0 length bonus - 0.30 margin.
+哭了	-3.587995	chiaki-fragment-denylist,fragment-demote,le-particle
+唱了	-3.428199	chiaki-fragment-denylist,fragment-demote,le-particle
+問了	-3.004353	chiaki-fragment-denylist,fragment-demote,le-particle
+找了	-3.089729	chiaki-fragment-denylist,fragment-demote,le-particle
+拆了	-3.097641	chiaki-fragment-denylist,fragment-demote,le-particle
+拿了	-3.297626	chiaki-fragment-denylist,fragment-demote,le-particle
+睡了	-3.221502	chiaki-fragment-denylist,fragment-demote,le-particle
+走了	-3.189597	chiaki-fragment-denylist,fragment-demote,le-particle
+跑了	-3.379479	chiaki-fragment-denylist,fragment-demote,le-particle
+送了	-3.074917	chiaki-fragment-denylist,fragment-demote,le-particle
+醒了	-3.486548	chiaki-fragment-denylist,fragment-demote,le-particle
+# 看了: preserve 監看|了 over 間|看了 by 0.30; avoid unnecessary additional demotion.
+# cap = eff(監看) + w(了 qq) - w(間 T:) - 1.0 - 0.30.
+看了	-2.564620	chiaki-fragment-denylist,fragment-demote,le-particle
