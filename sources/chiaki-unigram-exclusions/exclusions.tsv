@@ -7,3 +7,4 @@ N_nq	目地	spurious Rime entry; retain 目的地
 Ibl0C_	這出戏	Issue #37: mixed-script Rime fragment; use 這 + 齣戲 with contextual bigram
 `Z`Z	听听	Issue #37 audit: simplified Rime phrase with inferred ㄧㄣˇ ㄧㄣˇ reading; retain 聽聽
 <@_k?0p5	无妄之災	Issue #37 audit: mixed-script Rime phrase; retain 無妄之災
+nqVO1g	得比較	generated web-bigram fragment; keep 得 + 比較 separate to avoid stealing 的 + 比較
