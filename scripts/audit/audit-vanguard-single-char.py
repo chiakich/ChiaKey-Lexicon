@@ -44,18 +44,22 @@ def read_revision(upstream):
     """Read the cloned checkout's Git metadata without running an executable."""
     gitdir = upstream / ".git"
     if gitdir.is_file():
-        text = gitdir.read_text().strip()
+        text = gitdir.read_text(encoding="utf-8").strip()
         if not text.startswith("gitdir: "):
             raise ValueError("unrecognized gitdir file")
         gitdir = (upstream / text[8:]).resolve()
-    head = (gitdir / "HEAD").read_text().strip()
+    head = (gitdir / "HEAD").read_text(encoding="utf-8").strip()
     if head.startswith("ref: "):
         ref = head[5:]
-        path = gitdir / ref
+        # Linked worktrees keep branch refs in the common dir.
+        common = gitdir
+        if (gitdir / "commondir").exists():
+            common = (gitdir / (gitdir / "commondir").read_text(encoding="utf-8").strip()).resolve()
+        path = common / ref
         if path.exists():
-            head = path.read_text().strip()
+            head = path.read_text(encoding="utf-8").strip()
         else:
-            packed = (gitdir / "packed-refs").read_text().splitlines()
+            packed = (common / "packed-refs").read_text(encoding="utf-8").splitlines()
             head = next(line.split()[0] for line in packed if line.endswith(" " + ref))
     if not re.fullmatch(r"[0-9a-f]{40}", head):
         raise ValueError("unrecognized upstream revision")
@@ -223,7 +227,7 @@ def compare(candidates, source, db, out, upstream, mcbopomofo=None):
                        "chiakey_top10": " ".join(x[0] for x in chia[q][:10]),
                        "vanguard_core_top10": " ".join(x[0] for x in core[:10])})
     output.sort(key=lambda row: (row["evidence_tier"] != "supported",
-                                -int(row["shared_rank_improvement"] or -10000), row["character"], row["qstring"]))
+                                -(row["shared_rank_improvement"] if row["shared_rank_improvement"] != "" else -10000), row["character"], row["qstring"]))
     supported = [r for r in output if r["evidence_tier"] == "supported"
                  and r.get("frequency_gap", "1") == "1"]
     priority = [r for r in output if r["shared_rank_improvement"] != ""
@@ -303,7 +307,7 @@ def compare(candidates, source, db, out, upstream, mcbopomofo=None):
             checked=sum(r["vanguard_core_rank"] != "" for r in output),
             differences=len(export_differences))
         stats["sha256"][str(mcbopomofo)] = hashlib.sha256(mcbopomofo.read_bytes()).hexdigest()
-    (out / "summary.json").write_text(json.dumps(stats, ensure_ascii=False, indent=2) + "\n")
+    (out / "summary.json").write_text(json.dumps(stats, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(stats, ensure_ascii=False, indent=2))
 
 

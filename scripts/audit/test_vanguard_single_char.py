@@ -37,7 +37,7 @@ class VanguardRankTest(unittest.TestCase):
         self.assertEqual(AUDIT.grouped_values("\x07"), [])
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "dict.txtMap"
-            path.write_text(TEXTMAP)
+            path.write_text(TEXTMAP, encoding="utf-8")
             entries = AUDIT.load_textmap(path)["ㄒㄧㄝˋ"]
             self.assertEqual(AUDIT.ordered_unique(entries, {6}),
                              [("謝", -2, 6), ("械", -3, 6), ("解", -3, 6)])
@@ -48,7 +48,7 @@ class VanguardRankTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             source = root / "dict.txtMap"
-            source.write_text(TEXTMAP)
+            source.write_text(TEXTMAP, encoding="utf-8")
             db = root / "dict.db"
             with sqlite3.connect(db) as conn:
                 conn.execute("CREATE TABLE unigrams(qstring TEXT,current TEXT,probability REAL)")
@@ -59,10 +59,13 @@ class VanguardRankTest(unittest.TestCase):
             candidates.write_text("character\treading\tqstring\tevidence_tier\n"
                                   "械\tㄒㄧㄝˋ\tgc\tsupported\n"
                                   "妎\tㄒㄧㄝˋ\tgc\tno-evidence\n"
-                                  "液\tㄒㄧㄝˋ\tgc\tno-evidence\n")
+                                  "液\tㄒㄧㄝˋ\tgc\tno-evidence\n", encoding="utf-8")
+            upstream = root / "upstream"
+            (upstream / ".git").mkdir(parents=True)
+            (upstream / ".git/HEAD").write_text("0" * 40 + "\n", encoding="utf-8")
             with contextlib.redirect_stdout(io.StringIO()):
-                AUDIT.compare(candidates, source, db, root / "out", AUDIT.ROOT)
-            with (root / "out/all-comparison.tsv").open() as stream:
+                AUDIT.compare(candidates, source, db, root / "out", upstream)
+            with (root / "out/all-comparison.tsv").open(encoding="utf-8", newline="") as stream:
                 data = {r["character"]: r for r in csv.DictReader(stream, delimiter="\t")}
             self.assertEqual(data["械"]["candidate_rank"], "2")
             self.assertEqual(data["械"]["vanguard_core_rank"], "2")
@@ -76,7 +79,7 @@ class VanguardRankTest(unittest.TestCase):
         path = AUDIT.ROOT / "tmp/polyphone-frequency-audit/readings.tsv"
         if not path.exists():
             self.skipTest("run polyphone frequency audit first")
-        with path.open() as stream:
+        with path.open(encoding="utf-8", newline="") as stream:
             rows = list(csv.DictReader(stream, delimiter="\t"))
         encoded = AUDIT.encode_readings({row["reading"] for row in rows})
         for row in rows:
