@@ -91,8 +91,10 @@ def main():
     parser.add_argument("--after-db", type=Path)
     args = parser.parse_args()
     gold = read_gold(args.gold)
-    before = tally(gold, read_mismatches(args.before / "mismatches.tsv"))
-    after = tally(gold, read_mismatches(args.after / "mismatches.tsv"))
+    before_rows = read_mismatches(args.before / "mismatches.tsv")
+    after_rows = read_mismatches(args.after / "mismatches.tsv")
+    before = tally(gold, before_rows)
+    after = tally(gold, after_rows)
     print(json.dumps(dict(before=summary(args.before / "eval.log"), after=summary(args.after / "eval.log")),
                      ensure_ascii=False))
     print("\nreading\tdemoted char chosen wrongly: before -> after")
@@ -111,12 +113,9 @@ def main():
         print(f"\nhead changes among {len(old)} single-character readings: {len(changed)}")
         for q, a, b in changed:
             print(f"  {q}\t{a} -> {b}")
-    fixed = [e for e in gold if e in read_mismatches(args.before / "mismatches.tsv")
-             and e not in read_mismatches(args.after / "mismatches.tsv")]
-    broken = [e for e in gold if e not in read_mismatches(args.before / "mismatches.tsv")
-              and e in read_mismatches(args.after / "mismatches.tsv")]
+    fixed = [e for e in gold if e in before_rows and e not in after_rows]
+    broken = [e for e in gold if e not in before_rows and e in after_rows]
     print(f"\nsentences fixed: {len(fixed)}, newly wrong: {len(broken)}")
-    after_rows = read_mismatches(args.after / "mismatches.tsv")
     for e in broken:
         print(f"  broke: {e} -> {after_rows[e]}")
     for e in fixed:

@@ -101,11 +101,16 @@ tsi 分數取自 libchewing `tsi.csv` 單字列（release 單字頻率的來源�
 
 實驗目錄 `tmp/reading-demotion/`（不進版控）：`baseline-head.db`、`expA.db`、`expB.db`、各自的 `eval.log` 與 `mismatches.tsv`，以及 `u-*.txt`／`b-*.txt` 的 unigram／bigram 傾印。`dist/reading-demotion/` 有腳本輸出的 `explicit-rows.tsv`、`review.tsv`、`caps.tsv`、`inherited-readings.tsv`、`summary.json`。
 
+`baseline-head.db` 是在套用本次 `explicit.tsv` 修改前執行 `prepare-release`，再把 `dist/dev/ChiaKeySource-dev.db` 複製過來；`expA.db` 是套用後的同一份產物。
+
 ```sh
+mkdir -p tmp/reading-demotion/baseline-head tmp/reading-demotion/expA
 python3 scripts/lexicon/demote-inherited-readings.py --baseline tmp/reading-demotion/baseline-head.db
 python3 -m unittest discover -s scripts/audit -p 'test_reading_demotion.py'
+../ChiaKey/Scripts/eval-walker-goldset.sh --lexicon tmp/reading-demotion/baseline-head.db --gold tmp/reading-demotion/gold-line-d1.tsv --mismatches tmp/reading-demotion/baseline-head/mismatches.tsv | tee tmp/reading-demotion/baseline-head/eval.log
 cargo run --release -- prepare-release
-../ChiaKey/Scripts/eval-walker-goldset.sh --lexicon dist/dev/ChiaKeySource-dev.db --gold tmp/reading-demotion/gold-line-d1.tsv --mismatches tmp/reading-demotion/expA/mismatches.tsv
+cp dist/dev/ChiaKeySource-dev.db tmp/reading-demotion/expA.db
+../ChiaKey/Scripts/eval-walker-goldset.sh --lexicon tmp/reading-demotion/expA.db --gold tmp/reading-demotion/gold-line-d1.tsv --mismatches tmp/reading-demotion/expA/mismatches.tsv | tee tmp/reading-demotion/expA/eval.log
 python3 scripts/audit/compare-reading-demotion.py --gold tmp/reading-demotion/gold-line-d1.tsv --before tmp/reading-demotion/baseline-head --after tmp/reading-demotion/expA --before-db tmp/reading-demotion/baseline-head.db --after-db tmp/reading-demotion/expA.db
 ```
 

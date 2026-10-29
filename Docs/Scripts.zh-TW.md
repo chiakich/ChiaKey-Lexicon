@@ -63,6 +63,7 @@ ACTIVE_ROOT=/tmp/ChiaKey-Lexicons SLOT=test-dev scripts/release/uninstall-dev-le
 | `audit-bigram-effectiveness.mjs` | 依走訪器可達性把 DB 中每筆 bigram 分成 A/B/C/D 四類，並輸出可剪除清單與並列讀音清單。判準見 [WalkerScoring.zh-TW.md](WalkerScoring.zh-TW.md)，操作流程見 [BigramPruning.zh-TW.md](BigramPruning.zh-TW.md)。 | `node scripts/audit/audit-bigram-effectiveness.mjs --prune-out tmp/prunable.tsv` |
 | `audit-unigram-health.mjs` | 把 DB 中每筆多字 unigram 分成八類讀音／可達性狀態，並依來源層彙總。作法取自唯音輸入法先鋒語料庫的 `Collector_HealthCheck.swift`，判準換成本專案走訪器的有效分數（`weight + 1.0 ×(音節數−1)`）。 | `node scripts/audit/audit-unigram-health.mjs --out tmp/unigram-health.tsv` |
 | `audit-single-char-heads.mjs` | 找出單音節讀音上語氣詞／結構助詞輸給同音實詞的位置，依翻轉所需的權重差排序；另可列出前二名並列的讀音。針對 [WalkerBaseline.zh-TW.md](WalkerBaseline.zh-TW.md) 指出的最大宗字級錯誤。 | `node scripts/audit/audit-single-char-heads.mjs --out tmp/single-char-heads.tsv` |
+| `audit-vanguard-single-char.py` | 比較先鋒最終繁體單字順位與 ChiaKey，分開列核心／擴充 coverage，並在共同候選集合中重排名次。`--all-readings` 包含全部多音字讀音；工具只讀已建置資料，以 Python 轉換注音、不執行上游。`demote-inherited-readings.py` 也用它載入先鋒順位。 | `python3 scripts/audit/audit-vanguard-single-char.py --all-readings` |
 | `explain-weight.mjs` | 顯示詞條在正規化結果及各原始來源中的權重／頻率，協助判斷來源與勝出原因。 | `node scripts/audit/explain-weight.mjs 童音 同音` |
 | `audit-boneyard-legacy-weights.mjs` | 找出 KeyKey boneyard 舊資料中，可能因舊權重而壓過現代語料同音候選的項目；結果僅供人工審查。 | `node scripts/audit/audit-boneyard-legacy-weights.mjs --top 50 --min-ratio 3` |
 | `audit-rime-rerank-variants.mjs` | 找出 Rime 重排後值得以台灣用語檢視的候選差異。 | `node scripts/audit/audit-rime-rerank-variants.mjs --top 100 --max-gap 0.35 --min-tsi-ratio 1` |
@@ -102,7 +103,7 @@ node scripts/audit/audit-unigram-health.mjs --missing-out tmp/missing-readings.t
 
 `--missing-out` 的 `alt_reading_only` 欄標出「所有佐證詞都來自 `alt-reading,common-mistype` 列」的組。本專案的標準是**這些也要收**：詞層既然收了常見誤讀，單字層不收會讓打錯的人只能整詞打出、拆開就打不出來。
 
-`capped` 是從 `indifferent` / `insufficient` 分出來的：來源 tag 含 `compositional-cap`（`669e85a` 把 essay 的組合式條目壓下去，好讓 bigram 層有機會介入）、`fragment-demote` 或 `demote` 的列，本來就是為了輸給其他路徑才存在的。不分出來的話，這幾百列會把真正需要處理的項目淹掉。新增降權機制時記得同步更新腳本裡的 `DEMOTION_TAGS`。
+`capped` 是從 `indifferent` / `insufficient` 分出來的：來源 tag 含 `compositional-cap`（`669e85a` 把 essay 的組合式條目壓下去，好讓 bigram 層有機會介入）、`fragment-demote`、`demote`、`rare-word-cap`（罕用詞上限）或 `reading-demote`（次要讀音降權）的列，本來就是為了輸給其他路徑才存在的。不分出來的話，這幾百列會把真正需要處理的項目淹掉。新增降權機制時記得同步更新腳本裡的 `DEMOTION_TAGS`。
 
 判準說明：
 
