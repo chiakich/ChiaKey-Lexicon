@@ -86,6 +86,8 @@ qstring<TAB>phrase<TAB>tags
 
 帶有 `rare-word-cap` 與 `compositional-cap` tag 的列處理「罕用詞靠詞長加分壓過逐字／拆詞路徑」。walker 的 `+1.0/音節` 讓任何兩字詞的有效分數比逐字路徑高 1.0，所以某些只在該讀音出現一次的冷僻詞（`吏胥`）或 essay 的組合式條目（`在討論`）會成為預設輸出，擋住使用者真正想打的字。降權門檻以有效分數反推：`cap = baseline − 0.30 − 1.0 × (字數 − 1)`，`baseline` 取最佳拆詞路徑與同長度對手兩者較高者。
 
+帶有 `polyphone-reading-weight,vanguard-fixed-anchor` tag 的列是多音字單字讀音的權重修正：`reading-demote` 以外的列是升權（被壓低的讀音插回先鋒核心順位，其他字固定不動），帶 `reading-demote` 的列是降權（繼承整個字頻率的次要讀音，移到先鋒核心排在它前面的字之下，其他字同樣固定不動）。兩者都由先鋒核心順位決定位置，不憑感覺填數字；降權列由 `scripts/lexicon/demote-inherited-readings.py` 產生，升權列由 `scripts/lexicon/experiment-vanguard-precise.py` 產生。
+
 帶有 `de-tone-policy` tag 的列實作「的／得／地 以聲調區分」的政策：ㄉㄜ˙（`nq`）第一候選為「的」、ㄉㄜˊ（`0C`）為「得」、ㄉㄧˋ（`:_`）為「地」，其餘同音字降到第一候選下方 0.05，交由使用者自行選字。libchewing 的單字頻率讓這三個位置的前幾名相差不到0.003（`nq` 三字甚至只差 1e-6），實際排序等於隨機；0.05 是讓預設排序確定的最小間距，不改變這些字相對於其他讀音候選的強度。
 
 ## 上游與授權

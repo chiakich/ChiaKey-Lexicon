@@ -48,6 +48,7 @@ ACTIVE_ROOT=/tmp/ChiaKey-Lexicons SLOT=test-dev scripts/release/uninstall-dev-le
 | `prune-dead-bigrams.mjs` | 依走訪器可達性剪掉 A（不可達）與 B（永不勝出）的 bigram 列。預設試算，`--apply` 才寫檔。詳見 [BigramPruning.zh-TW.md](BigramPruning.zh-TW.md)。 | `node scripts/lexicon/prune-dead-bigrams.mjs`；確認後加 `--apply` |
 | `process-missing-word-issue.mjs` | GitHub Actions 用：讀取 `ISSUE_BODY` 等環境變數，驗證缺詞回報、寫出回覆及 PR 資料。通常不需在本機直接執行。 | 由 `.github/workflows/add-unigram.yml` 呼叫 |
 | `process-bigram-issue.mjs` | GitHub Actions 用：讀取 issue 環境變數，驗證並建立 bigram 變更資料。通常不需在本機直接執行。 | 由 `.github/workflows/add-bigram.yml` 呼叫 |
+| `demote-inherited-readings.py` | 把繼承整個字頻率的次要讀音單字移到先鋒核心排在它前面的字之下（其他字固定不動），並用 rare-word-cap 公式替搶字的補充詞算上限；只產生 `explicit.tsv` 列與審查表，不改 `sources/`。同時輸出全部「次要讀音與主讀音同權重」的分析清單。結果見 [InheritedReadingDemotion.zh-TW.md](InheritedReadingDemotion.zh-TW.md)。 | `python3 scripts/lexicon/demote-inherited-readings.py`；對照版加 `--variant` |
 
 `add-unigram.mjs` 推算權重時，只以「拆字路徑」為要超越的對手，並保證新詞排在該讀音**每一個**既有同音詞之下；若兩者衝突，會以同音詞為準並提示改用 `--weight`。`audit-reduplication-gaps.mjs` 用同一套規則賦權。
 
@@ -65,6 +66,7 @@ ACTIVE_ROOT=/tmp/ChiaKey-Lexicons SLOT=test-dev scripts/release/uninstall-dev-le
 | `explain-weight.mjs` | 顯示詞條在正規化結果及各原始來源中的權重／頻率，協助判斷來源與勝出原因。 | `node scripts/audit/explain-weight.mjs 童音 同音` |
 | `audit-boneyard-legacy-weights.mjs` | 找出 KeyKey boneyard 舊資料中，可能因舊權重而壓過現代語料同音候選的項目；結果僅供人工審查。 | `node scripts/audit/audit-boneyard-legacy-weights.mjs --top 50 --min-ratio 3` |
 | `audit-rime-rerank-variants.mjs` | 找出 Rime 重排後值得以台灣用語檢視的候選差異。 | `node scripts/audit/audit-rime-rerank-variants.mjs --top 100 --max-gap 0.35 --min-tsi-ratio 1` |
+| `compare-reading-demotion.py` | 比較兩次 walker gold-set 評測在指定讀音群的逐字錯誤與首選變更，列出修好與新錯的句子。 | `python3 scripts/audit/compare-reading-demotion.py --gold gold.tsv --before dirA --after dirB --before-db a.db --after-db b.db` |
 
 `audit-rime-rerank-variants.mjs --help` 可列出完整選項，包括 `--min-shared-positions` 與 `--include-overlay-winners`。
 
