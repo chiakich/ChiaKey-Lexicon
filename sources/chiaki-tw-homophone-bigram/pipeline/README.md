@@ -43,18 +43,21 @@ cd sources/chiaki-tw-homophone-bigram/pipeline && cargo build --release
 
 前置：`normalized/smart-mandarin.tsv`（repo 根目錄 `cargo run --release -- prepare-release`）。詞庫要先定版再跑，因為詞庫會改變斷詞與撞碼判定。
 
-出貨版用的七個語料檔與句數（可用 `wc -l` 對）：`govnews-train.txt` 57,460、`ntpc-train.txt` 324,621、`ntpc-test.txt` 326,069、`ly-train.txt` 847,844、`ly-test.txt` 74,304、`ptt-95.txt` 2,909,870、`ptt-gold5.txt` 156,656，合計 4,696,824。
+2026-08-03 重建用的九個語料檔與行數（可用 `wc -l` 對）：`govnews-train.txt` 57,460、`ntpc-train.txt` 324,621、`ntpc-test.txt` 326,069、`ly-train.txt` 1,783,880、`ly-test.txt` 182,907、`ptt-95.txt` 2,909,870、`ptt-gold5.txt` 156,656、`plurk.txt` 102,484、`wiki.txt` 892,029，合計 6,735,976。
+
+立法院兩個檔案是這次從 `tmp/ly-gazette/docs` 重新萃取的：依 `index.json` 的 term／session 把 11-2 切出去當測試集（train 6,232 份、test 617 份），再各跑一次 `scripts/corpus/extract-ly-speech.mjs`。政府新聞的四家端點多已失效，這次用的是既有的 `govnews-train.txt`。
 
 ```bash
 # 1. 語料 → 一句一行
 node scripts/build-corpora.mjs --out data --ptt-json path/to/ppt_pretrain.json
 
-# 2. 抽取相鄰詞對（Viterbi 斷詞，詞長加成 +1.0/字，對齊 walker）
+# 2. 抽取相鄰詞對（Viterbi 斷詞，詞長加成 +1.0/多出的字，對齊 Node::lengthPrior）
 ./target/release/chiakey-bigram-pipeline extract \
   --lexicon ../../../normalized/smart-mandarin.tsv \
   --out data/pairs-all.tsv \
   data/govnews-train.txt data/ntpc-train.txt data/ntpc-test.txt \
-  data/ly-train.txt data/ly-test.txt data/ptt-95.txt data/ptt-gold5.txt
+  data/ly-train.txt data/ly-test.txt data/ptt-95.txt data/ptt-gold5.txt \
+  data/plurk.txt data/wiki.txt
 
 # 3. 排除複合詞（extract 標在第 5 欄）並套 doc_count >= 3 門檻
 awk -F'\t' 'NR>1 && $4>=3 && NF==4' data/pairs-all.tsv > data/pairs-eligible.tsv
@@ -62,10 +65,13 @@ awk -F'\t' 'NR>1 && $4>=3 && NF==4' data/pairs-all.tsv > data/pairs-eligible.tsv
 # 4. 產出（撞碼過濾＋讀音綁定＋語料證據檢查）
 #    --input 是過濾後的表，--rival-evidence 必須是未過門檻的完整表，
 #    否則對手的真實計數會被當成 0
+#    --prev-primary-reading 是出貨設定：多音 previous 綁到它的常用讀音，
+#    不加這個旗標會整批棄用（2026-08-02 以前的行為）
 ./target/release/chiakey-bigram-pipeline emit \
   --lexicon ../../../normalized/smart-mandarin.tsv \
   --input data/pairs-eligible.tsv \
   --rival-evidence data/pairs-all.tsv \
+  --prev-primary-reading \
   --out ../bigrams.tsv
 
 # 5. 客觀關卡：每個語域分別跑，比較改動前後
@@ -81,6 +87,7 @@ awk -F'\t' 'NR>1 && $4>=3 && NF==4' data/pairs-all.tsv > data/pairs-eligible.tsv
 
 ## 幾件要知道的事
 
-- **重產不會得到一樣的 230,993 列**，因為詞庫已經變了（撞碼判定與斷詞都跟著變），這也正是重產的目的。`evaluate` 的數字要重新量，不要沿用 [../README.md](../README.md) 附錄裡的數值。
-- `--all-prev-readings` 沒有用在出貨版。767,923 筆因 `previous` 讀音歧義被棄用的候選可以靠它救回，但還沒量測過。
+- **重產不會得到一樣的 394,267 列**，因為詞庫已經變了（撞碼判定與斷詞都跟著變），這也正是重產的目的。`evaluate` 的數字要重新量，不要沿用 [../README.md](../README.md) 附錄裡的數值。
+- `--all-prev-readings`（每個讀音各發一列）已量測，未採用：淨值與 `--prev-primary-reading` 完全相同，列數卻多 27%。相同不是巧合——`evaluate` 不看 `previous` 的讀音，多出來的列剛好全部落在它的盲區，所以那 27% 的風險是未量測的。
+- `evaluate` 的 key 是 `(previous 文字, current, current 讀音)`。要比較兩種 `previous` 讀音政策，這個工具量不出來，得先讓它知道使用者打的是哪個讀音。
 - repo 根目錄的 `src/bigram.rs`（`build-bigram-stats`）是另一個較舊的實作，缺步驟 7 與步驟 10，沒有產生過出貨資料，不要誤改那一份。

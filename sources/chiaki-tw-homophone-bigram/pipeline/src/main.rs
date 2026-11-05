@@ -5,101 +5,11 @@ use std::{
     io::{self, BufRead, BufReader, BufWriter, Write},
 };
 
-// Mimics the walker's preference for longer words (see ChiaKey Node.cpp +1.0/syllable).
-const LENGTH_BONUS: f64 = 1.0;
-const UNKNOWN_CHAR_PENALTY: f64 = -9.0;
-const MAX_WORD_CHARS: usize = 8;
+mod lexicon;
+mod reweight;
+mod unigram_counts;
 
-struct Lexicon {
-    // phrase -> best (highest) weight across readings
-    words: HashMap<String, f64>,
-    max_len: usize,
-}
-
-fn load_lexicon(path: &str) -> io::Result<Lexicon> {
-    let reader = BufReader::new(File::open(path)?);
-    let mut words = HashMap::<String, f64>::new();
-    let mut max_len = 1;
-    for line in reader.lines() {
-        let line = line?;
-        if line.starts_with('#') {
-            continue;
-        }
-        let mut fields = line.split('\t');
-        let _code = fields.next();
-        let phrase = match fields.next() {
-            Some(p) if !p.is_empty() => p,
-            _ => continue,
-        };
-        let weight: f64 = match fields.next().and_then(|w| w.parse().ok()) {
-            Some(w) => w,
-            None => continue,
-        };
-        let chars = phrase.chars().count();
-        if chars == 0 || chars > MAX_WORD_CHARS || !phrase.chars().all(is_han) {
-            continue;
-        }
-        max_len = max_len.max(chars);
-        words
-            .entry(phrase.to_string())
-            .and_modify(|w| {
-                if weight > *w {
-                    *w = weight;
-                }
-            })
-            .or_insert(weight);
-    }
-    Ok(Lexicon { words, max_len })
-}
-
-fn is_han(c: char) -> bool {
-    matches!(c as u32, 0x3400..=0x4DBF | 0x4E00..=0x9FFF | 0xF900..=0xFAFF)
-}
-
-// Viterbi max-score segmentation over one Han-only run.
-fn segment(run: &[char], lexicon: &Lexicon) -> Vec<String> {
-    let n = run.len();
-    if n == 0 {
-        return Vec::new();
-    }
-    // best[i] = (score up to i, backpointer word length)
-    let mut best = vec![(f64::NEG_INFINITY, 0usize); n + 1];
-    best[0] = (0.0, 0);
-    let mut buffer = String::new();
-    for i in 0..n {
-        let (base, _) = best[i];
-        if base == f64::NEG_INFINITY {
-            continue;
-        }
-        let limit = lexicon.max_len.min(n - i);
-        for len in 1..=limit {
-            buffer.clear();
-            buffer.extend(&run[i..i + len]);
-            let score = match lexicon.words.get(buffer.as_str()) {
-                Some(w) => w + LENGTH_BONUS * len as f64,
-                None if len == 1 => UNKNOWN_CHAR_PENALTY,
-                None => continue,
-            };
-            let candidate = base + score;
-            if candidate > best[i + len].0 {
-                best[i + len] = (candidate, len);
-            }
-        }
-    }
-    let mut words = Vec::new();
-    let mut pos = n;
-    while pos > 0 {
-        let len = best[pos].1;
-        if len == 0 {
-            // unreachable in practice: single chars always score
-            break;
-        }
-        words.push(run[pos - len..pos].iter().collect::<String>());
-        pos -= len;
-    }
-    words.reverse();
-    words
-}
+use lexicon::{is_han, load_lexicon, segment};
 
 fn extract(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
     let mut lexicon_path = None;
@@ -374,6 +284,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args: Vec<String> = env::args().skip(1).collect();
     match args.first().map(String::as_str) {
         Some("extract") => extract(&args[1..]),
+        Some("unigrams") => unigram_counts::unigrams(&args[1..]),
+        Some("reweight") => reweight::reweight(&args[1..]),
         Some("coverage") => coverage(&args[1..]),
         Some("collision") => collision(&args[1..]),
         Some("candidates") => candidates(&args[1..]),
@@ -381,7 +293,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Some("emit") => emit(&args[1..]),
         _ => {
             eprintln!(
-                "Usage:\n  extract --lexicon L --out OUT [--min-count N] CORPUS...\n  coverage --lexicon L --target T [--extracted F]... [--overlay F]... [--split dev|test|all] [--out-gaps G]"
+                "Usage:\n  extract --lexicon L --out OUT [--min-count N] CORPUS...\n  unigrams --lexicon L --out OUT CORPUS...\n  coverage --lexicon L --target T [--extracted F]... [--overlay F]... [--split dev|test|all] [--out-gaps G]"
             );
             Ok(())
         }
@@ -855,14 +767,15 @@ fn evaluate(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-// Emit runtime rows in the repo's overlay format. A row is only safe when both
-// sides have an unambiguous reading: `previous` must have exactly one code, and
-// `current` is pinned to the code where its rival lives.
+// Emit runtime rows in the repo's overlay format. Both sides are pinned to one code:
+// `current` to the code where its rival lives, `previous` to its own code, or under
+// --prev-primary-reading to its usual reading when it is polyphonic.
 fn emit(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
     let mut lexicon_path = None;
     let mut input = None;
     let mut out_path = None;
     let mut all_readings = false;
+    let mut prev_primary_reading = false;
     let mut all_cur_readings = false;
     let mut rival_evidence = None;
     let mut iter = args.iter();
@@ -874,8 +787,12 @@ fn emit(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
             // full (unthresholded) pair table, used to compare a candidate against
             // its homophone rivals after the same previous word
             "--rival-evidence" => rival_evidence = iter.next().cloned(),
-            // a polyphonic previous is not wrong, it just needs one row per reading
+            // one row per reading. Measured to be worth nothing over
+            // --prev-primary-reading, and evaluate cannot see the difference — see the
+            // step 9 section of ../README.md
             "--all-prev-readings" => all_readings = true,
+            // keep a polyphonic previous, but only at its usual reading
+            "--prev-primary-reading" => prev_primary_reading = true,
             // opt-in, measured as a regression — see contested_codes
             "--all-cur-readings" => all_cur_readings = true,
             other => return Err(format!("unexpected emit argument: {other}").into()),
@@ -923,17 +840,29 @@ fn emit(args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
         }
         let (prev, cur) = (f[0], f[1]);
         let docfreq: f64 = f.get(3).and_then(|v| v.parse().ok()).unwrap_or(1.0);
-        // previous must have exactly one reading, or the qstring would be a guess
         let prev_codes = match index.phrase_codes.get(prev) {
             Some(codes) => codes,
             None => continue,
         };
-        let mut unique_prev: Vec<&String> = prev_codes.iter().collect();
+        let mut unique_prev: Vec<String> = prev_codes.iter().cloned().collect();
         unique_prev.sort();
         unique_prev.dedup();
-        if unique_prev.len() != 1 && !all_readings {
-            ambiguous_prev += 1;
-            continue;
+        if unique_prev.len() != 1 {
+            // The corpus only shows characters, so it cannot say which reading of a
+            // polyphonic previous was meant. Keeping just the usual reading spends the
+            // ambiguity on the reading the user is most likely to have typed.
+            if prev_primary_reading {
+                match primary_code(&index, prev) {
+                    Some((code, _)) => unique_prev = vec![code],
+                    None => {
+                        ambiguous_prev += 1;
+                        continue;
+                    }
+                }
+            } else if !all_readings {
+                ambiguous_prev += 1;
+                continue;
+            }
         }
         // 的/地/得 are being separated by tone in the IME itself (ㄉㄜ˙ -> 的,
         // ㄉㄜˊ -> 得), so bigram rows for them are dead weight and currently

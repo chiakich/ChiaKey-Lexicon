@@ -79,6 +79,7 @@ pub struct ServiceData {
 
 pub fn load(
     canned_messages_path: &Path,
+    symbol_metadata_path: &Path,
     supplemental_symbols_path: &Path,
     mozc_categorized_path: &Path,
     mozc_emoticon_path: &Path,
@@ -94,12 +95,93 @@ pub fn load(
     let (canned_messages, emoji_message_count) =
         replace_emoji_category_with_mozc_messages(&canned_messages, &mozc_emoticons)?;
 
+    let metadata = fs::read_to_string(symbol_metadata_path)
+        .with_context(|| format!("read {}", symbol_metadata_path.display()))?;
+    let canned_messages = add_symbol_metadata(&canned_messages, &metadata)?;
+
     Ok(ServiceData {
         canned_messages,
         timestamp,
         supplemental_symbol_count,
         emoji_message_count,
     })
+}
+
+// Keep Buttons as strings for older apps. Metadata is optional to consumers,
+// keyed by the exact input string (including whitespace), within each category.
+fn add_symbol_metadata(canned_messages: &str, json: &str) -> Result<String> {
+    let value: serde_json::Value = serde_json::from_str(json)?;
+    let metadata = value
+        .as_object()
+        .context("symbol metadata must be an object")?;
+    for (symbol, entry) in metadata {
+        if symbol.is_empty() || symbol.chars().any(char::is_control) {
+            bail!("invalid symbol metadata key");
+        }
+        // Shipped apps re-dump canned_messages without escaping dict keys, so
+        // one such key makes the whole plist unparseable there.
+        if symbol.contains(['&', '<', '>']) {
+            bail!("symbol metadata key {symbol:?} would break the app's plist reload");
+        }
+        let fields = entry
+            .as_object()
+            .context("symbol metadata entry must be an object")?;
+        if fields
+            .get("Name")
+            .and_then(|v| v.as_str())
+            .is_none_or(|s| s.trim().is_empty())
+        {
+            bail!("symbol metadata requires a nonempty Name");
+        }
+        for (key, value) in fields {
+            if !["Name", "Description", "DisplayLabel"].contains(&key.as_str()) {
+                bail!("unknown symbol metadata field {key}");
+            }
+            let text = value
+                .as_str()
+                .context("symbol metadata fields must be strings")?;
+            if text.trim().is_empty() || text.chars().any(char::is_control) {
+                bail!("invalid symbol metadata field {key}");
+            }
+        }
+    }
+
+    let mut output = canned_messages.to_string();
+    for category in canned_message_categories(canned_messages) {
+        if !category_is_symbol_button_list(category) {
+            continue;
+        }
+        let Some(after_key) = category.split("<key>Buttons</key>").nth(1) else {
+            continue;
+        };
+        let buttons = after_key.split("</array>").next().unwrap_or("");
+        let mut entries = String::new();
+        for (symbol, entry) in metadata {
+            if !buttons.contains(&format!("<string>{}</string>", xml_escape(symbol))) {
+                continue;
+            }
+            entries.push_str(&format!("<key>{}</key><dict>", xml_escape(symbol)));
+            for (key, value) in entry.as_object().unwrap() {
+                entries.push_str(&format!(
+                    "<key>{}</key><string>{}</string>",
+                    xml_escape(key),
+                    xml_escape(value.as_str().unwrap())
+                ));
+            }
+            entries.push_str("</dict>");
+        }
+        if !entries.is_empty() {
+            let enriched = category.replacen(
+                "<key>Buttons</key>",
+                &format!(
+                    "<key>SymbolMetadata</key><dict>{entries}</dict>\n\t\t\t<key>Buttons</key>"
+                ),
+                1,
+            );
+            output = output.replacen(category, &enriched, 1);
+        }
+    }
+    Ok(output)
 }
 
 pub fn validate_payload(data: &ServiceData) -> Result<()> {
@@ -652,6 +734,86 @@ fn forbid_service_row(conn: &Connection, key: &str, sql: &str) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::{validate_payload, ServiceData};
+
+    #[test]
+    fn symbol_metadata_compatibility_with_legacy_consumers() {
+        use std::io::Write;
+        use std::process::{Command, Stdio};
+        let metadata = include_str!("../sources/chiaki-symbols-overlay/symbol-metadata.json");
+        let vendor =
+            include_str!("../sources/keykey-prepopulated-service-data/vendor/CannedMessages.plist");
+        let whitespace = format!("<plist version=\"1.0\"><dict><key>CannedMessages</key><array>{}</array></dict></plist>",
+            button_category_fixture("相容性", &["　".into(), "·".into(), "😀".into(), "&".into()]));
+        for legacy in [vendor, whitespace.as_str()] {
+            let modern = super::add_symbol_metadata(legacy, metadata).unwrap();
+            let mut child = Command::new("python3")
+                .arg(concat!(
+                    env!("CARGO_MANIFEST_DIR"),
+                    "/scripts/lexicon/check-symbol-metadata-compatibility.py"
+                ))
+                .stdin(Stdio::piped())
+                .spawn()
+                .expect("Python 3 is required for plist compatibility checks");
+            child
+                .stdin
+                .take()
+                .unwrap()
+                .write_all(
+                    serde_json::json!({"legacy":legacy, "modern":modern})
+                        .to_string()
+                        .as_bytes(),
+                )
+                .unwrap();
+            assert!(child.wait().unwrap().success());
+        }
+    }
+
+    #[test]
+    fn symbol_metadata_preserves_buttons_and_exact_whitespace_keys() {
+        let category = button_category_fixture(
+            "測試",
+            &[
+                "　".to_string(),
+                "．".to_string(),
+                "😀".to_string(),
+                "&".to_string(),
+            ],
+        );
+        let metadata = include_str!("../sources/chiaki-symbols-overlay/symbol-metadata.json");
+        let enriched = super::add_symbol_metadata(&category, metadata).unwrap();
+        assert!(enriched.contains("<key>　</key>"));
+        assert!(enriched.contains("<key>DisplayLabel</key><string>全形空白</string>"));
+        assert!(enriched.contains("<key>Name</key><string>全形句點</string>"));
+        assert_eq!(super::count_key_array_strings(&enriched, "Buttons"), 4);
+        assert!(enriched.ends_with(category.split("<key>Buttons</key>").nth(1).unwrap()));
+        assert!(!enriched.contains("<key>😀</key>"));
+        // Values may carry XML-special text; the app re-escapes string values.
+        let escaped =
+            super::add_symbol_metadata(&category, r#"{"．":{"Name":"A & B < C"}}"#).unwrap();
+        assert!(
+            escaped.contains("<key>．</key><dict><key>Name</key><string>A &amp; B &lt; C</string>")
+        );
+        assert_eq!(
+            super::add_symbol_metadata(&category, "{}").unwrap(),
+            category
+        );
+    }
+
+    #[test]
+    fn rejects_malformed_symbol_metadata() {
+        for json in [
+            r#"[]"#,
+            r#"{"x":{"Name":7}}"#,
+            r#"{"x":{"Name":""}}"#,
+            r#"{"x":{"Name":"x","DisplayLabel":false}}"#,
+            r#"{"x":{"Name":"x","Unknown":"bad"}}"#,
+            r#"{"&":{"Name":"x"}}"#,
+            r#"{"<":{"Name":"x"}}"#,
+            r#"{"a>":{"Name":"x"}}"#,
+        ] {
+            assert!(super::add_symbol_metadata("", json).is_err());
+        }
+    }
 
     #[test]
     fn rejects_empty_service_payloads_and_zero_timestamp() {

@@ -63,8 +63,11 @@ pub const CHIAKI_TW_HOMOPHONE_SOURCE_NAME: &str =
 pub const OPENFORMOSA_COMMON_VOICE_SOURCE_NAME: &str =
     "OpenFormosa Common Voice 25 zh-TW bigram overlay";
 pub const OPENCC_VARIANT_SOURCE_ID: &str = "opencc-variant-policy";
+pub const NI_GENDER_VARIANT_SOURCE_ID: &str = "ni-gender-variant-policy";
 pub const FRAGMENT_DENYLIST_SOURCE_ID: &str = "chiaki-fragment-denylist";
 pub const FRAGMENT_DENYLIST_SOURCE_NAME: &str = "ChiaKey non-lexical fragment weight caps";
+pub const UNIGRAM_EXCLUSIONS_SOURCE_ID: &str = "chiaki-unigram-exclusions";
+pub const UNIGRAM_EXCLUSIONS_SOURCE_NAME: &str = "ChiaKey exact unigram exclusions";
 pub const DATABASE_SCHEMA_VERSION: i64 = 1;
 pub const DEFAULT_RELEASE_VERSION: &str = "dev";
 
@@ -156,7 +159,7 @@ pub fn load() -> Result<Config> {
         .unwrap_or_else(|_| chrono::Utc::now().to_rfc3339_opts(SecondsFormat::Secs, true));
     let release_base_url = env_or(
         "RELEASE_BASE_URL",
-        format!("https://github.com/akira02/ChiaKey-Lexicon/releases/download/{release_version}"),
+        format!("https://github.com/chiakich/ChiaKey-Lexicon/releases/download/{release_version}"),
     );
     let max_phrase_codepoints = env_or("MAX_PHRASE_CODEPOINTS", "7")
         .parse()

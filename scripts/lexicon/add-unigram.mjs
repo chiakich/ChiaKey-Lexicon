@@ -10,7 +10,9 @@ const UNIGRAM_PATH = path.join(ROOT, "sources/chiaki-modern-overlay/unigrams.tsv
 const NORMALIZED_PATH =
   process.env.NORMALIZED_PATH ?? path.join(ROOT, "normalized/smart-mandarin.tsv");
 const DEFAULT_TAGS = "chiaki-modern-overlay,auto-pr";
-const SPLIT_MARGIN = 0.01;
+// Manjusri Node.cpp c_phraseLengthBonus: log10 bonus per extra syllable.
+const PHRASE_LENGTH_BONUS = 1.0;
+const SPLIT_MARGIN = 0.3;
 const FALLBACK_WEIGHT = -2.3;
 
 const KEYBOARD_TO_BPMF = new Map([
@@ -129,7 +131,12 @@ async function main() {
   const existingUnigram = unigramRows.find(
     (row) => row.qstring === qstring && row.phrase === options.phrase,
   );
-  const suggested = options.weight ?? suggestWeight(qstring, options.phrase, lexicon);
+  // suggestWeight returns {weight, reason}; an explicit --weight/positional
+  // value is a bare number and has to be wrapped to match.
+  const suggested =
+    options.weight === null
+      ? suggestWeight(qstring, options.phrase, lexicon)
+      : { weight: options.weight, reason: "explicit" };
   const tags = buildTags(options);
   const line = `${qstring}\t${options.phrase}\t${formatWeight(suggested.weight)}\t${tags}`;
 
@@ -345,11 +352,49 @@ function suggestWeight(qstring, phrase, lexicon) {
     };
   }
 
-  const split = bestSplit(qstring, lexicon.bestByQstring);
-  if (split) {
+  // The new phrase must out-score the walker's best *split* path, but a rival
+  // phrase already occupying the whole qstring is a homophone, not a path to
+  // beat: promoting above it would demote an established word on no evidence.
+  const split = bestPath(qstring, lexicon.bestByQstring, new Map(), true);
+  const prior = lengthPrior(qstring.length / 2);
+  const required = split ? split.score - prior + SPLIT_MARGIN : null;
+  // byQstring groups are sorted by descending weight, so the last row is the
+  // weakest homophone. Same qstring means the same length bonus, so raw
+  // weights compare directly. Without corpus evidence the new phrase has no
+  // claim to outrank any of them, so it goes below the weakest.
+  const rivals = lexicon.byQstring.get(qstring) ?? [];
+  const weakest = rivals.length > 0 ? rivals[rivals.length - 1] : null;
+  const cap = weakest ? weakest.weight - SPLIT_MARGIN : null;
+
+  if (required !== null && cap !== null) {
+    if (cap < required) {
+      return {
+        weight: round6(cap),
+        reason:
+          `below every homophone, weakest is ${weakest.phrase} (${formatWeight(weakest.weight)}) - ${SPLIT_MARGIN}; ` +
+          `will not beat split path ${describePath(split)} (needs ${formatWeight(required)}); ` +
+          `pass --weight if corpus evidence says this phrase outranks a homophone`,
+      };
+    }
     return {
-      weight: round6(split.weight + SPLIT_MARGIN),
-      reason: `best split ${split.parts.map((row) => row.phrase).join("+")} + ${SPLIT_MARGIN}`,
+      weight: round6(required),
+      reason:
+        `best split path ${describePath(split)} (effective ${formatWeight(split.score)}) + ${SPLIT_MARGIN}, ` +
+        `below every homophone (weakest ${weakest.phrase} at ${formatWeight(weakest.weight)})`,
+    };
+  }
+
+  if (cap !== null) {
+    return {
+      weight: round6(cap),
+      reason: `below every homophone, weakest is ${weakest.phrase} (${formatWeight(weakest.weight)}) - ${SPLIT_MARGIN}`,
+    };
+  }
+
+  if (required !== null) {
+    return {
+      weight: round6(required),
+      reason: `best split path ${describePath(split)} (effective ${formatWeight(split.score)}) + ${SPLIT_MARGIN}`,
     };
   }
 
@@ -364,26 +409,46 @@ function suggestWeight(qstring, phrase, lexicon) {
   return { weight: FALLBACK_WEIGHT, reason: "fallback; no lexicon context found" };
 }
 
-function bestSplit(qstring, bestByQstring) {
+function lengthPrior(syllableCount) {
+  return PHRASE_LENGTH_BONUS * (syllableCount - 1);
+}
+
+function nodeScore(row) {
+  return row.weight + lengthPrior(row.qstring.length / 2);
+}
+
+// Best effective score over every segmentation of `qstring`. Scores are
+// walker-effective (`weight + 1.0 x (syllables - 1)` per node), so they can be
+// compared against a candidate phrase's own effective score. `requireSplit`
+// excludes the single-node path, i.e. an existing whole-qstring homophone.
+function bestPath(qstring, bestByQstring, memo = new Map(), requireSplit = false) {
   const syllableCount = qstring.length / 2;
-  if (!Number.isInteger(syllableCount) || syllableCount < 2) return null;
+  if (!Number.isInteger(syllableCount) || syllableCount < 1) return null;
+  const cached = requireSplit ? undefined : memo.get(qstring);
+  if (cached !== undefined) return cached;
 
   let best = null;
+  // Top level only; nested calls still use whole-qstring nodes inside a split.
+  const whole = requireSplit ? null : bestByQstring.get(qstring);
+  if (whole) best = { score: nodeScore(whole), parts: [whole] };
+
   for (let splitSyllable = 1; splitSyllable < syllableCount; splitSyllable += 1) {
-    const leftQstring = qstring.slice(0, splitSyllable * 2);
-    const rightQstring = qstring.slice(splitSyllable * 2);
-    const left = bestByQstring.get(leftQstring);
-    const rightSplit = bestSplit(rightQstring, bestByQstring);
-    const right = rightSplit ?? bestByQstring.get(rightQstring);
+    const left = bestByQstring.get(qstring.slice(0, splitSyllable * 2));
+    const right = bestPath(qstring.slice(splitSyllable * 2), bestByQstring, memo);
     if (!left || !right) continue;
 
-    const parts = [left, ...(right.parts ?? [right])];
-    const weight = left.weight + right.weight;
-    if (!best || weight > best.weight) {
-      best = { weight, parts };
+    const score = nodeScore(left) + right.score;
+    if (!best || score > best.score) {
+      best = { score, parts: [left, ...right.parts] };
     }
   }
+
+  if (!requireSplit) memo.set(qstring, best);
   return best;
+}
+
+function describePath(path) {
+  return path.parts.map((row) => row.phrase).join("+");
 }
 
 function printContext(qstring, phrase, lexicon) {
@@ -404,12 +469,12 @@ function printContext(qstring, phrase, lexicon) {
     for (const row of sameQstring.slice(0, 8)) printRow(row, row.phrase === phrase ? "*" : " ");
   }
 
-  const split = bestSplit(qstring, lexicon.bestByQstring);
-  if (split) {
+  const path = bestPath(qstring, lexicon.bestByQstring);
+  if (path) {
     console.log(
-      `\nbest split: ${split.parts
+      `\nbest path: ${path.parts
         .map((row) => `${row.phrase}(${row.qstring}, ${formatWeight(row.weight)})`)
-        .join(" + ")} = ${formatWeight(split.weight)}`,
+        .join(" + ")} = effective ${formatWeight(path.score)}`,
     );
   }
 }

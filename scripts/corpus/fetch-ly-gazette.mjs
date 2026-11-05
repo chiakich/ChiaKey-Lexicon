@@ -135,7 +135,7 @@ async function fetchWithRetry(url, cfg, asText = false) {
   let serverErrors = 0
   for (let attempt = 0; attempt < cfg.maxRetries; attempt += 1) {
     const response = await fetch(url, {
-      headers: { 'user-agent': 'ChiaKey-Lexicon/gazette-fetch (+https://github.com/akira02/ChiaKey-Lexicon)' },
+      headers: { 'user-agent': 'ChiaKey-Lexicon/gazette-fetch (+https://github.com/chiakich/ChiaKey-Lexicon)' },
     })
     if (response.ok) {
       const body = asText ? await response.text() : await response.json()

@@ -9,7 +9,7 @@
 本專案不只嘗試解決「哪個詞比較常見」的詞頻問題，更嘗試解決注音輸入最影響體驗的同音詞難題。
 
 - 從政府新聞、立法院公報、PTT、Plurk 與正體中文維基等約 4.6 億字真實文本萃取台灣語境資料。
-- 主力層收錄 292,639 筆同音消歧 bigram，全部針對使用者常用讀音下，可改變選字結果的位置。
+- 主力層收錄 394,267 筆同音消歧 bigram，全部針對使用者常用讀音下，可改變選字結果的位置。
 - 以書面、正式口語、論壇與私訊四種語域的 held-out 測試，量測修正選字與誤搶候選，而非只以資料筆數判斷品質。
 - 每個資料層都有來源、授權與整合紀錄；release 可以從已審查的來源重新建置與追溯。
 
@@ -25,8 +25,8 @@
 
 ## 回報詞庫問題
 
-- [缺詞回報](https://github.com/akira02/ChiaKey-Lexicon/issues/new?template=add-unigram.yml)：回報一個應作為單獨詞語、但目前詞庫缺少的詞，例如「泳鏡」。
-- [長句選字錯誤](https://github.com/akira02/ChiaKey-Lexicon/issues/new?template=add-bigram.yml)：回報兩個已存在詞前後組合時，在長句中選錯字。例如想輸入「天意難測」卻出現「天意南側」。
+- [缺詞回報](https://github.com/chiakich/ChiaKey-Lexicon/issues/new?template=add-unigram.yml)：回報一個應作為單獨詞語、但目前詞庫缺少的詞，例如「泳鏡」。
+- [長句選字錯誤](https://github.com/chiakich/ChiaKey-Lexicon/issues/new?template=add-bigram.yml)：回報兩個已存在詞前後組合時，在長句中選錯字。例如想輸入「天意難測」卻出現「天意南側」。
 
 ## 為什麼有這個專案
 
@@ -49,7 +49,7 @@
 
 本研究發現，bigram 對注音輸入法的唯一作用，是在使用者實際會打出的那個讀音上，把落後的同音候選推到前面。如果某個詞在自己的常用讀音上本來就是最高權重候選，walker 已經會選它，那筆 bigram 不會改變任何結果，只是體積。
 
-以這個判準回頭檢視舊的合成語料層，46,822 列中只有 11.6% 落在能改變結果的位置。新的一層在產生階段即強制這個條件，292,639 列全部落在撞碼位置。
+以這個判準回頭檢視舊的合成語料層，46,822 列中只有 11.6% 落在能改變結果的位置。新的一層在產生階段即強制這個條件，394,267 列全部落在撞碼位置。
 
 #### 用真實輸入正確率當閘門
 
@@ -83,6 +83,8 @@ stored = min( unigram(current) + boost + (raw − raw_max_of_source), −0.05 )
 - **立法院議事暨公報資訊網 / g0v `ly.govapi.tw`**：公報詢答逐字稿，bigram 的即席口語語料來源。
 - **行政院、大陸委員會、中央研究院、客家委員會、新北市政府**：依政府資料開放授權條款釋出的新聞發布，bigram 的書面語料來源。
 - **PTT、Plurk 與中文維基百科**：bigram 主力層使用的論壇、公開貼文與百科文本來源；各來源資訊見其專屬授權聲明。
+- **唯音輸入法 / 先鋒語料庫**（`vChewing/KeyKey-Boneyard`、`vChewing/libvchewing-data`）：本專案的相容性基底詞庫、`bpmf-ext.cin` 與標點資料，都來自該專案整理保存的 Yahoo! KeyKey 原始碼封存；`scripts/audit/audit-unigram-health.mjs` 的多字詞健檢分類作法取自先鋒語料庫的 `Collector_HealthCheck.swift`。該專案資料整理品質很高，體例清楚、可追溯，本專案在建置與驗證方法上參考甚多。
+- **國家教育研究院《通用詞頻表》**：`sources/naer-word-frequency` 本專案之詞頻排序參考資料來⾃國家教育研究院《通⽤詞頻表》(定稿1141208)，特此致謝。該表用於在權重相同的候選之間決定順序。依國教院教研語譯字第 1150001412 號函之書面確認，該資料集採 CC BY 4.0；姓名標示與本專案的資料處理方式見其[來源說明](sources/naer-word-frequency/README.md)。
 - **Mozc**：顏文字預載分類資料。
 - **教育部《重編國語辭典修訂本》／`g0v/moedict-data`**：`chiaki-modern-overlay/reading-supplements.tsv` 破音字讀音補充的資料來源，依教育部「創用CC－姓名標示－禁止改作 3.0 台灣」授權條款重製讀音；姓名標示：中華民國教育部（終身教育司）。
 - **金妤律師**：提供法律交流與意見。惟本致謝不構成其對本專案的正式法律意見、法律代理或任何擔保；本專案資料、授權與使用所生責任均不由其承擔。
@@ -155,6 +157,7 @@ stored = min( unigram(current) + boost + (raw − raw_max_of_source), −0.05 )
 
 - `chiaki-rime-conversion-policy`：OpenCC `t2tw` 後的 Rime 例外規則，只保留地名 `里`、食物詞 `里肌` 等 `t2tw` 無法安全判斷的專案偏好。
 - `chiaki-fragment-denylist`：句段碎片權重上限（降低偷字造成的錯誤斷詞），在 explicit overlay 後最後套用並優先於一般排序調整。
+- `chiaki-unigram-exclusions`：以精確的 `(qstring, 詞語)` 排除錯音或錯詞，在所有來源匯入後套用。
 
 ## 整合方式
 
@@ -170,11 +173,12 @@ Release builder 的整合流程是具有確定性的：
 7. 匯入 `chiaki-web-overlay/unigrams.tsv`、`chiaki-modern-overlay/unigrams.tsv` 與 auto-hotwords，並以 phrase evidence 補強單字讀音。
 8. 由 OpenCC `t2tw` 產生同 qstring variant 權重上限，並套用 Rime 單字同音 rerank。
 9. 匯入 `chiaki-modern-overlay/explicit.tsv`，處理專案自有且需要指定 qstring 或排序的精準修正；它覆蓋所有一般 unigram 來源與前述校正。
-10. 最後套用 `chiaki-fragment-denylist`，把偷字的非詞彙碎片壓到安全界；這個安全上限優先於 explicit overlay。
+10. 套用 `chiaki-fragment-denylist`，把偷字的非詞彙碎片壓到安全界；這個安全上限優先於 explicit overlay。
 11. 依序匯入 bigram 來源：`openformosa-common-voice-25-zh-tw`、`chiaki-tw-homophone-bigram`、`chiaki-web-overlay`、`chiaki-modern-overlay`。後匯入者覆蓋前者的重疊 rows，因此人工審查過的 web overlay 與人工修正 overlay 位於語料統計來源之上。
 12. 補入 runtime compatibility data：BPMF 標點、ChiaKey supplemental symbol list、canned messages、Mozc 顏文字、module CIN tables。
-13. 從最終 `unigrams` 派生 `associated_phrases`，供聯想詞提示使用。
-14. 執行 runtime-required validations，寫出 normalized TSV、release metadata、manifest 與 checksums。
+13. 套用 `chiaki-unigram-exclusions`，移除經人工確認的精確錯誤讀音配對與其相關 bigram。
+14. 從最終 `unigrams` 派生 `associated_phrases`，供聯想詞提示使用。
+15. 執行 runtime-required validations，寫出 normalized TSV、release metadata、manifest 與 checksums。
 
 另外，release builder 會從整合完成的 `unigrams` 派生 `associated_phrases` runtime table。這張表不是獨立詞源，而是提供「聯想詞提示」使用的 head-character -> phrase-tail 候選，例如輸出 `我` 後可提示 `們`、`的` 等詞尾。
 
@@ -204,4 +208,3 @@ Rust release tooling 與 repository scripts 使用 MIT License；見 [LICENSE](L
 - 依實際缺漏加入台灣現代用語。
 - 依真實打字測試調整跨來源權重映射。
 - 若外部詞庫變動時，需重新檢查 LGPL 再散布要求。
-- 研究是否有辦法納入如教育部、國教院等詞庫。

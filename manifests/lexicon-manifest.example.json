@@ -8,7 +8,7 @@
     {
       "id": "chiaki-modern-overlay",
       "name": "ChiaKey Modern Overlay Seed",
-      "url": "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiaki-modern-overlay",
+      "url": "https://github.com/chiakich/ChiaKey-Lexicon/tree/main/sources/chiaki-modern-overlay",
       "format": "tsv",
       "license": "TBD",
       "attribution": "ChiaKey Lexicon project seed data",
@@ -21,7 +21,7 @@
     {
       "id": "smart-mandarin-db",
       "kind": "chiakey-source-db",
-      "url": "https://github.com/akira02/ChiaKey-Lexicon/releases/download/2026.06/ChiaKeySource-2026.06.db",
+      "url": "https://github.com/chiakich/ChiaKey-Lexicon/releases/download/2026.06/ChiaKeySource-2026.06.db",
       "filename": "ChiaKeySource-2026.06.db",
       "sha256": "TBD",
       "size": 0,

@@ -2,6 +2,7 @@ use crate::associated_phrases;
 use crate::bpmf_ext;
 use crate::config::{self, Config};
 use crate::db;
+use crate::exclusions;
 use crate::files::{
     file_info, repo_relative, sha256_bytes, sha256_file, verify_required_files, write_inventory,
     write_json, write_text,
@@ -148,6 +149,15 @@ pub fn run() -> Result<()> {
         &mut source_keys,
         &mut import_results,
     )?;
+    // Last unigram-weight import: caps every 妳-phrase against its 你-counterpart's
+    // final weight, after fragment-demotions and all other overlays have settled.
+    import_ni_gender_variant_policy(
+        &mut conn,
+        &cfg,
+        &paths,
+        &mut source_keys,
+        &mut import_results,
+    )?;
     import_openformosa_common_voice_bigrams(&mut conn, &cfg, &paths, &mut import_results)?;
     // tw-ly-transcript bigrams are retired: after removing its 65 nq-bound 得/部份
     // rows the layer still adds nothing over chiaki-tw-homophone-bigram (+0.07% on
@@ -178,6 +188,15 @@ pub fn run() -> Result<()> {
     )?;
     import_prepopulated_service_data(&mut conn, &cfg, &paths, &mut import_results)?;
     import_module_cin_tables(&mut conn, &cfg, &paths, &mut import_results)?;
+    apply_unigram_exclusions(
+        &mut conn,
+        &cfg,
+        &paths,
+        &mut source_keys,
+        &mut import_results,
+    )?;
+    // Before the cin reorder, which reads unigram order back out.
+    reorder_unigrams_by_frequency(&mut conn, &cfg, &paths, &mut import_results)?;
     db::reorder_mandarin_bpmf_candidates(&mut conn)?;
     import_associated_phrases(&mut conn, &mut import_results)?;
 
@@ -234,6 +253,7 @@ fn verify_inputs(
         paths.punctuation_cin.clone(),
         paths.symbol_overlay_symbols.clone(),
         paths.symbol_overlay_alternatives.clone(),
+        paths.symbol_metadata.clone(),
         paths.canned_messages_plist.clone(),
         paths.mozc_emoticon_categorized.clone(),
         paths.mozc_emoticon_tsv.clone(),
@@ -248,6 +268,7 @@ fn verify_inputs(
         paths.chiakey_auto_hotwords_state.clone(),
         paths.openformosa_common_voice_bigrams.clone(),
         paths.fragment_demotions.clone(),
+        paths.unigram_exclusions.clone(),
         paths.rime_essay_raw.clone(),
         paths.rime_conversion_replacements.clone(),
     ];
@@ -276,6 +297,7 @@ fn create_output_dirs(cfg: &Config, paths: &ReleasePaths) -> Result<()> {
     fs::create_dir_all(&paths.chiakey_auto_hotwords_source_dir)?;
     fs::create_dir_all(&paths.openformosa_common_voice_source_dir)?;
     fs::create_dir_all(&paths.fragment_denylist_source_dir)?;
+    fs::create_dir_all(&paths.unigram_exclusions_source_dir)?;
     Ok(())
 }
 
@@ -415,6 +437,7 @@ fn import_prepopulated_service_data(
 ) -> Result<()> {
     let data = prepopulated::load(
         &paths.canned_messages_plist,
+        &paths.symbol_metadata,
         &paths.symbol_overlay_symbols,
         &paths.mozc_emoticon_categorized,
         &paths.mozc_emoticon_tsv,
@@ -423,6 +446,11 @@ fn import_prepopulated_service_data(
     prepopulated::validate_payload(&data)?;
 
     let source_rows = vec![
+        (
+            repo_relative(&cfg.root, &paths.symbol_metadata)?,
+            "chiaki-symbol-metadata".to_string(),
+            sha256_file(&paths.symbol_metadata)?,
+        ),
         (
             repo_relative(&cfg.root, &paths.canned_messages_plist)?,
             prepopulated::source_kind().to_string(),
@@ -796,6 +824,31 @@ fn import_opencc_variant_policy(
     Ok(())
 }
 
+fn import_ni_gender_variant_policy(
+    conn: &mut Connection,
+    _cfg: &Config,
+    _paths: &ReleasePaths,
+    source_keys: &mut HashMap<(String, String), SourceRecord>,
+    import_results: &mut Vec<ImportResult>,
+) -> Result<()> {
+    let rows = db::load_unigram_rows(conn)?;
+    let (records, seen, skipped) = importers::generate_ni_gender_variant_demotions(&rows);
+    let source_path = "generated/ni-gender-variant-demotions";
+    let source_sha256 = sha256_bytes(b"ni-gender qstring variant demotions v1");
+    let result = db::apply_qstring_variant_demotions(
+        conn,
+        &records,
+        source_path,
+        "ni-gender-variant-demotion",
+        &source_sha256,
+        seen,
+        skipped,
+    )?;
+    remember_records(source_keys, &result);
+    import_results.push(result);
+    Ok(())
+}
+
 fn import_single_char_homophone_rerank(
     conn: &mut Connection,
     cfg: &Config,
@@ -804,10 +857,15 @@ fn import_single_char_homophone_rerank(
     import_results: &mut Vec<ImportResult>,
 ) -> Result<()> {
     let existing_records = db::load_existing_phrase_weights(conn)?;
+    // Same conversion policy as the main rime import: this path reads the raw
+    // essay, so without it the policy-rejected variant gets reranked back up.
+    let (conversion_rules, _, _) =
+        importers::parse_conversion_rules(&paths.rime_conversion_replacements)?;
     let (records, seen, skipped) = importers::parse_single_char_homophone_reranks(
         &paths.rime_essay_raw,
         &existing_records,
         cfg.homophone_rerank_min_ratio,
+        &conversion_rules,
     )?;
     let result = db::apply_records(
         conn,
@@ -847,6 +905,24 @@ fn import_fragment_demotions(
     )?;
     remember_records(source_keys, &result);
     import_results.push(result);
+    Ok(())
+}
+
+fn apply_unigram_exclusions(
+    conn: &mut Connection,
+    cfg: &Config,
+    paths: &ReleasePaths,
+    source_keys: &mut HashMap<(String, String), SourceRecord>,
+    import_results: &mut Vec<ImportResult>,
+) -> Result<()> {
+    let exclusions = exclusions::parse(&paths.unigram_exclusions)?;
+    import_results.push(exclusions::apply(
+        conn,
+        &exclusions,
+        source_keys,
+        &repo_relative(&cfg.root, &paths.unigram_exclusions)?,
+        &sha256_file(&paths.unigram_exclusions)?,
+    )?);
     Ok(())
 }
 
@@ -1133,6 +1209,29 @@ fn import_openformosa_common_voice_bigrams(
         skipped,
     )?;
     import_results.push(result);
+    Ok(())
+}
+
+fn reorder_unigrams_by_frequency(
+    conn: &mut Connection,
+    cfg: &Config,
+    paths: &ReleasePaths,
+    import_results: &mut Vec<ImportResult>,
+) -> Result<()> {
+    let path = &paths.naer_word_frequency;
+    if !path.exists() {
+        return Ok(());
+    }
+    let (frequency, seen, skipped) = importers::parse_word_frequency(path)?;
+    let reordered = db::reorder_unigrams(conn, &frequency)?;
+    import_results.push(ImportResult {
+        source_path: repo_relative(&cfg.root, path)?,
+        seen,
+        added: reordered,
+        skipped,
+        records: Vec::new(),
+    });
+
     Ok(())
 }
 

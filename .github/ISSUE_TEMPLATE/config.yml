@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 輸入法運作問題
+    url: https://github.com/chiakich/ChiaKey/issues/new/choose
+    about: 打不出字、當掉、候選視窗異常、與特定 App 不相容，請到 ChiaKey 回報。

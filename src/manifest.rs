@@ -10,7 +10,7 @@ use crate::config::{
     PREPOPULATED_SERVICE_SOURCE_ID, PREPOPULATED_SERVICE_SOURCE_NAME, PUNCTUATION_SOURCE_ID,
     PUNCTUATION_SOURCE_NAME, RIME_CONVERSION_SOURCE_ID, RIME_CONVERSION_SOURCE_NAME,
     RIME_ESSAY_SOURCE_ID, RIME_ESSAY_SOURCE_NAME, SYMBOL_OVERLAY_SOURCE_ID,
-    SYMBOL_OVERLAY_SOURCE_NAME,
+    SYMBOL_OVERLAY_SOURCE_NAME, UNIGRAM_EXCLUSIONS_SOURCE_ID, UNIGRAM_EXCLUSIONS_SOURCE_NAME,
 };
 use crate::db;
 use crate::files::{file_info, relative_to, sha256_bytes, sha256_file};
@@ -176,6 +176,15 @@ pub fn release_metadata(
             &[&paths.fragment_demotions],
             db::stats_for_source_rows(source_rows, "sources/chiaki-fragment-denylist/"),
         )?,
+        release_source_from_files(
+            UNIGRAM_EXCLUSIONS_SOURCE_ID,
+            UNIGRAM_EXCLUSIONS_SOURCE_NAME,
+            "CC BY-NC 4.0; commercial use requires permission from Chiaki.C",
+            "Chiaki.C",
+            &paths.unigram_exclusions_source_dir,
+            &[&paths.unigram_exclusions],
+            db::stats_for_source_rows(source_rows, "sources/chiaki-unigram-exclusions/"),
+        )?,
     ];
 
     Ok(json!({
@@ -233,7 +242,7 @@ pub fn manifest(
         manifest_source_from_files(
             SYMBOL_OVERLAY_SOURCE_ID,
             SYMBOL_OVERLAY_SOURCE_NAME,
-            "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiaki-symbols-overlay",
+            "https://github.com/chiakich/ChiaKey-Lexicon/tree/main/sources/chiaki-symbols-overlay",
             "tsv",
             "CC0-1.0",
             "ChiaKey Lexicon maintainers",
@@ -307,7 +316,7 @@ pub fn manifest(
         manifest_source_from_files(
             RIME_CONVERSION_SOURCE_ID,
             RIME_CONVERSION_SOURCE_NAME,
-            "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiaki-rime-conversion-policy",
+            "https://github.com/chiakich/ChiaKey-Lexicon/tree/main/sources/chiaki-rime-conversion-policy",
             "tsv",
             "CC0-1.0",
             "ChiaKey Lexicon maintainers",
@@ -318,7 +327,7 @@ pub fn manifest(
         manifest_source_from_files(
             OVERLAY_SOURCE_ID,
             OVERLAY_SOURCE_NAME,
-            "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiaki-modern-overlay",
+            "https://github.com/chiakich/ChiaKey-Lexicon/tree/main/sources/chiaki-modern-overlay",
             "tsv",
             "CC BY-NC 4.0; commercial use requires permission from Chiaki.C",
             "Chiaki.C",
@@ -329,7 +338,7 @@ pub fn manifest(
         manifest_source_from_files(
             CHIAKI_WEB_OVERLAY_SOURCE_ID,
             CHIAKI_WEB_OVERLAY_SOURCE_NAME,
-            "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiaki-web-overlay",
+            "https://github.com/chiakich/ChiaKey-Lexicon/tree/main/sources/chiaki-web-overlay",
             "tsv",
             "CC BY-NC 4.0; commercial use requires permission from Chiaki.C",
             "Chiaki.C",
@@ -340,7 +349,7 @@ pub fn manifest(
         manifest_source_from_files(
             CHIAKEY_AUTO_HOTWORDS_SOURCE_ID,
             CHIAKEY_AUTO_HOTWORDS_SOURCE_NAME,
-            "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiaki-auto-hotwords-overlay",
+            "https://github.com/chiakich/ChiaKey-Lexicon/tree/main/sources/chiaki-auto-hotwords-overlay",
             "tsv",
             "CC0-1.0",
             "ChiaKey Lexicon maintainers",
@@ -362,7 +371,7 @@ pub fn manifest(
                 manifest_source_from_files(
             CHIAKI_TW_HOMOPHONE_SOURCE_ID,
             CHIAKI_TW_HOMOPHONE_SOURCE_NAME,
-            "https://github.com/akira02/ChiaKey-Lexicon/tree/main/sources/chiaki-tw-homophone-bigram",
+            "https://github.com/chiakich/ChiaKey-Lexicon/tree/main/sources/chiaki-tw-homophone-bigram",
             "tsv",
             "CC BY-NC 4.0; commercial use requires permission from Chiaki.C",
             "Chiaki.C",
@@ -380,6 +389,17 @@ pub fn manifest(
             &paths.fragment_denylist_source_dir,
             &[&paths.fragment_demotions],
             311,
+        )?,
+        manifest_source_from_files(
+            UNIGRAM_EXCLUSIONS_SOURCE_ID,
+            UNIGRAM_EXCLUSIONS_SOURCE_NAME,
+            "https://github.com/chiakich/ChiaKey-Lexicon/tree/main/sources/chiaki-unigram-exclusions",
+            "tsv",
+            "CC BY-NC 4.0; commercial use requires permission from Chiaki.C",
+            "Chiaki.C",
+            &paths.unigram_exclusions_source_dir,
+            &[&paths.unigram_exclusions],
+            312,
         )?,
     ];
 

@@ -196,6 +196,58 @@ pub fn reorder_mandarin_bpmf_candidates(conn: &mut Connection) -> Result<()> {
     Ok(())
 }
 
+/// Give tied candidates a defined order.
+///
+/// The walker sorts a reading's candidates with `stable_sort`
+/// (`LanguageModel::findUnigrams`), so equal weights keep the order SQLite
+/// hands back, which is the physical row order. 12,003 of the 68,684 adjacent
+/// candidate pairs in the lexicon are exactly tied, so for those the winner is
+/// whatever the build happened to write first -- and any UPDATE reshuffles it.
+/// Two databases with identical contents differed by 1.02 points of top-1
+/// sentence accuracy on the spoken gold set purely from row order.
+///
+/// Rewriting the table in a stated order fixes the winner to the more frequent
+/// word instead. Weights are untouched; only ties are affected, because
+/// `probability DESC` still comes first. `current` last keeps the result
+/// reproducible when neither word has a frequency.
+pub fn reorder_unigrams(conn: &mut Connection, frequency: &[(String, f64)]) -> Result<usize> {
+    let tx = conn.transaction()?;
+    tx.execute(
+        "CREATE TEMP TABLE chiaki_word_frequency (word TEXT PRIMARY KEY, per_million REAL)",
+        [],
+    )?;
+    {
+        let mut insert =
+            tx.prepare("INSERT OR REPLACE INTO chiaki_word_frequency VALUES(?1, ?2)")?;
+        for (word, per_million) in frequency {
+            insert.execute(params![word, per_million])?;
+        }
+    }
+    tx.execute(
+        "CREATE TEMP TABLE chiaki_unigrams_ordered AS
+         SELECT unigrams.qstring, unigrams.current, unigrams.probability, unigrams.backoff
+         FROM unigrams
+         LEFT JOIN chiaki_word_frequency ON chiaki_word_frequency.word = unigrams.current
+         ORDER BY unigrams.qstring,
+                  unigrams.probability DESC,
+                  COALESCE(chiaki_word_frequency.per_million, 0) DESC,
+                  unigrams.current",
+        [],
+    )?;
+    tx.execute("DELETE FROM unigrams", [])?;
+    let reordered = tx.execute(
+        "INSERT INTO unigrams (qstring, current, probability, backoff)
+         SELECT qstring, current, probability, backoff
+         FROM chiaki_unigrams_ordered",
+        [],
+    )?;
+    tx.execute("DROP TABLE chiaki_unigrams_ordered", [])?;
+    tx.execute("DROP TABLE chiaki_word_frequency", [])?;
+    tx.commit()?;
+
+    Ok(reordered)
+}
+
 pub fn apply_prepopulated_service_data(
     conn: &mut Connection,
     data: &ServiceData,

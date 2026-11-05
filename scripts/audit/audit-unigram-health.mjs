@@ -157,7 +157,7 @@ function loadSourceMap(path) {
 // 這些 tag 代表該列是被刻意壓下去的（`compositional-cap` 來自 669e85a，把 essay
 // 的組合式條目壓到讓 bigram 層有機會介入；`fragment-demote` 來自碎片降權層）。
 // 這種列贏不了逐字路徑正是設計意圖，不該和「不小心權重不足」混在一起看。
-const DEMOTION_TAGS = new Set(["compositional-cap", "fragment-demote", "demote"]);
+const DEMOTION_TAGS = new Set(["compositional-cap", "rare-word-cap", "fragment-demote", "demote", "reading-demote"]);
 const isDemoted = (tags) => tags.split(",").some((tag) => DEMOTION_TAGS.has(tag));
 
 // `alt-reading` / `common-mistype` 是刻意收的常見誤讀，讓打錯的人也找得到詞

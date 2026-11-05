@@ -64,15 +64,13 @@ qstring<TAB>phrase<TAB>tags
 
 帶 `tw-usage-reading` tag 的列則是專案自己人工複核的台灣實際用法讀音，不是辭典收錄的讀音，屬本層自有資料（CC BY-NC 4.0）。
 
-這張表本身不隨這個檔案內嵌字典原文（釋義、例句等），只有讀音；release 匯入時也不會讀取moedict-data 本身。`moedict-reviewed` 的部分可用以下流程重新產生（重跑會覆寫整份檔案，人工複核的列需另外保留）：
+帶 `bu-tone-coverage` tag 的列補「不」的本調讀音。「不」在四聲前變調成 ㄅㄨˊ、在正反問句與補語結構中弱化成 ㄅㄨ˙，使用者多半打變調後的音，但也有人照辭典打本調 ㄅㄨˋ；兩種讀音都應能出字。語料統計只會記下變調後的讀音，於是「吃不下」只有 `=@`／`{n`、沒有 `L_`，`ㄔ ㄅㄨˋ ㄒㄧㄚˋ` 只能走「吃＋部下」。反方向的缺口（essay 來的詞只有本調）已由帶 `bu-sandhi-reading` tag 的 243 列補上。這批列由 `scripts/audit/audit-bu-tone-readings.mjs` 從詞庫機械列舉：含「不」且缺對應 `L_` 讀音的既有詞，把每個 `=@`／`{n` 音節換成 `L_` 當補充讀音。因為原讀音不會被動到，變調讀音仍然照舊可打。
 
-```sh
-node scripts/audit/audit-moedict-readings.mjs
-cargo build --release
-node scripts/lexicon/generate-moedict-readings.mjs
-```
+這張表本身不隨這個檔案內嵌字典原文（釋義、例句等），只有讀音；release 匯入時也不會讀取moedict-data 本身。
 
-`audit-moedict-readings.mjs` 需要本機另外準備 moedict-data 的 `dict-revised.json`（不隨本 repo 提供，見該腳本檔頭說明）；`generate-moedict-readings.mjs` 直接把比對結果轉成qstring 寫回這張表，可以直接 commit。未來若加入其他複核來源（非 moedict），沿用同一份`reading-supplements.tsv`，只要在 `tags` 欄位標示清楚來源即可。
+`moedict-reviewed` 的列仍然是這張表的主力，每次 release 照常匯入；**功臣身退的是產生流程，不是資料**。`scripts/audit/audit-moedict-readings.mjs` 與`scripts/lexicon/generate-moedict-readings.mjs` 只保留作為當初產生過程的紀錄，**不要再重跑**：generator 會覆寫整份檔案，而這張表現在有 6,951 列不是 moedict 來的（`bu-tone-coverage`、`reviewed-reading`、`tw-usage-reading` 等），重跑會全部清掉。要調整 moedict 那批讀音，直接改這張表的對應列。
+
+未來若加入其他複核來源（非 moedict），沿用同一份 `reading-supplements.tsv`，只要在 `tags`欄位標示清楚來源、並自備只追加不覆寫的產生腳本即可（見`scripts/audit/audit-bu-tone-readings.mjs`）。
 
 ## Release 匯入規則
 
@@ -83,6 +81,12 @@ node scripts/lexicon/generate-moedict-readings.mjs
 - `reading-supplements.tsv`：在 `explicit.tsv` 之後、fragment denylist 之前匯入，此時詞庫已完整合併，才能正確判斷「這個詞是否已在詞庫」與「這個讀音是否已被別的詞佔用」。
 
 帶有 `naer-frequency-review` tag 的列是以國教院《通用詞頻表》進行本機審查後的多字同音詞組排序調整。原始詞頻表與審查表在授權未確認前只供本機研究，不應隨公開 release 散布。
+
+帶有 `variant-normalization` tag 的降權列處理「中國用字形壓過台灣正字形」的殘餘。整族轉換由 `chiaki-rime-conversion-policy` 在 Rime 匯入階段完成（例如 `賬 → 帳`），但 libchewing 與 boneyard 來的同形詞不走那條路徑，需要在這裡個別壓到對應正字形之下，例如 `付賬`（boneyard `−0.05`）壓到 `付帳` 之下、`爛賬` 壓到 `爛帳` 之下。
+
+帶有 `rare-word-cap` 與 `compositional-cap` tag 的列處理「罕用詞靠詞長加分壓過逐字／拆詞路徑」。walker 的 `+1.0/音節` 讓任何兩字詞的有效分數比逐字路徑高 1.0，所以某些只在該讀音出現一次的冷僻詞（`吏胥`）或 essay 的組合式條目（`在討論`）會成為預設輸出，擋住使用者真正想打的字。降權門檻以有效分數反推：`cap = baseline − 0.30 − 1.0 × (字數 − 1)`，`baseline` 取最佳拆詞路徑與同長度對手兩者較高者。
+
+帶有 `polyphone-reading-weight,vanguard-fixed-anchor` tag 的列是多音字單字讀音的權重修正：`reading-demote` 以外的列是升權（被壓低的讀音插回先鋒核心順位，其他字固定不動），帶 `reading-demote` 的列是降權（繼承整個字頻率的次要讀音，移到先鋒核心排在它前面的字之下，其他字同樣固定不動）。兩者都由先鋒核心順位決定位置，不憑感覺填數字；降權列由 `scripts/lexicon/demote-inherited-readings.py` 產生，升權列由 `scripts/lexicon/experiment-vanguard-precise.py` 產生。
 
 帶有 `de-tone-policy` tag 的列實作「的／得／地 以聲調區分」的政策：ㄉㄜ˙（`nq`）第一候選為「的」、ㄉㄜˊ（`0C`）為「得」、ㄉㄧˋ（`:_`）為「地」，其餘同音字降到第一候選下方 0.05，交由使用者自行選字。libchewing 的單字頻率讓這三個位置的前幾名相差不到0.003（`nq` 三字甚至只差 1e-6），實際排序等於隨機；0.05 是讓預設排序確定的最小間距，不改變這些字相對於其他讀音候選的強度。
 

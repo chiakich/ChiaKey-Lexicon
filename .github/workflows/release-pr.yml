@@ -1,0 +1,65 @@
+name: Release PR
+
+on:
+  push:
+    branches:
+      - dev
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: release-pr
+  cancel-in-progress: true
+
+jobs:
+  release-pr:
+    name: Keep the dev to main release PR open
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Collect pending commits
+        id: pending
+        run: |
+          git fetch --no-tags origin main dev
+          commits="$(git log --pretty='- %h %s' origin/main..origin/dev)"
+          if [[ -z "$commits" ]]; then
+            echo "has_commits=false" >> "$GITHUB_OUTPUT"
+            echo "dev has nothing ahead of main; leaving the release PR alone"
+            exit 0
+          fi
+
+          echo "has_commits=true" >> "$GITHUB_OUTPUT"
+          {
+            echo 'body<<PR_BODY_EOF'
+            echo '## 待發版的變更'
+            echo
+            echo "$commits"
+            echo
+            echo '合併這個 PR 會推送到 `main` 並觸發 Release Lexicon。'
+            echo 'PR_BODY_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Create or refresh the release PR
+        if: steps.pending.outputs.has_commits == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_BODY: ${{ steps.pending.outputs.body }}
+        run: |
+          number="$(gh pr list --base main --head dev --state open --json number --jq '.[0].number // empty')"
+          if [[ -z "$number" ]]; then
+            gh pr create \
+              --base main \
+              --head dev \
+              --title "Release: dev → main" \
+              --body "$PR_BODY"
+          else
+            gh pr edit "$number" --body "$PR_BODY"
+          fi
