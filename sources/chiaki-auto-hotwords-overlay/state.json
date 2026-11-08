@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "updated_at": "2026-11-08T15:21:51.905Z",
-  "updated_on": "2026-11-08",
+  "updated_at": "2026-11-08T23:51:38.198Z",
+  "updated_on": "2026-11-09",
   "retention_days": 90,
   "state_retention_days": 180,
   "terms": {
@@ -96,14 +96,10 @@
         "2026-10-25",
         "2026-10-26"
       ],
-      "seen_windows": {
-        "7d": [
-          "2026-10-26"
-        ]
-      },
+      "seen_windows": {},
       "seen_days": 7,
-      "signal_14": 3,
-      "signal_30": 3,
+      "signal_14": 0,
+      "signal_30": 0,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -484,14 +480,13 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28"
         ]
       },
       "seen_days": 21,
-      "signal_14": 9,
-      "signal_30": 9,
+      "signal_14": 6,
+      "signal_30": 6,
       "max_traffic": 1000,
       "admitted": true,
       "sources": [
@@ -960,14 +955,13 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28"
         ]
       },
       "seen_days": 7,
-      "signal_14": 9,
-      "signal_30": 9,
+      "signal_14": 6,
+      "signal_30": 6,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -1767,13 +1761,12 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27"
         ]
       },
       "seen_days": 7,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 3,
+      "signal_30": 3,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -2248,7 +2241,6 @@
           "2026-10-31"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -2262,8 +2254,8 @@
         ]
       },
       "seen_days": 20,
-      "signal_14": 38,
-      "signal_30": 38,
+      "signal_14": 35,
+      "signal_30": 35,
       "max_traffic": 2000,
       "admitted": true,
       "derived_from": [
@@ -2848,14 +2840,11 @@
         ],
         "48h": [
           "2026-10-28"
-        ],
-        "7d": [
-          "2026-10-26"
         ]
       },
       "seen_days": 33,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 3,
+      "signal_30": 3,
       "max_traffic": 10000,
       "admitted": true,
       "sources": [
@@ -3157,7 +3146,6 @@
           "2026-10-28"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-28",
           "2026-10-29",
           "2026-10-30",
@@ -3167,8 +3155,8 @@
         ]
       },
       "seen_days": 13,
-      "signal_14": 24,
-      "signal_30": 24,
+      "signal_14": 21,
+      "signal_30": 21,
       "max_traffic": 5000,
       "admitted": true,
       "derived_from": [
@@ -3896,15 +3884,14 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29"
         ]
       },
       "seen_days": 13,
-      "signal_14": 12,
-      "signal_30": 12,
+      "signal_14": 9,
+      "signal_30": 9,
       "max_traffic": 10000,
       "admitted": true,
       "sources": [
@@ -4129,14 +4116,10 @@
         "2026-10-25",
         "2026-10-26"
       ],
-      "seen_windows": {
-        "7d": [
-          "2026-10-26"
-        ]
-      },
+      "seen_windows": {},
       "seen_days": 17,
-      "signal_14": 3,
-      "signal_30": 3,
+      "signal_14": 0,
+      "signal_30": 0,
       "max_traffic": 10000,
       "admitted": true,
       "sources": [
@@ -4164,6 +4147,32 @@
       "sources": [
         "google-trends",
         "google-trends-trending"
+      ]
+    },
+    "劉德音": {
+      "first_seen": "2026-11-05",
+      "last_seen": "2026-11-05",
+      "seen_dates": [
+        "2026-11-05"
+      ],
+      "seen_windows": {
+        "24h": [
+          "2026-11-05"
+        ],
+        "48h": [
+          "2026-11-05"
+        ],
+        "7d": [
+          "2026-11-05"
+        ]
+      },
+      "seen_days": 1,
+      "signal_14": 6,
+      "signal_30": 6,
+      "max_traffic": 500,
+      "admitted": true,
+      "sources": [
+        "google-trends"
       ]
     },
     "劉恃蘟": {
@@ -4416,13 +4425,12 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27"
         ]
       },
       "seen_days": 6,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 3,
+      "signal_30": 3,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -4478,11 +4486,7 @@
         "2026-10-31"
       ],
       "seen_windows": {
-        "48h": [
-          "2026-10-26"
-        ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -4491,8 +4495,8 @@
         ]
       },
       "seen_days": 7,
-      "signal_14": 20,
-      "signal_30": 20,
+      "signal_14": 15,
+      "signal_30": 15,
       "max_traffic": 1000,
       "admitted": true,
       "sources": [
@@ -4765,13 +4769,12 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27"
         ]
       },
       "seen_days": 78,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 3,
+      "signal_30": 3,
       "max_traffic": 200000,
       "admitted": true,
       "sources": [
@@ -4843,15 +4846,10 @@
         "2026-11-01"
       ],
       "seen_windows": {
-        "24h": [
-          "2026-10-26"
-        ],
         "48h": [
-          "2026-10-26",
           "2026-10-27"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -4861,8 +4859,8 @@
         ]
       },
       "seen_days": 14,
-      "signal_14": 26,
-      "signal_30": 26,
+      "signal_14": 20,
+      "signal_30": 20,
       "max_traffic": 1000,
       "admitted": true,
       "derived_from": [
@@ -5452,14 +5450,10 @@
         "2026-10-25",
         "2026-10-26"
       ],
-      "seen_windows": {
-        "7d": [
-          "2026-10-26"
-        ]
-      },
+      "seen_windows": {},
       "seen_days": 5,
-      "signal_14": 3,
-      "signal_30": 3,
+      "signal_14": 0,
+      "signal_30": 0,
       "max_traffic": 5000,
       "admitted": true,
       "derived_from": [
@@ -6016,7 +6010,6 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -6024,8 +6017,8 @@
         ]
       },
       "seen_days": 7,
-      "signal_14": 15,
-      "signal_30": 15,
+      "signal_14": 12,
+      "signal_30": 12,
       "max_traffic": 1000,
       "admitted": true,
       "sources": [
@@ -6206,7 +6199,6 @@
           "2026-10-28"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -6217,8 +6209,8 @@
         ]
       },
       "seen_days": 12,
-      "signal_14": 29,
-      "signal_30": 29,
+      "signal_14": 26,
+      "signal_30": 26,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -6357,15 +6349,14 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29"
         ]
       },
       "seen_days": 53,
-      "signal_14": 12,
-      "signal_30": 12,
+      "signal_14": 9,
+      "signal_30": 9,
       "max_traffic": 50000,
       "admitted": true,
       "sources": [
@@ -6400,11 +6391,7 @@
         "2026-11-01"
       ],
       "seen_windows": {
-        "24h": [
-          "2026-10-26"
-        ],
         "48h": [
-          "2026-10-26",
           "2026-10-27"
         ],
         "7d": [
@@ -6417,8 +6404,8 @@
         ]
       },
       "seen_days": 21,
-      "signal_14": 23,
-      "signal_30": 23,
+      "signal_14": 20,
+      "signal_30": 20,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -6630,15 +6617,10 @@
         "2026-11-01"
       ],
       "seen_windows": {
-        "24h": [
-          "2026-10-26"
-        ],
         "48h": [
-          "2026-10-26",
           "2026-10-27"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -6648,8 +6630,8 @@
         ]
       },
       "seen_days": 18,
-      "signal_14": 26,
-      "signal_30": 26,
+      "signal_14": 20,
+      "signal_30": 20,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -7153,11 +7135,7 @@
         "2026-10-31"
       ],
       "seen_windows": {
-        "48h": [
-          "2026-10-26"
-        ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -7166,8 +7144,8 @@
         ]
       },
       "seen_days": 14,
-      "signal_14": 20,
-      "signal_30": 20,
+      "signal_14": 15,
+      "signal_30": 15,
       "max_traffic": 20000,
       "admitted": true,
       "sources": [
@@ -7266,13 +7244,12 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27"
         ]
       },
       "seen_days": 28,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 3,
+      "signal_30": 3,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -7732,7 +7709,6 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -7740,8 +7716,8 @@
         ]
       },
       "seen_days": 6,
-      "signal_14": 15,
-      "signal_30": 15,
+      "signal_14": 12,
+      "signal_30": 12,
       "max_traffic": 200,
       "admitted": true,
       "sources": [
@@ -8112,13 +8088,12 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27"
         ]
       },
       "seen_days": 7,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 3,
+      "signal_30": 3,
       "max_traffic": 500,
       "admitted": true,
       "sources": [
@@ -8452,7 +8427,6 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -8460,8 +8434,8 @@
         ]
       },
       "seen_days": 21,
-      "signal_14": 15,
-      "signal_30": 15,
+      "signal_14": 12,
+      "signal_30": 12,
       "max_traffic": 500,
       "admitted": true,
       "sources": [
@@ -9419,11 +9393,7 @@
         "2026-10-30"
       ],
       "seen_windows": {
-        "48h": [
-          "2026-10-26"
-        ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -9431,8 +9401,8 @@
         ]
       },
       "seen_days": 24,
-      "signal_14": 17,
-      "signal_30": 17,
+      "signal_14": 12,
+      "signal_30": 12,
       "max_traffic": 1000,
       "admitted": true,
       "sources": [
@@ -9548,14 +9518,10 @@
         "2026-10-25",
         "2026-10-26"
       ],
-      "seen_windows": {
-        "7d": [
-          "2026-10-26"
-        ]
-      },
+      "seen_windows": {},
       "seen_days": 7,
-      "signal_14": 3,
-      "signal_30": 3,
+      "signal_14": 0,
+      "signal_30": 0,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -10381,15 +10347,14 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29"
         ]
       },
       "seen_days": 34,
-      "signal_14": 12,
-      "signal_30": 12,
+      "signal_14": 9,
+      "signal_30": 9,
       "max_traffic": 5000,
       "admitted": true,
       "sources": [
@@ -10545,14 +10510,10 @@
         "2026-10-25",
         "2026-10-26"
       ],
-      "seen_windows": {
-        "7d": [
-          "2026-10-26"
-        ]
-      },
+      "seen_windows": {},
       "seen_days": 7,
-      "signal_14": 3,
-      "signal_30": 3,
+      "signal_14": 0,
+      "signal_30": 0,
       "max_traffic": 200,
       "admitted": true,
       "sources": [
@@ -10709,15 +10670,14 @@
           "2026-11-05"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-11-05"
         ]
       },
       "seen_days": 15,
-      "signal_14": 15,
-      "signal_30": 15,
+      "signal_14": 12,
+      "signal_30": 12,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -11184,15 +11144,14 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29"
         ]
       },
       "seen_days": 32,
-      "signal_14": 12,
-      "signal_30": 12,
+      "signal_14": 9,
+      "signal_30": 9,
       "max_traffic": 5000,
       "admitted": true,
       "sources": [
@@ -11510,7 +11469,6 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -11518,8 +11476,8 @@
         ]
       },
       "seen_days": 7,
-      "signal_14": 15,
-      "signal_30": 15,
+      "signal_14": 12,
+      "signal_30": 12,
       "max_traffic": 5000,
       "admitted": true,
       "sources": [
@@ -11801,14 +11759,10 @@
         "2026-10-25",
         "2026-10-26"
       ],
-      "seen_windows": {
-        "7d": [
-          "2026-10-26"
-        ]
-      },
+      "seen_windows": {},
       "seen_days": 11,
-      "signal_14": 3,
-      "signal_30": 3,
+      "signal_14": 0,
+      "signal_30": 0,
       "max_traffic": 500,
       "admitted": true,
       "sources": [
@@ -11867,20 +11821,10 @@
       "seen_dates": [
         "2026-10-26"
       ],
-      "seen_windows": {
-        "24h": [
-          "2026-10-26"
-        ],
-        "48h": [
-          "2026-10-26"
-        ],
-        "7d": [
-          "2026-10-26"
-        ]
-      },
+      "seen_windows": {},
       "seen_days": 1,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 0,
+      "signal_30": 0,
       "max_traffic": 500,
       "admitted": true,
       "sources": [
@@ -11956,15 +11900,14 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29"
         ]
       },
       "seen_days": 7,
-      "signal_14": 12,
-      "signal_30": 12,
+      "signal_14": 9,
+      "signal_30": 9,
       "max_traffic": 20000,
       "admitted": true,
       "sources": [
@@ -12014,7 +11957,6 @@
           "2026-10-30"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -12027,8 +11969,8 @@
         ]
       },
       "seen_days": 27,
-      "signal_14": 38,
-      "signal_30": 38,
+      "signal_14": 35,
+      "signal_30": 35,
       "max_traffic": 5000,
       "admitted": true,
       "sources": [
@@ -12481,15 +12423,14 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29"
         ]
       },
       "seen_days": 10,
-      "signal_14": 12,
-      "signal_30": 12,
+      "signal_14": 9,
+      "signal_30": 9,
       "max_traffic": 10000,
       "admitted": true,
       "sources": [
@@ -12974,14 +12915,10 @@
         "2026-10-25",
         "2026-10-26"
       ],
-      "seen_windows": {
-        "7d": [
-          "2026-10-26"
-        ]
-      },
+      "seen_windows": {},
       "seen_days": 3,
-      "signal_14": 3,
-      "signal_30": 3,
+      "signal_14": 0,
+      "signal_30": 0,
       "max_traffic": 100,
       "admitted": true,
       "derived_from": [
@@ -13870,15 +13807,10 @@
         "2026-11-01"
       ],
       "seen_windows": {
-        "24h": [
-          "2026-10-26"
-        ],
         "48h": [
-          "2026-10-26",
           "2026-10-27"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -13888,8 +13820,8 @@
         ]
       },
       "seen_days": 7,
-      "signal_14": 26,
-      "signal_30": 26,
+      "signal_14": 20,
+      "signal_30": 20,
       "max_traffic": 5000,
       "admitted": true,
       "sources": [
@@ -14005,15 +13937,14 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29"
         ]
       },
       "seen_days": 9,
-      "signal_14": 12,
-      "signal_30": 12,
+      "signal_14": 9,
+      "signal_30": 9,
       "max_traffic": 100,
       "admitted": true,
       "sources": [
@@ -14558,7 +14489,6 @@
           "2026-10-30"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -14571,8 +14501,8 @@
         ]
       },
       "seen_days": 61,
-      "signal_14": 35,
-      "signal_30": 35,
+      "signal_14": 32,
+      "signal_30": 32,
       "max_traffic": 10000,
       "admitted": true,
       "derived_from": [
@@ -14959,14 +14889,7 @@
         "2026-11-02"
       ],
       "seen_windows": {
-        "24h": [
-          "2026-10-26"
-        ],
-        "48h": [
-          "2026-10-26"
-        ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-29",
           "2026-10-30",
@@ -14976,8 +14899,8 @@
         ]
       },
       "seen_days": 15,
-      "signal_14": 24,
-      "signal_30": 24,
+      "signal_14": 18,
+      "signal_30": 18,
       "max_traffic": 20000,
       "admitted": true,
       "sources": [
@@ -15398,17 +15321,14 @@
       ],
       "seen_windows": {
         "24h": [
-          "2026-10-26",
           "2026-11-01"
         ],
         "48h": [
-          "2026-10-26",
           "2026-10-27",
           "2026-11-01",
           "2026-11-02"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -15422,8 +15342,8 @@
         ]
       },
       "seen_days": 11,
-      "signal_14": 43,
-      "signal_30": 43,
+      "signal_14": 37,
+      "signal_30": 37,
       "max_traffic": 500,
       "admitted": true,
       "sources": [
@@ -15449,17 +15369,14 @@
       ],
       "seen_windows": {
         "24h": [
-          "2026-10-26",
           "2026-10-29"
         ],
         "48h": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-29",
           "2026-10-30"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -15472,8 +15389,8 @@
         ]
       },
       "seen_days": 12,
-      "signal_14": 40,
-      "signal_30": 40,
+      "signal_14": 34,
+      "signal_30": 34,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -15777,7 +15694,6 @@
           "2026-11-03"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -15791,8 +15707,8 @@
         ]
       },
       "seen_days": 22,
-      "signal_14": 40,
-      "signal_30": 40,
+      "signal_14": 37,
+      "signal_30": 37,
       "max_traffic": 20000,
       "admitted": true,
       "sources": [
@@ -15868,11 +15784,7 @@
         "2026-10-31"
       ],
       "seen_windows": {
-        "48h": [
-          "2026-10-26"
-        ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -15880,8 +15792,8 @@
         ]
       },
       "seen_days": 33,
-      "signal_14": 17,
-      "signal_30": 17,
+      "signal_14": 12,
+      "signal_30": 12,
       "max_traffic": 50000,
       "admitted": true,
       "derived_from": [
@@ -16200,14 +16112,13 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28"
         ]
       },
       "seen_days": 21,
-      "signal_14": 9,
-      "signal_30": 9,
+      "signal_14": 6,
+      "signal_30": 6,
       "max_traffic": 1000,
       "admitted": true,
       "sources": [
@@ -16245,7 +16156,6 @@
           "2026-10-31"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-30",
           "2026-10-31",
           "2026-11-01",
@@ -16256,8 +16166,8 @@
         ]
       },
       "seen_days": 16,
-      "signal_14": 29,
-      "signal_30": 29,
+      "signal_14": 26,
+      "signal_30": 26,
       "max_traffic": 500,
       "admitted": true,
       "sources": [
@@ -16319,7 +16229,6 @@
           "2026-10-28"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-30",
@@ -16330,8 +16239,8 @@
         ]
       },
       "seen_days": 42,
-      "signal_14": 27,
-      "signal_30": 27,
+      "signal_14": 24,
+      "signal_30": 24,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -16704,14 +16613,13 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28"
         ]
       },
       "seen_days": 14,
-      "signal_14": 9,
-      "signal_30": 9,
+      "signal_14": 6,
+      "signal_30": 6,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -17154,13 +17062,12 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27"
         ]
       },
       "seen_days": 23,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 3,
+      "signal_30": 3,
       "max_traffic": 50000,
       "admitted": true,
       "sources": [
@@ -17930,13 +17837,12 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27"
         ]
       },
       "seen_days": 7,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 3,
+      "signal_30": 3,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -18160,7 +18066,6 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -18168,8 +18073,8 @@
         ]
       },
       "seen_days": 12,
-      "signal_14": 15,
-      "signal_30": 15,
+      "signal_14": 12,
+      "signal_30": 12,
       "max_traffic": 1000,
       "admitted": true,
       "sources": [
@@ -18441,7 +18346,6 @@
           "2026-11-05"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-29",
           "2026-10-30",
           "2026-11-01",
@@ -18451,8 +18355,8 @@
         ]
       },
       "seen_days": 41,
-      "signal_14": 28,
-      "signal_30": 28,
+      "signal_14": 25,
+      "signal_30": 25,
       "max_traffic": 5000,
       "admitted": true,
       "sources": [
@@ -18711,13 +18615,12 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27"
         ]
       },
       "seen_days": 6,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 3,
+      "signal_30": 3,
       "max_traffic": 100,
       "admitted": true,
       "sources": [
@@ -18964,14 +18867,10 @@
         "2026-10-25",
         "2026-10-26"
       ],
-      "seen_windows": {
-        "7d": [
-          "2026-10-26"
-        ]
-      },
+      "seen_windows": {},
       "seen_days": 10,
-      "signal_14": 3,
-      "signal_30": 3,
+      "signal_14": 0,
+      "signal_30": 0,
       "max_traffic": 1000,
       "admitted": true,
       "sources": [
@@ -18992,13 +18891,12 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27"
         ]
       },
       "seen_days": 7,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 3,
+      "signal_30": 3,
       "max_traffic": 200,
       "admitted": true,
       "sources": [
@@ -19215,14 +19113,13 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28"
         ]
       },
       "seen_days": 7,
-      "signal_14": 9,
-      "signal_30": 9,
+      "signal_14": 6,
+      "signal_30": 6,
       "max_traffic": 500,
       "admitted": true,
       "sources": [
@@ -19460,15 +19357,10 @@
         "2026-11-01"
       ],
       "seen_windows": {
-        "24h": [
-          "2026-10-26"
-        ],
         "48h": [
-          "2026-10-26",
           "2026-10-27"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -19478,8 +19370,8 @@
         ]
       },
       "seen_days": 7,
-      "signal_14": 26,
-      "signal_30": 26,
+      "signal_14": 20,
+      "signal_30": 20,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -19537,9 +19429,6 @@
         "2026-11-01"
       ],
       "seen_windows": {
-        "24h": [
-          "2026-10-26"
-        ],
         "48h": [
           "2026-10-27"
         ],
@@ -19553,8 +19442,8 @@
         ]
       },
       "seen_days": 7,
-      "signal_14": 21,
-      "signal_30": 21,
+      "signal_14": 20,
+      "signal_30": 20,
       "max_traffic": 5000,
       "admitted": true,
       "sources": [
@@ -20579,14 +20468,10 @@
         "2026-10-25",
         "2026-10-26"
       ],
-      "seen_windows": {
-        "7d": [
-          "2026-10-26"
-        ]
-      },
+      "seen_windows": {},
       "seen_days": 7,
-      "signal_14": 3,
-      "signal_30": 3,
+      "signal_14": 0,
+      "signal_30": 0,
       "max_traffic": 200,
       "admitted": true,
       "sources": [
@@ -20632,11 +20517,7 @@
         "2026-10-31"
       ],
       "seen_windows": {
-        "48h": [
-          "2026-10-26"
-        ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -20645,8 +20526,8 @@
         ]
       },
       "seen_days": 7,
-      "signal_14": 20,
-      "signal_30": 20,
+      "signal_14": 15,
+      "signal_30": 15,
       "max_traffic": 100,
       "admitted": true,
       "sources": [
@@ -21133,14 +21014,13 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28"
         ]
       },
       "seen_days": 6,
-      "signal_14": 9,
-      "signal_30": 9,
+      "signal_14": 6,
+      "signal_30": 6,
       "max_traffic": 500,
       "admitted": true,
       "sources": [
@@ -21179,11 +21059,7 @@
         "2026-10-31"
       ],
       "seen_windows": {
-        "48h": [
-          "2026-10-26"
-        ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -21192,8 +21068,8 @@
         ]
       },
       "seen_days": 7,
-      "signal_14": 20,
-      "signal_30": 20,
+      "signal_14": 15,
+      "signal_30": 15,
       "max_traffic": 200,
       "admitted": true,
       "sources": [
@@ -21410,7 +21286,6 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -21418,8 +21293,8 @@
         ]
       },
       "seen_days": 30,
-      "signal_14": 15,
-      "signal_30": 15,
+      "signal_14": 12,
+      "signal_30": 12,
       "max_traffic": 1000,
       "admitted": true,
       "sources": [
@@ -21583,14 +21458,10 @@
         "2026-10-25",
         "2026-10-26"
       ],
-      "seen_windows": {
-        "7d": [
-          "2026-10-26"
-        ]
-      },
+      "seen_windows": {},
       "seen_days": 7,
-      "signal_14": 3,
-      "signal_30": 3,
+      "signal_14": 0,
+      "signal_30": 0,
       "max_traffic": 500,
       "admitted": true,
       "sources": [
@@ -21721,14 +21592,10 @@
         "2026-10-25",
         "2026-10-26"
       ],
-      "seen_windows": {
-        "7d": [
-          "2026-10-26"
-        ]
-      },
+      "seen_windows": {},
       "seen_days": 9,
-      "signal_14": 3,
-      "signal_30": 3,
+      "signal_14": 0,
+      "signal_30": 0,
       "max_traffic": 500,
       "admitted": true,
       "sources": [
@@ -21795,6 +21662,30 @@
       "seen_days": 7,
       "signal_14": 0,
       "signal_30": 0,
+      "max_traffic": 2000,
+      "admitted": true,
+      "sources": [
+        "google-trends"
+      ]
+    },
+    "李文儀": {
+      "first_seen": "2026-11-03",
+      "last_seen": "2026-11-05",
+      "seen_dates": [
+        "2026-11-03",
+        "2026-11-04",
+        "2026-11-05"
+      ],
+      "seen_windows": {
+        "7d": [
+          "2026-11-03",
+          "2026-11-04",
+          "2026-11-05"
+        ]
+      },
+      "seen_days": 3,
+      "signal_14": 9,
+      "signal_30": 9,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -21882,15 +21773,41 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28"
         ]
       },
       "seen_days": 7,
-      "signal_14": 9,
-      "signal_30": 9,
+      "signal_14": 6,
+      "signal_30": 6,
       "max_traffic": 5000,
+      "admitted": true,
+      "sources": [
+        "google-trends"
+      ]
+    },
+    "李明璇": {
+      "first_seen": "2026-11-03",
+      "last_seen": "2026-11-05",
+      "seen_dates": [
+        "2026-11-03",
+        "2026-11-04",
+        "2026-11-05"
+      ],
+      "seen_windows": {
+        "48h": [
+          "2026-11-03"
+        ],
+        "7d": [
+          "2026-11-03",
+          "2026-11-04",
+          "2026-11-05"
+        ]
+      },
+      "seen_days": 3,
+      "signal_14": 11,
+      "signal_30": 11,
+      "max_traffic": 100,
       "admitted": true,
       "sources": [
         "google-trends"
@@ -22435,14 +22352,10 @@
         "2026-10-25",
         "2026-10-26"
       ],
-      "seen_windows": {
-        "7d": [
-          "2026-10-26"
-        ]
-      },
+      "seen_windows": {},
       "seen_days": 7,
-      "signal_14": 3,
-      "signal_30": 3,
+      "signal_14": 0,
+      "signal_30": 0,
       "max_traffic": 500,
       "admitted": true,
       "sources": [
@@ -22598,7 +22511,6 @@
           "2026-11-04"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -22612,8 +22524,8 @@
         ]
       },
       "seen_days": 23,
-      "signal_14": 43,
-      "signal_30": 43,
+      "signal_14": 40,
+      "signal_30": 40,
       "max_traffic": 1000,
       "admitted": true,
       "sources": [
@@ -23052,7 +22964,6 @@
           "2026-11-03"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -23064,8 +22975,8 @@
         ]
       },
       "seen_days": 57,
-      "signal_14": 32,
-      "signal_30": 32,
+      "signal_14": 29,
+      "signal_30": 29,
       "max_traffic": 10000,
       "admitted": true,
       "sources": [
@@ -23113,7 +23024,6 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -23121,8 +23031,8 @@
         ]
       },
       "seen_days": 7,
-      "signal_14": 15,
-      "signal_30": 15,
+      "signal_14": 12,
+      "signal_30": 12,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -23299,16 +23209,13 @@
       ],
       "seen_windows": {
         "24h": [
-          "2026-10-26",
           "2026-10-27"
         ],
         "48h": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -23319,8 +23226,8 @@
         ]
       },
       "seen_days": 43,
-      "signal_14": 32,
-      "signal_30": 32,
+      "signal_14": 26,
+      "signal_30": 26,
       "max_traffic": 20000,
       "admitted": true,
       "sources": [
@@ -23340,13 +23247,12 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27"
         ]
       },
       "seen_days": 6,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 3,
+      "signal_30": 3,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -23444,15 +23350,14 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29"
         ]
       },
       "seen_days": 7,
-      "signal_14": 12,
-      "signal_30": 12,
+      "signal_14": 9,
+      "signal_30": 9,
       "max_traffic": 200,
       "admitted": true,
       "sources": [
@@ -24609,14 +24514,10 @@
         "2026-10-25",
         "2026-10-26"
       ],
-      "seen_windows": {
-        "7d": [
-          "2026-10-26"
-        ]
-      },
+      "seen_windows": {},
       "seen_days": 15,
-      "signal_14": 3,
-      "signal_30": 3,
+      "signal_14": 0,
+      "signal_30": 0,
       "max_traffic": 10000,
       "admitted": true,
       "sources": [
@@ -24759,15 +24660,14 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29"
         ]
       },
       "seen_days": 7,
-      "signal_14": 12,
-      "signal_30": 12,
+      "signal_14": 9,
+      "signal_30": 9,
       "max_traffic": 500,
       "admitted": true,
       "sources": [
@@ -24802,12 +24702,10 @@
           "2026-10-31"
         ],
         "48h": [
-          "2026-10-26",
           "2026-10-31",
           "2026-11-01"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -24821,8 +24719,8 @@
         ]
       },
       "seen_days": 18,
-      "signal_14": 40,
-      "signal_30": 40,
+      "signal_14": 35,
+      "signal_30": 35,
       "max_traffic": 20000,
       "admitted": true,
       "sources": [
@@ -24994,15 +24892,10 @@
         "2026-11-01"
       ],
       "seen_windows": {
-        "24h": [
-          "2026-10-26"
-        ],
         "48h": [
-          "2026-10-26",
           "2026-10-27"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -25012,8 +24905,8 @@
         ]
       },
       "seen_days": 7,
-      "signal_14": 26,
-      "signal_30": 26,
+      "signal_14": 20,
+      "signal_30": 20,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -25395,14 +25288,13 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28"
         ]
       },
       "seen_days": 7,
-      "signal_14": 9,
-      "signal_30": 9,
+      "signal_14": 6,
+      "signal_30": 6,
       "max_traffic": 500,
       "admitted": true,
       "sources": [
@@ -25451,12 +25343,10 @@
           "2026-10-28"
         ],
         "48h": [
-          "2026-10-26",
           "2026-10-28",
           "2026-10-29"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -25468,8 +25358,8 @@
         ]
       },
       "seen_days": 9,
-      "signal_14": 34,
-      "signal_30": 34,
+      "signal_14": 29,
+      "signal_30": 29,
       "max_traffic": 10000,
       "admitted": true,
       "sources": [
@@ -25490,14 +25380,7 @@
         "2026-10-31"
       ],
       "seen_windows": {
-        "24h": [
-          "2026-10-26"
-        ],
-        "48h": [
-          "2026-10-26"
-        ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -25506,8 +25389,8 @@
         ]
       },
       "seen_days": 8,
-      "signal_14": 21,
-      "signal_30": 21,
+      "signal_14": 15,
+      "signal_30": 15,
       "max_traffic": 10000,
       "admitted": true,
       "sources": [
@@ -25579,15 +25462,14 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29"
         ]
       },
       "seen_days": 7,
-      "signal_14": 12,
-      "signal_30": 12,
+      "signal_14": 9,
+      "signal_30": 9,
       "max_traffic": 10000,
       "admitted": true,
       "sources": [
@@ -25634,14 +25516,10 @@
         "2026-10-25",
         "2026-10-26"
       ],
-      "seen_windows": {
-        "7d": [
-          "2026-10-26"
-        ]
-      },
+      "seen_windows": {},
       "seen_days": 13,
-      "signal_14": 3,
-      "signal_30": 3,
+      "signal_14": 0,
+      "signal_30": 0,
       "max_traffic": 5000,
       "admitted": true,
       "sources": [
@@ -26678,15 +26556,14 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29"
         ]
       },
       "seen_days": 8,
-      "signal_14": 12,
-      "signal_30": 12,
+      "signal_14": 9,
+      "signal_30": 9,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -26907,15 +26784,10 @@
         "2026-11-01"
       ],
       "seen_windows": {
-        "24h": [
-          "2026-10-26"
-        ],
         "48h": [
-          "2026-10-26",
           "2026-10-27"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -26925,8 +26797,8 @@
         ]
       },
       "seen_days": 7,
-      "signal_14": 26,
-      "signal_30": 26,
+      "signal_14": 20,
+      "signal_30": 20,
       "max_traffic": 200,
       "admitted": true,
       "sources": [
@@ -27261,15 +27133,10 @@
         "2026-11-01"
       ],
       "seen_windows": {
-        "24h": [
-          "2026-10-26"
-        ],
         "48h": [
-          "2026-10-26",
           "2026-10-27"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -27279,8 +27146,8 @@
         ]
       },
       "seen_days": 16,
-      "signal_14": 26,
-      "signal_30": 26,
+      "signal_14": 20,
+      "signal_30": 20,
       "max_traffic": 1000,
       "admitted": true,
       "sources": [
@@ -27492,15 +27359,14 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29"
         ]
       },
       "seen_days": 20,
-      "signal_14": 12,
-      "signal_30": 12,
+      "signal_14": 9,
+      "signal_30": 9,
       "max_traffic": 500,
       "admitted": true,
       "sources": [
@@ -27823,11 +27689,7 @@
         "2026-10-31"
       ],
       "seen_windows": {
-        "48h": [
-          "2026-10-26"
-        ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -27836,8 +27698,8 @@
         ]
       },
       "seen_days": 7,
-      "signal_14": 20,
-      "signal_30": 20,
+      "signal_14": 15,
+      "signal_30": 15,
       "max_traffic": 100,
       "admitted": true,
       "sources": [
@@ -28100,7 +27962,6 @@
           "2026-10-27"
         ],
         "48h": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28"
         ],
@@ -28115,8 +27976,8 @@
         ]
       },
       "seen_days": 26,
-      "signal_14": 28,
-      "signal_30": 28,
+      "signal_14": 26,
+      "signal_30": 26,
       "max_traffic": 5000,
       "admitted": true,
       "sources": [
@@ -28377,15 +28238,14 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29"
         ]
       },
       "seen_days": 7,
-      "signal_14": 12,
-      "signal_30": 12,
+      "signal_14": 9,
+      "signal_30": 9,
       "max_traffic": 1000,
       "admitted": true,
       "sources": [
@@ -28417,7 +28277,6 @@
           "2026-11-03"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-11-04",
@@ -28425,8 +28284,8 @@
         ]
       },
       "seen_days": 11,
-      "signal_14": 20,
-      "signal_30": 20,
+      "signal_14": 17,
+      "signal_30": 17,
       "max_traffic": 20000,
       "admitted": true,
       "sources": [
@@ -28532,15 +28391,10 @@
         "2026-11-01"
       ],
       "seen_windows": {
-        "24h": [
-          "2026-10-26"
-        ],
         "48h": [
-          "2026-10-26",
           "2026-10-27"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -28550,8 +28404,8 @@
         ]
       },
       "seen_days": 7,
-      "signal_14": 26,
-      "signal_30": 26,
+      "signal_14": 20,
+      "signal_30": 20,
       "max_traffic": 10000,
       "admitted": true,
       "sources": [
@@ -28815,7 +28669,6 @@
           "2026-10-30"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -28828,8 +28681,8 @@
         ]
       },
       "seen_days": 13,
-      "signal_14": 38,
-      "signal_30": 38,
+      "signal_14": 35,
+      "signal_30": 35,
       "max_traffic": 1000,
       "admitted": true,
       "sources": [
@@ -28881,14 +28734,13 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28"
         ]
       },
       "seen_days": 10,
-      "signal_14": 9,
-      "signal_30": 9,
+      "signal_14": 6,
+      "signal_30": 6,
       "max_traffic": 20000,
       "admitted": true,
       "sources": [
@@ -28918,13 +28770,12 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27"
         ]
       },
       "seen_days": 16,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 3,
+      "signal_30": 3,
       "max_traffic": 1000,
       "admitted": true,
       "sources": [
@@ -29068,15 +28919,14 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29"
         ]
       },
       "seen_days": 6,
-      "signal_14": 12,
-      "signal_30": 12,
+      "signal_14": 9,
+      "signal_30": 9,
       "max_traffic": 500,
       "admitted": true,
       "sources": [
@@ -29095,14 +28945,10 @@
         "2026-10-25",
         "2026-10-26"
       ],
-      "seen_windows": {
-        "7d": [
-          "2026-10-26"
-        ]
-      },
+      "seen_windows": {},
       "seen_days": 7,
-      "signal_14": 3,
-      "signal_30": 3,
+      "signal_14": 0,
+      "signal_30": 0,
       "max_traffic": 1000,
       "admitted": true,
       "sources": [
@@ -29736,7 +29582,6 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -29744,8 +29589,8 @@
         ]
       },
       "seen_days": 6,
-      "signal_14": 15,
-      "signal_30": 15,
+      "signal_14": 12,
+      "signal_30": 12,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -29893,11 +29738,7 @@
         "2026-10-31"
       ],
       "seen_windows": {
-        "48h": [
-          "2026-10-26"
-        ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -29906,8 +29747,8 @@
         ]
       },
       "seen_days": 7,
-      "signal_14": 20,
-      "signal_30": 20,
+      "signal_14": 15,
+      "signal_30": 15,
       "max_traffic": 5000,
       "admitted": true,
       "derived_from": [
@@ -29972,14 +29813,13 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28"
         ]
       },
       "seen_days": 29,
-      "signal_14": 9,
-      "signal_30": 9,
+      "signal_14": 6,
+      "signal_30": 6,
       "max_traffic": 100000,
       "admitted": true,
       "sources": [
@@ -30773,15 +30613,10 @@
         "2026-11-01"
       ],
       "seen_windows": {
-        "24h": [
-          "2026-10-26"
-        ],
         "48h": [
-          "2026-10-26",
           "2026-10-27"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -30791,8 +30626,8 @@
         ]
       },
       "seen_days": 14,
-      "signal_14": 26,
-      "signal_30": 26,
+      "signal_14": 20,
+      "signal_30": 20,
       "max_traffic": 2000,
       "admitted": true,
       "derived_from": [
@@ -30998,14 +30833,13 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28"
         ]
       },
       "seen_days": 22,
-      "signal_14": 9,
-      "signal_30": 9,
+      "signal_14": 6,
+      "signal_30": 6,
       "max_traffic": 50000,
       "admitted": true,
       "sources": [
@@ -31422,13 +31256,12 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27"
         ]
       },
       "seen_days": 14,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 3,
+      "signal_30": 3,
       "max_traffic": 10000,
       "admitted": true,
       "sources": [
@@ -31776,14 +31609,13 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28"
         ]
       },
       "seen_days": 7,
-      "signal_14": 9,
-      "signal_30": 9,
+      "signal_14": 6,
+      "signal_30": 6,
       "max_traffic": 500,
       "admitted": true,
       "sources": [
@@ -32122,15 +31954,14 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29"
         ]
       },
       "seen_days": 6,
-      "signal_14": 12,
-      "signal_30": 12,
+      "signal_14": 9,
+      "signal_30": 9,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -32231,7 +32062,6 @@
           "2026-11-03"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-11-02",
           "2026-11-03",
@@ -32240,8 +32070,8 @@
         ]
       },
       "seen_days": 16,
-      "signal_14": 23,
-      "signal_30": 23,
+      "signal_14": 20,
+      "signal_30": 20,
       "max_traffic": 1000,
       "admitted": true,
       "sources": [
@@ -32770,13 +32600,12 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27"
         ]
       },
       "seen_days": 25,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 3,
+      "signal_30": 3,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -32797,14 +32626,13 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28"
         ]
       },
       "seen_days": 7,
-      "signal_14": 9,
-      "signal_30": 9,
+      "signal_14": 6,
+      "signal_30": 6,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -33534,14 +33362,10 @@
         "2026-10-25",
         "2026-10-26"
       ],
-      "seen_windows": {
-        "7d": [
-          "2026-10-26"
-        ]
-      },
+      "seen_windows": {},
       "seen_days": 20,
-      "signal_14": 3,
-      "signal_30": 3,
+      "signal_14": 0,
+      "signal_30": 0,
       "max_traffic": 200,
       "admitted": true,
       "sources": [
@@ -33685,15 +33509,10 @@
         "2026-11-01"
       ],
       "seen_windows": {
-        "24h": [
-          "2026-10-26"
-        ],
         "48h": [
-          "2026-10-26",
           "2026-10-27"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -33703,8 +33522,8 @@
         ]
       },
       "seen_days": 7,
-      "signal_14": 26,
-      "signal_30": 26,
+      "signal_14": 20,
+      "signal_30": 20,
       "max_traffic": 500,
       "admitted": true,
       "derived_from": [
@@ -33755,15 +33574,14 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29"
         ]
       },
       "seen_days": 12,
-      "signal_14": 12,
-      "signal_30": 12,
+      "signal_14": 9,
+      "signal_30": 9,
       "max_traffic": 500,
       "admitted": true,
       "sources": [
@@ -33857,15 +33675,10 @@
         "2026-11-01"
       ],
       "seen_windows": {
-        "24h": [
-          "2026-10-26"
-        ],
         "48h": [
-          "2026-10-26",
           "2026-10-27"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -33875,8 +33688,8 @@
         ]
       },
       "seen_days": 7,
-      "signal_14": 26,
-      "signal_30": 26,
+      "signal_14": 20,
+      "signal_30": 20,
       "max_traffic": 200,
       "admitted": true,
       "sources": [
@@ -34700,14 +34513,13 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28"
         ]
       },
       "seen_days": 7,
-      "signal_14": 9,
-      "signal_30": 9,
+      "signal_14": 6,
+      "signal_30": 6,
       "max_traffic": 200,
       "admitted": true,
       "sources": [
@@ -34858,14 +34670,13 @@
           "2026-11-05"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-11-05"
         ]
       },
       "seen_days": 46,
-      "signal_14": 12,
-      "signal_30": 12,
+      "signal_14": 9,
+      "signal_30": 9,
       "max_traffic": 10000,
       "admitted": true,
       "sources": [
@@ -34979,14 +34790,13 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28"
         ]
       },
       "seen_days": 15,
-      "signal_14": 9,
-      "signal_30": 9,
+      "signal_14": 6,
+      "signal_30": 6,
       "max_traffic": 10000,
       "admitted": true,
       "sources": [
@@ -35108,16 +34918,13 @@
         "2026-10-31"
       ],
       "seen_windows": {
-        "48h": [
-          "2026-10-26"
-        ],
         "7d": [
           "2026-10-31"
         ]
       },
       "seen_days": 2,
-      "signal_14": 5,
-      "signal_30": 5,
+      "signal_14": 3,
+      "signal_30": 3,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -35500,14 +35307,10 @@
         "2026-10-25",
         "2026-10-26"
       ],
-      "seen_windows": {
-        "7d": [
-          "2026-10-26"
-        ]
-      },
+      "seen_windows": {},
       "seen_days": 17,
-      "signal_14": 3,
-      "signal_30": 3,
+      "signal_14": 0,
+      "signal_30": 0,
       "max_traffic": 50000,
       "admitted": true,
       "sources": [
@@ -35586,13 +35389,12 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27"
         ]
       },
       "seen_days": 10,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 3,
+      "signal_30": 3,
       "max_traffic": 5000,
       "admitted": true,
       "sources": [
@@ -35902,16 +35704,13 @@
         "2026-10-27"
       ],
       "seen_windows": {
-        "24h": [
-          "2026-10-26"
-        ],
         "48h": [
           "2026-10-27"
         ]
       },
       "seen_days": 2,
-      "signal_14": 3,
-      "signal_30": 3,
+      "signal_14": 2,
+      "signal_30": 2,
       "max_traffic": 100,
       "admitted": true,
       "derived_from": [
@@ -36626,13 +36425,12 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27"
         ]
       },
       "seen_days": 35,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 3,
+      "signal_30": 3,
       "max_traffic": 10000,
       "admitted": true,
       "sources": [
@@ -36700,15 +36498,14 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29"
         ]
       },
       "seen_days": 15,
-      "signal_14": 12,
-      "signal_30": 12,
+      "signal_14": 9,
+      "signal_30": 9,
       "max_traffic": 500,
       "admitted": true,
       "sources": [
@@ -36803,14 +36600,13 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28"
         ]
       },
       "seen_days": 13,
-      "signal_14": 9,
-      "signal_30": 9,
+      "signal_14": 6,
+      "signal_30": 6,
       "max_traffic": 5000,
       "admitted": true,
       "sources": [
@@ -37410,14 +37206,13 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28"
         ]
       },
       "seen_days": 33,
-      "signal_14": 9,
-      "signal_30": 9,
+      "signal_14": 6,
+      "signal_30": 6,
       "max_traffic": 500,
       "admitted": true,
       "sources": [
@@ -37715,15 +37510,10 @@
         "2026-11-01"
       ],
       "seen_windows": {
-        "24h": [
-          "2026-10-26"
-        ],
         "48h": [
-          "2026-10-26",
           "2026-10-27"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -37733,8 +37523,8 @@
         ]
       },
       "seen_days": 7,
-      "signal_14": 26,
-      "signal_30": 26,
+      "signal_14": 20,
+      "signal_30": 20,
       "max_traffic": 1000,
       "admitted": true,
       "sources": [
@@ -37770,14 +37560,13 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28"
         ]
       },
       "seen_days": 22,
-      "signal_14": 9,
-      "signal_30": 9,
+      "signal_14": 6,
+      "signal_30": 6,
       "max_traffic": 1000,
       "admitted": true,
       "sources": [
@@ -38155,7 +37944,6 @@
           "2026-10-31"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -38169,8 +37957,8 @@
         ]
       },
       "seen_days": 13,
-      "signal_14": 38,
-      "signal_30": 38,
+      "signal_14": 35,
+      "signal_30": 35,
       "max_traffic": 1000,
       "admitted": true,
       "derived_from": [
@@ -38238,15 +38026,14 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29"
         ]
       },
       "seen_days": 8,
-      "signal_14": 12,
-      "signal_30": 12,
+      "signal_14": 9,
+      "signal_30": 9,
       "max_traffic": 1000,
       "admitted": true,
       "sources": [
@@ -38751,7 +38538,6 @@
           "2026-10-31"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-31",
           "2026-11-01",
@@ -38762,8 +38548,8 @@
         ]
       },
       "seen_days": 47,
-      "signal_14": 26,
-      "signal_30": 26,
+      "signal_14": 23,
+      "signal_30": 23,
       "max_traffic": 50000,
       "admitted": true,
       "derived_from": [
@@ -38886,6 +38672,30 @@
       "signal_14": 0,
       "signal_30": 0,
       "max_traffic": 500,
+      "admitted": true,
+      "sources": [
+        "google-trends"
+      ]
+    },
+    "臺東市長": {
+      "first_seen": "2026-10-27",
+      "last_seen": "2026-10-29",
+      "seen_dates": [
+        "2026-10-27",
+        "2026-10-28",
+        "2026-10-29"
+      ],
+      "seen_windows": {
+        "7d": [
+          "2026-10-27",
+          "2026-10-28",
+          "2026-10-29"
+        ]
+      },
+      "seen_days": 3,
+      "signal_14": 9,
+      "signal_30": 9,
+      "max_traffic": 1000,
       "admitted": true,
       "sources": [
         "google-trends"
@@ -39029,7 +38839,6 @@
           "2026-10-29"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -39040,8 +38849,8 @@
         ]
       },
       "seen_days": 36,
-      "signal_14": 29,
-      "signal_30": 29,
+      "signal_14": 26,
+      "signal_30": 26,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -39116,13 +38925,12 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27"
         ]
       },
       "seen_days": 7,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 3,
+      "signal_30": 3,
       "max_traffic": 10000,
       "admitted": true,
       "derived_from": [
@@ -39309,7 +39117,6 @@
           "2026-11-05"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -39319,8 +39126,8 @@
         ]
       },
       "seen_days": 68,
-      "signal_14": 27,
-      "signal_30": 27,
+      "signal_14": 24,
+      "signal_30": 24,
       "max_traffic": 100000,
       "admitted": true,
       "sources": [
@@ -39500,14 +39307,13 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28"
         ]
       },
       "seen_days": 5,
-      "signal_14": 9,
-      "signal_30": 9,
+      "signal_14": 6,
+      "signal_30": 6,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -39594,14 +39400,13 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28"
         ]
       },
       "seen_days": 51,
-      "signal_14": 9,
-      "signal_30": 9,
+      "signal_14": 6,
+      "signal_30": 6,
       "max_traffic": 5000,
       "admitted": true,
       "sources": [
@@ -39697,7 +39502,6 @@
           "2026-11-04"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -39707,8 +39511,8 @@
         ]
       },
       "seen_days": 47,
-      "signal_14": 31,
-      "signal_30": 31,
+      "signal_14": 28,
+      "signal_30": 28,
       "max_traffic": 20000,
       "admitted": true,
       "derived_from": [
@@ -39803,13 +39607,12 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27"
         ]
       },
       "seen_days": 17,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 3,
+      "signal_30": 3,
       "max_traffic": 10000,
       "admitted": true,
       "sources": [
@@ -40215,15 +40018,14 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29"
         ]
       },
       "seen_days": 7,
-      "signal_14": 12,
-      "signal_30": 12,
+      "signal_14": 9,
+      "signal_30": 9,
       "max_traffic": 200,
       "admitted": true,
       "sources": [
@@ -40647,11 +40449,7 @@
         "2026-10-31"
       ],
       "seen_windows": {
-        "48h": [
-          "2026-10-26"
-        ],
         "7d": [
-          "2026-10-26",
           "2026-10-28",
           "2026-10-29",
           "2026-10-30",
@@ -40659,8 +40457,8 @@
         ]
       },
       "seen_days": 6,
-      "signal_14": 17,
-      "signal_30": 17,
+      "signal_14": 12,
+      "signal_30": 12,
       "max_traffic": 20000,
       "admitted": true,
       "sources": [
@@ -40842,13 +40640,12 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27"
         ]
       },
       "seen_days": 13,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 3,
+      "signal_30": 3,
       "max_traffic": 10000,
       "admitted": true,
       "sources": [
@@ -41319,11 +41116,7 @@
         "2026-10-31"
       ],
       "seen_windows": {
-        "48h": [
-          "2026-10-26"
-        ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -41332,8 +41125,8 @@
         ]
       },
       "seen_days": 21,
-      "signal_14": 20,
-      "signal_30": 20,
+      "signal_14": 15,
+      "signal_30": 15,
       "max_traffic": 5000,
       "admitted": true,
       "sources": [
@@ -41502,13 +41295,12 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27"
         ]
       },
       "seen_days": 7,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 3,
+      "signal_30": 3,
       "max_traffic": 1000,
       "admitted": true,
       "sources": [
@@ -41534,14 +41326,7 @@
         "2026-11-01"
       ],
       "seen_windows": {
-        "24h": [
-          "2026-10-26"
-        ],
-        "48h": [
-          "2026-10-26"
-        ],
         "7d": [
-          "2026-10-26",
           "2026-10-28",
           "2026-10-29",
           "2026-10-30",
@@ -41550,8 +41335,8 @@
         ]
       },
       "seen_days": 13,
-      "signal_14": 21,
-      "signal_30": 21,
+      "signal_14": 15,
+      "signal_30": 15,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -41718,7 +41503,6 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -41726,8 +41510,8 @@
         ]
       },
       "seen_days": 7,
-      "signal_14": 15,
-      "signal_30": 15,
+      "signal_14": 12,
+      "signal_30": 12,
       "max_traffic": 200,
       "admitted": true,
       "sources": [
@@ -41855,15 +41639,14 @@
           "2026-10-28"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29"
         ]
       },
       "seen_days": 7,
-      "signal_14": 17,
-      "signal_30": 17,
+      "signal_14": 14,
+      "signal_30": 14,
       "max_traffic": 20000,
       "admitted": true,
       "sources": [
@@ -42310,12 +42093,6 @@
         "2026-11-01"
       ],
       "seen_windows": {
-        "24h": [
-          "2026-10-26"
-        ],
-        "48h": [
-          "2026-10-26"
-        ],
         "7d": [
           "2026-10-27",
           "2026-10-28",
@@ -42325,8 +42102,8 @@
         ]
       },
       "seen_days": 10,
-      "signal_14": 18,
-      "signal_30": 18,
+      "signal_14": 15,
+      "signal_30": 15,
       "max_traffic": 2000000,
       "admitted": true,
       "derived_from": [
@@ -42368,9 +42145,6 @@
         "2026-11-01"
       ],
       "seen_windows": {
-        "24h": [
-          "2026-10-26"
-        ],
         "48h": [
           "2026-10-27"
         ],
@@ -42379,8 +42153,8 @@
         ]
       },
       "seen_days": 3,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 5,
+      "signal_30": 5,
       "max_traffic": 200,
       "admitted": true,
       "sources": [
@@ -42576,14 +42350,10 @@
         "2026-10-25",
         "2026-10-26"
       ],
-      "seen_windows": {
-        "7d": [
-          "2026-10-26"
-        ]
-      },
+      "seen_windows": {},
       "seen_days": 12,
-      "signal_14": 3,
-      "signal_30": 3,
+      "signal_14": 0,
+      "signal_30": 0,
       "max_traffic": 500,
       "admitted": true,
       "sources": [
@@ -42950,15 +42720,10 @@
         "2026-11-01"
       ],
       "seen_windows": {
-        "24h": [
-          "2026-10-26"
-        ],
         "48h": [
-          "2026-10-26",
           "2026-10-27"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -42968,8 +42733,8 @@
         ]
       },
       "seen_days": 7,
-      "signal_14": 26,
-      "signal_30": 26,
+      "signal_14": 20,
+      "signal_30": 20,
       "max_traffic": 200,
       "admitted": true,
       "sources": [
@@ -43122,14 +42887,10 @@
         "2026-10-25",
         "2026-10-26"
       ],
-      "seen_windows": {
-        "7d": [
-          "2026-10-26"
-        ]
-      },
+      "seen_windows": {},
       "seen_days": 6,
-      "signal_14": 3,
-      "signal_30": 3,
+      "signal_14": 0,
+      "signal_30": 0,
       "max_traffic": 100,
       "admitted": true,
       "sources": [
@@ -43750,14 +43511,13 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28"
         ]
       },
       "seen_days": 7,
-      "signal_14": 9,
-      "signal_30": 9,
+      "signal_14": 6,
+      "signal_30": 6,
       "max_traffic": 20000,
       "admitted": true,
       "derived_from": [
@@ -43782,13 +43542,12 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27"
         ]
       },
       "seen_days": 8,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 3,
+      "signal_30": 3,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -43828,14 +43587,7 @@
         "2026-11-01"
       ],
       "seen_windows": {
-        "24h": [
-          "2026-10-26"
-        ],
-        "48h": [
-          "2026-10-26"
-        ],
         "7d": [
-          "2026-10-26",
           "2026-10-28",
           "2026-10-29",
           "2026-10-30",
@@ -43844,8 +43596,8 @@
         ]
       },
       "seen_days": 6,
-      "signal_14": 21,
-      "signal_30": 21,
+      "signal_14": 15,
+      "signal_30": 15,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -44120,14 +43872,10 @@
         "2026-10-25",
         "2026-10-26"
       ],
-      "seen_windows": {
-        "7d": [
-          "2026-10-26"
-        ]
-      },
+      "seen_windows": {},
       "seen_days": 35,
-      "signal_14": 3,
-      "signal_30": 3,
+      "signal_14": 0,
+      "signal_30": 0,
       "max_traffic": 5000,
       "admitted": true,
       "sources": [
@@ -44218,7 +43966,6 @@
           "2026-10-30"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -44226,8 +43973,8 @@
         ]
       },
       "seen_days": 10,
-      "signal_14": 21,
-      "signal_30": 21,
+      "signal_14": 18,
+      "signal_30": 18,
       "max_traffic": 500,
       "admitted": true,
       "sources": [
@@ -44279,7 +44026,6 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -44287,8 +44033,8 @@
         ]
       },
       "seen_days": 16,
-      "signal_14": 15,
-      "signal_30": 15,
+      "signal_14": 12,
+      "signal_30": 12,
       "max_traffic": 10000,
       "admitted": true,
       "sources": [
@@ -44401,7 +44147,6 @@
           "2026-10-31"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-30",
           "2026-10-31",
@@ -44413,8 +44158,8 @@
         ]
       },
       "seen_days": 29,
-      "signal_14": 32,
-      "signal_30": 32,
+      "signal_14": 29,
+      "signal_30": 29,
       "max_traffic": 50000,
       "admitted": true,
       "sources": [
@@ -44435,13 +44180,12 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27"
         ]
       },
       "seen_days": 7,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 3,
+      "signal_30": 3,
       "max_traffic": 500,
       "admitted": true,
       "sources": [
@@ -44580,15 +44324,14 @@
           "2026-11-05"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-11-05"
         ]
       },
       "seen_days": 30,
-      "signal_14": 15,
-      "signal_30": 15,
+      "signal_14": 12,
+      "signal_30": 12,
       "max_traffic": 10000,
       "admitted": true,
       "sources": [
@@ -44699,14 +44442,10 @@
         "2026-10-25",
         "2026-10-26"
       ],
-      "seen_windows": {
-        "7d": [
-          "2026-10-26"
-        ]
-      },
+      "seen_windows": {},
       "seen_days": 14,
-      "signal_14": 3,
-      "signal_30": 3,
+      "signal_14": 0,
+      "signal_30": 0,
       "max_traffic": 1000,
       "admitted": true,
       "sources": [
@@ -44868,13 +44607,12 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27"
         ]
       },
       "seen_days": 11,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 3,
+      "signal_30": 3,
       "max_traffic": 100000,
       "admitted": true,
       "sources": [
@@ -44948,13 +44686,12 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27"
         ]
       },
       "seen_days": 21,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 3,
+      "signal_30": 3,
       "max_traffic": 10000,
       "admitted": true,
       "sources": [
@@ -45716,15 +45453,14 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29"
         ]
       },
       "seen_days": 14,
-      "signal_14": 12,
-      "signal_30": 12,
+      "signal_14": 9,
+      "signal_30": 9,
       "max_traffic": 1000,
       "admitted": true,
       "sources": [
@@ -46326,7 +46062,6 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -46334,8 +46069,8 @@
         ]
       },
       "seen_days": 8,
-      "signal_14": 15,
-      "signal_30": 15,
+      "signal_14": 12,
+      "signal_30": 12,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -46386,7 +46121,6 @@
           "2026-11-02"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -46399,8 +46133,8 @@
         ]
       },
       "seen_days": 28,
-      "signal_14": 38,
-      "signal_30": 38,
+      "signal_14": 35,
+      "signal_30": 35,
       "max_traffic": 50000,
       "admitted": true,
       "sources": [
@@ -46425,11 +46159,7 @@
         "2026-10-31"
       ],
       "seen_windows": {
-        "48h": [
-          "2026-10-26"
-        ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -46438,8 +46168,8 @@
         ]
       },
       "seen_days": 12,
-      "signal_14": 20,
-      "signal_30": 20,
+      "signal_14": 15,
+      "signal_30": 15,
       "max_traffic": 5000,
       "admitted": true,
       "sources": [
@@ -46566,9 +46296,6 @@
         "2026-11-01"
       ],
       "seen_windows": {
-        "24h": [
-          "2026-10-26"
-        ],
         "48h": [
           "2026-10-27"
         ],
@@ -46577,8 +46304,8 @@
         ]
       },
       "seen_days": 3,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 5,
+      "signal_30": 5,
       "max_traffic": 200,
       "admitted": true,
       "sources": [
@@ -47167,14 +46894,10 @@
         "2026-10-25",
         "2026-10-26"
       ],
-      "seen_windows": {
-        "7d": [
-          "2026-10-26"
-        ]
-      },
+      "seen_windows": {},
       "seen_days": 7,
-      "signal_14": 3,
-      "signal_30": 3,
+      "signal_14": 0,
+      "signal_30": 0,
       "max_traffic": 200,
       "admitted": true,
       "derived_from": [
@@ -47223,9 +46946,6 @@
         "2026-11-01"
       ],
       "seen_windows": {
-        "24h": [
-          "2026-10-26"
-        ],
         "48h": [
           "2026-10-27"
         ],
@@ -47234,8 +46954,8 @@
         ]
       },
       "seen_days": 3,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 5,
+      "signal_30": 5,
       "max_traffic": 500,
       "admitted": true,
       "sources": [
@@ -47557,14 +47277,13 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28"
         ]
       },
       "seen_days": 21,
-      "signal_14": 9,
-      "signal_30": 9,
+      "signal_14": 6,
+      "signal_30": 6,
       "max_traffic": 5000,
       "admitted": true,
       "sources": [
@@ -47747,13 +47466,12 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27"
         ]
       },
       "seen_days": 21,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 3,
+      "signal_30": 3,
       "max_traffic": 50000,
       "admitted": true,
       "sources": [
@@ -47898,13 +47616,12 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27"
         ]
       },
       "seen_days": 21,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 3,
+      "signal_30": 3,
       "max_traffic": 5000,
       "admitted": true,
       "sources": [
@@ -48257,13 +47974,12 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27"
         ]
       },
       "seen_days": 36,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 3,
+      "signal_30": 3,
       "max_traffic": 10000,
       "admitted": true,
       "sources": [
@@ -48406,7 +48122,6 @@
           "2026-11-04"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-31",
           "2026-11-01",
@@ -48416,8 +48131,8 @@
         ]
       },
       "seen_days": 54,
-      "signal_14": 29,
-      "signal_30": 29,
+      "signal_14": 26,
+      "signal_30": 26,
       "max_traffic": 5000,
       "admitted": true,
       "sources": [
@@ -48758,15 +48473,10 @@
         "2026-11-01"
       ],
       "seen_windows": {
-        "24h": [
-          "2026-10-26"
-        ],
         "48h": [
-          "2026-10-26",
           "2026-10-27"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -48776,8 +48486,8 @@
         ]
       },
       "seen_days": 88,
-      "signal_14": 26,
-      "signal_30": 26,
+      "signal_14": 20,
+      "signal_30": 20,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -48853,14 +48563,13 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28"
         ]
       },
       "seen_days": 29,
-      "signal_14": 9,
-      "signal_30": 9,
+      "signal_14": 6,
+      "signal_30": 6,
       "max_traffic": 5000,
       "admitted": true,
       "sources": [
@@ -49261,7 +48970,6 @@
           "2026-11-01"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-31",
@@ -49273,8 +48981,8 @@
         ]
       },
       "seen_days": 13,
-      "signal_14": 32,
-      "signal_30": 32,
+      "signal_14": 29,
+      "signal_30": 29,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -50081,15 +49789,14 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29"
         ]
       },
       "seen_days": 12,
-      "signal_14": 12,
-      "signal_30": 12,
+      "signal_14": 9,
+      "signal_30": 9,
       "max_traffic": 50000,
       "admitted": true,
       "sources": [
@@ -50109,11 +49816,7 @@
         "2026-10-31"
       ],
       "seen_windows": {
-        "48h": [
-          "2026-10-26"
-        ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -50122,8 +49825,8 @@
         ]
       },
       "seen_days": 7,
-      "signal_14": 20,
-      "signal_30": 20,
+      "signal_14": 15,
+      "signal_30": 15,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -50189,14 +49892,10 @@
         "2026-10-25",
         "2026-10-26"
       ],
-      "seen_windows": {
-        "7d": [
-          "2026-10-26"
-        ]
-      },
+      "seen_windows": {},
       "seen_days": 7,
-      "signal_14": 3,
-      "signal_30": 3,
+      "signal_14": 0,
+      "signal_30": 0,
       "max_traffic": 100,
       "admitted": true,
       "sources": [
@@ -50328,15 +50027,14 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29"
         ]
       },
       "seen_days": 14,
-      "signal_14": 12,
-      "signal_30": 12,
+      "signal_14": 9,
+      "signal_30": 9,
       "max_traffic": 500,
       "admitted": true,
       "sources": [
@@ -50411,15 +50109,14 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29"
         ]
       },
       "seen_days": 5,
-      "signal_14": 12,
-      "signal_30": 12,
+      "signal_14": 9,
+      "signal_30": 9,
       "max_traffic": 1000,
       "admitted": true,
       "sources": [
@@ -51171,11 +50868,7 @@
         "2026-10-31"
       ],
       "seen_windows": {
-        "48h": [
-          "2026-10-26"
-        ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -51184,8 +50877,8 @@
         ]
       },
       "seen_days": 9,
-      "signal_14": 20,
-      "signal_30": 20,
+      "signal_14": 15,
+      "signal_30": 15,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -51669,15 +51362,14 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29"
         ]
       },
       "seen_days": 7,
-      "signal_14": 12,
-      "signal_30": 12,
+      "signal_14": 9,
+      "signal_30": 9,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -51781,13 +51473,12 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27"
         ]
       },
       "seen_days": 61,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 3,
+      "signal_30": 3,
       "max_traffic": 5000,
       "admitted": true,
       "sources": [
@@ -52253,17 +51944,14 @@
       ],
       "seen_windows": {
         "24h": [
-          "2026-10-26",
           "2026-11-02"
         ],
         "48h": [
-          "2026-10-26",
           "2026-10-27",
           "2026-11-02",
           "2026-11-03"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -52277,8 +51965,8 @@
         ]
       },
       "seen_days": 30,
-      "signal_14": 43,
-      "signal_30": 43,
+      "signal_14": 37,
+      "signal_30": 37,
       "max_traffic": 5000,
       "admitted": true,
       "sources": [
@@ -54327,14 +54015,13 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28"
         ]
       },
       "seen_days": 22,
-      "signal_14": 9,
-      "signal_30": 9,
+      "signal_14": 6,
+      "signal_30": 6,
       "max_traffic": 5000,
       "admitted": true,
       "sources": [
@@ -54631,14 +54318,10 @@
         "2026-10-25",
         "2026-10-26"
       ],
-      "seen_windows": {
-        "7d": [
-          "2026-10-26"
-        ]
-      },
+      "seen_windows": {},
       "seen_days": 4,
-      "signal_14": 3,
-      "signal_30": 3,
+      "signal_14": 0,
+      "signal_30": 0,
       "max_traffic": 2000,
       "admitted": true,
       "derived_from": [
@@ -55428,20 +55111,10 @@
       "seen_dates": [
         "2026-10-26"
       ],
-      "seen_windows": {
-        "24h": [
-          "2026-10-26"
-        ],
-        "48h": [
-          "2026-10-26"
-        ],
-        "7d": [
-          "2026-10-26"
-        ]
-      },
+      "seen_windows": {},
       "seen_days": 1,
-      "signal_14": 6,
-      "signal_30": 6,
+      "signal_14": 0,
+      "signal_30": 0,
       "max_traffic": 5000,
       "admitted": true,
       "sources": [
@@ -57192,14 +56865,10 @@
         "2026-10-25",
         "2026-10-26"
       ],
-      "seen_windows": {
-        "7d": [
-          "2026-10-26"
-        ]
-      },
+      "seen_windows": {},
       "seen_days": 7,
-      "signal_14": 3,
-      "signal_30": 3,
+      "signal_14": 0,
+      "signal_30": 0,
       "max_traffic": 10000,
       "admitted": true,
       "sources": [
@@ -57346,14 +57015,10 @@
         "2026-10-25",
         "2026-10-26"
       ],
-      "seen_windows": {
-        "7d": [
-          "2026-10-26"
-        ]
-      },
+      "seen_windows": {},
       "seen_days": 11,
-      "signal_14": 3,
-      "signal_30": 3,
+      "signal_14": 0,
+      "signal_30": 0,
       "max_traffic": 10000,
       "admitted": true,
       "sources": [
@@ -57518,15 +57183,10 @@
         "2026-11-01"
       ],
       "seen_windows": {
-        "24h": [
-          "2026-10-26"
-        ],
         "48h": [
-          "2026-10-26",
           "2026-10-27"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -57536,8 +57196,8 @@
         ]
       },
       "seen_days": 14,
-      "signal_14": 26,
-      "signal_30": 26,
+      "signal_14": 20,
+      "signal_30": 20,
       "max_traffic": 1000,
       "admitted": true,
       "sources": [
@@ -58000,14 +57660,13 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28"
         ]
       },
       "seen_days": 7,
-      "signal_14": 9,
-      "signal_30": 9,
+      "signal_14": 6,
+      "signal_30": 6,
       "max_traffic": 20000,
       "admitted": true,
       "sources": [
@@ -58100,7 +57759,6 @@
       ],
       "seen_windows": {
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -58108,8 +57766,8 @@
         ]
       },
       "seen_days": 7,
-      "signal_14": 15,
-      "signal_30": 15,
+      "signal_14": 12,
+      "signal_30": 12,
       "max_traffic": 2000,
       "admitted": true,
       "sources": [
@@ -58259,15 +57917,10 @@
         "2026-11-01"
       ],
       "seen_windows": {
-        "24h": [
-          "2026-10-26"
-        ],
         "48h": [
-          "2026-10-26",
           "2026-10-27"
         ],
         "7d": [
-          "2026-10-26",
           "2026-10-27",
           "2026-10-28",
           "2026-10-29",
@@ -58277,8 +57930,8 @@
         ]
       },
       "seen_days": 7,
-      "signal_14": 26,
-      "signal_30": 26,
+      "signal_14": 20,
+      "signal_30": 20,
       "max_traffic": 1000,
       "admitted": true,
       "sources": [
