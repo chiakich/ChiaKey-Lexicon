@@ -1107,6 +1107,8 @@ B_NX	契友	-1.700000	chiaki-modern-overlay,manual,demote,segmentation-order,iss
 # ㄇㄢˇ ㄔㄤˊ: place sense usually uses ㄔㄤˇ. Let 滿|常 win on the second-tone code.
 # Its split score is -2.114, so a two-syllable phrase needs raw weight < -3.114.
 DY4L	滿場	-3.350000	chiaki-modern-overlay,manual,reading-demote,segmentation-order,issue-33
+# Henan place name; 葉縣|再也 beat 頁|現在|也 by ~0.256. Stays above its 頁+線 split (-1.80).
+YcEi	葉縣	-2.500000	chiaki-modern-overlay,manual,demote,segmentation-order
 
 # ㄏㄨㄣˋ ㄓㄨㄛˊ: prefer 混濁 over 溷濁 (-2.30); bypass the supplemental-reading conflict cap.
 aj]B	混濁	-2.250000	chiaki-modern-overlay,manual,homophone-order,tw-usage
