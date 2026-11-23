@@ -602,7 +602,6 @@ B@nq	突地	-3.605770	chiaki-modern-overlay,generated,compositional-cap,homophon
 B@nq	突的	-3.555769	chiaki-modern-overlay,generated,compositional-cap,homophone-collision
 BLnq	涼的	-2.970757	chiaki-modern-overlay,generated,compositional-cap,homophone-collision
 BLnq	量的	-2.970743	chiaki-modern-overlay,generated,compositional-cap,homophone-collision
-CRxq	所著	-2.988809	chiaki-modern-overlay,generated,compositional-cap,homophone-collision
 CRxq	鎖著	-3.907998	chiaki-modern-overlay,generated,compositional-cap,homophone-collision
 C_nq	細的	-3.224362	chiaki-modern-overlay,generated,compositional-cap,homophone-collision
 C_nq	隙地	-3.659357	chiaki-modern-overlay,generated,compositional-cap,homophone-collision
@@ -1127,6 +1126,7 @@ aj]B	混濁	-2.250000	chiaki-modern-overlay,manual,homophone-order,tw-usage
 # ㄏㄟ ㄊㄠˊ: weights swapped so 黑桃 (spades) leads 黑陶 (black pottery).
 q6UG	黑桃	-1.802193	chiaki-modern-overlay,manual,homophone-order,tw-usage
 q6UG	黑陶	-2.265327	chiaki-modern-overlay,manual,demote,homophone-order
+mfZ_	罩著	-1.565167	chiaki-modern-overlay,manual,reading-demote,homophone-order
 01	麴	-1.7426629999999999	chiaki-modern-overlay,polyphone-reading-weight,vanguard-fixed-anchor
 01	蛆	-1.7926229999999999	chiaki-modern-overlay,polyphone-reading-weight,vanguard-fixed-anchor
 01	沏	-1.9220344999999999	chiaki-modern-overlay,polyphone-reading-weight,vanguard-fixed-anchor
