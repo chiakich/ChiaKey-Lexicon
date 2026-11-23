@@ -567,9 +567,6 @@ z?|Jnq	敵人的	noun+的 fragment; CKIP head 敵人/Na
 ~_]Onq	那裡的	noun+的 fragment; CKIP head 那裡/Ncd
 ~_hInq	那男的	noun+的 fragment; CKIP head 男/Na
 ~_p?nq	那時的	noun+的 fragment; CKIP head 那時/Nd
-
-# Rime supplemental 著 misreads (2026-11-23): Rime phrases take each char's primary reading, so 著 always lands on
-# ˙ㄓㄜ. These 著 are ㄓㄨˋ; verb + aspect 著 (彰顯著, 討論著) stays. Existing ㄓㄨˋ rows of the same phrase are kept.
 0ZCixqpaaJ	軟件著作權	著 in 著作 reads ㄓㄨˋ; Rime filed primary ˙ㄓㄜ
 0_ecFMxq	世界名著	著 in 名著 reads ㄓㄨˋ; Rime filed primary ˙ㄓㄜ
 0_ecxqFM	世界著名	著 in 著名 reads ㄓㄨˋ; Rime filed primary ˙ㄓㄜ
@@ -580,11 +577,13 @@ z?|Jnq	敵人的	noun+的 fragment; CKIP head 敵人/Na
 3g7ReYxq	效果顯著	著 in 顯著 reads ㄓㄨˋ; Rime filed primary ˙ㄓㄜ
 4_|_FMxq	四大名著	著 in 名著 reads ㄓㄨˋ; Rime filed primary ˙ㄓㄜ
 5E\_xqpa	學術著作	著 in 著作 reads ㄓㄨˋ; Rime filed primary ˙ㄓㄜ
+6Cxq	合著	著 in 合著 reads ㄓㄨˋ; libchewing filed ˙ㄓㄜ
 6CxqiR	合著者	著 in 著者 reads ㄓㄨˋ; Rime filed primary ˙ㄓㄜ
 6NxqFM	而著名	著 in 著名 reads ㄓㄨˋ; Rime filed primary ˙ㄓㄜ
 6Nxq]=	而著稱	著 in 著稱 reads ㄓㄨˋ; Rime filed primary ˙ㄓㄜ
 :C5Exqpa	哲學著作	著 in 著作 reads ㄓㄨˋ; Rime filed primary ˙ㄓㄜ
 :bFM~7xq	惡名昭著	著 in 昭著 reads ㄓㄨˋ; Rime filed primary ˙ㄓㄜ
+:hxq	舊著	著 in 舊著 reads ㄓㄨˋ; libchewing filed ˙ㄓㄜ
 =@eYxq	不顯著	著 in 顯著 reads ㄓㄨˋ; Rime filed primary ˙ㄓㄜ; ㄓㄨˋ row kept
 =M3geYxq	成效顯著	著 in 顯著 reads ㄓㄨˋ; Rime filed primary ˙ㄓㄜ
 A@FMxq	讀名著	著 in 名著 reads ㄓㄨˋ; Rime filed primary ˙ㄓㄜ
@@ -600,6 +599,7 @@ VO1geYxq	比較顯著	著 in 顯著 reads ㄓㄨˋ; Rime filed primary ˙ㄓㄜ
 WBA_xqFM	國際著名	著 in 著名 reads ㄓㄨˋ; Rime filed primary ˙ㄓㄜ
 WB\exqFM	國內著名	著 in 著名 reads ㄓㄨˋ; Rime filed primary ˙ㄓㄜ
 [L[Lm_xq	皇皇鉅著	著 in 鉅著 reads ㄓㄨˋ; Rime filed primary ˙ㄓㄜ
+]Bxq	拙著	著 in 拙著 reads ㄓㄨˋ; libchewing filed ˙ㄓㄜ; ㄓㄨˋ row kept
 ^;thxqpaaJ	侵犯著作權	著 in 著作 reads ㄓㄨˋ; Rime filed primary ˙ㄓㄜ
 ^;thxqpaaJEf	侵犯著作權罪	著 in 著作 reads ㄓㄨˋ; Rime filed primary ˙ㄓㄜ; ㄓㄨˋ row kept
 _;xq	新著	著 in 新著 reads ㄓㄨˋ; Rime filed primary ˙ㄓㄜ

@@ -1126,10 +1126,7 @@ aj]B	混濁	-2.250000	chiaki-modern-overlay,manual,homophone-order,tw-usage
 # ㄏㄟ ㄊㄠˊ: weights swapped so 黑桃 (spades) leads 黑陶 (black pottery).
 q6UG	黑桃	-1.802193	chiaki-modern-overlay,manual,homophone-order,tw-usage
 q6UG	黑陶	-2.265327	chiaki-modern-overlay,manual,demote,homophone-order
-
-# ㄓㄠˋ ㄓㄨˋ: libchewing files 罩著 only at ㄓㄨˋ (17), 0.01 above 罩住; keep it reachable below 罩住.
 mfZ_	罩著	-1.565167	chiaki-modern-overlay,manual,reading-demote,homophone-order
-
 01	麴	-1.7426629999999999	chiaki-modern-overlay,polyphone-reading-weight,vanguard-fixed-anchor
 01	蛆	-1.7926229999999999	chiaki-modern-overlay,polyphone-reading-weight,vanguard-fixed-anchor
 01	沏	-1.9220344999999999	chiaki-modern-overlay,polyphone-reading-weight,vanguard-fixed-anchor
