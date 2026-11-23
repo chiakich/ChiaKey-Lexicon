@@ -22,7 +22,12 @@ jobs:
   release:
     name: Build and publish lexicon
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[skip release]')
+    # Direct PRs into main must not publish; workflow_dispatch remains for hotfixes.
+    if: >-
+      github.event_name == 'workflow_dispatch' || (
+      startsWith(github.event.head_commit.message, 'Merge pull request #') &&
+      contains(github.event.head_commit.message, format(' from {0}/dev{1}', github.repository_owner, fromJSON('"\n"'))) &&
+      !contains(github.event.head_commit.message, '[skip release]'))
 
     steps:
       - name: Check out repository

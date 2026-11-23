@@ -602,7 +602,6 @@ B@nq	突地	-3.605770	chiaki-modern-overlay,generated,compositional-cap,homophon
 B@nq	突的	-3.555769	chiaki-modern-overlay,generated,compositional-cap,homophone-collision
 BLnq	涼的	-2.970757	chiaki-modern-overlay,generated,compositional-cap,homophone-collision
 BLnq	量的	-2.970743	chiaki-modern-overlay,generated,compositional-cap,homophone-collision
-CRxq	所著	-2.988809	chiaki-modern-overlay,generated,compositional-cap,homophone-collision
 CRxq	鎖著	-3.907998	chiaki-modern-overlay,generated,compositional-cap,homophone-collision
 C_nq	細的	-3.224362	chiaki-modern-overlay,generated,compositional-cap,homophone-collision
 C_nq	隙地	-3.659357	chiaki-modern-overlay,generated,compositional-cap,homophone-collision
@@ -1107,9 +1106,27 @@ B_NX	契友	-1.700000	chiaki-modern-overlay,manual,demote,segmentation-order,iss
 # ㄇㄢˇ ㄔㄤˊ: place sense usually uses ㄔㄤˇ. Let 滿|常 win on the second-tone code.
 # Its split score is -2.114, so a two-syllable phrase needs raw weight < -3.114.
 DY4L	滿場	-3.350000	chiaki-modern-overlay,manual,reading-demote,segmentation-order,issue-33
+# Henan place name; 葉縣|再也 beat 頁|現在|也 by ~0.256. Stays above its 頁+線 split (-1.80).
+YcEi	葉縣	-2.500000	chiaki-modern-overlay,manual,demote,segmentation-order
+
+# Issue #73: libchewing puts 姿 (33296) one count above 資 (33295); 資 is far more common.
+C0	資	-0.910000	chiaki-modern-overlay,manual,homophone-order,libchewing-freq-gap,issue-73
 
 # ㄏㄨㄣˋ ㄓㄨㄛˊ: prefer 混濁 over 溷濁 (-2.30); bypass the supplemental-reading conflict cap.
 aj]B	混濁	-2.250000	chiaki-modern-overlay,manual,homophone-order,tw-usage
+
+# ㄏㄨㄟˋ ㄕˋ: 會試 (imperial exam, -1.625) led 會是, which the fragment cap holds at -1.713320
+# and this table cannot raise. Still above the 會+試 split (-1.82 before the length bonus).
+=f0_	會試	-1.800000	chiaki-modern-overlay,manual,demote,homophone-order
+
+# ㄋㄧˇ ㄗㄨㄛˋ: weights swapped so 你做 leads 你作; the node's best weight, hence segmentation, is unchanged.
+\Opa	你做	-1.246028	chiaki-modern-overlay,manual,homophone-order,tw-usage
+\Opa	你作	-1.688008	chiaki-modern-overlay,manual,demote,homophone-order
+
+# ㄏㄟ ㄊㄠˊ: weights swapped so 黑桃 (spades) leads 黑陶 (black pottery).
+q6UG	黑桃	-1.802193	chiaki-modern-overlay,manual,homophone-order,tw-usage
+q6UG	黑陶	-2.265327	chiaki-modern-overlay,manual,demote,homophone-order
+mfZ_	罩著	-1.565167	chiaki-modern-overlay,manual,reading-demote,homophone-order
 01	麴	-1.7426629999999999	chiaki-modern-overlay,polyphone-reading-weight,vanguard-fixed-anchor
 01	蛆	-1.7926229999999999	chiaki-modern-overlay,polyphone-reading-weight,vanguard-fixed-anchor
 01	沏	-1.9220344999999999	chiaki-modern-overlay,polyphone-reading-weight,vanguard-fixed-anchor

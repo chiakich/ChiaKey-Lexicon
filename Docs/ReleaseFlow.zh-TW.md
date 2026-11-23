@@ -85,7 +85,7 @@ YYYY.MM.N
 
 GitHub Actions 的 release workflow 觸發條件：
 
-- push 到 `main`
+- `dev` 透過 PR 合併進 `main`（其他分支直接合併進 `main` 不會發版）
 - 亦可手動觸發 `workflow_dispatch`
 
 workflow 會做：
@@ -136,7 +136,7 @@ cargo run --release -- fetch-modern-sources
 
 這會重新下載 raw files、驗證 SHA-256，並更新對應的`source-inventory.sha256`。更新後應把 raw source snapshot、inventory、license 變更與 builder 變更一起 commit。
 
-若只是調整 release workflow 本身、而且會另外手動發版，可以在 commit message 放 `[skip release]`。這只應用在少數維護流程的情境；一般 `main` merge 應該讓 CI 自動 release。
+若只是調整 release workflow 本身、而且會另外手動發版，可以在 commit message 放 `[skip release]`。這只應用在少數維護流程的情境；一般從 `dev` 合併進 `main` 應該讓 CI 自動 release。
 
 ## 發版流程
 

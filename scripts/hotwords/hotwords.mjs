@@ -332,10 +332,42 @@ async function refresh(options) {
 }
 
 async function fetchGoogleTrends({ geo, hl, windowHours }) {
-  const pageUrl = `https://trends.google.com/trending?geo=${encodeURIComponent(geo)}&hl=${encodeURIComponent(hl)}`;
+  const pageUrl = `https://trends.google.com/trending?geo=${encodeURIComponent(geo)}&hl=${encodeURIComponent(hl)}&hours=${windowHours}`;
   const html = await fetchText(pageUrl, {
     headers: { "user-agent": "Mozilla/5.0" },
   });
+  const failures = [];
+  for (const [name, fetchRows] of [
+    ["embedded page data", async () => extractEmbeddedTrendRows(html, geo)],
+    ["batchexecute RPC", () => fetchTrendRowsViaRpc({ html, pageUrl, geo, hl, windowHours })],
+  ]) {
+    try {
+      return mapTrendRows(await fetchRows());
+    } catch (error) {
+      failures.push(`${name}: ${error.message}`);
+    }
+  }
+  throw new Error(`All Google Trends sources failed for ${windowHours}h window:\n  ${failures.join("\n  ")}`);
+}
+
+function extractEmbeddedTrendRows(html, geo) {
+  const pattern = /AF_initDataCallback\(\{key: '[^']*', hash: '[^']*', data:([\s\S]*?), sideChannel: \{\}\}\);<\/script>/g;
+  for (const match of html.matchAll(pattern)) {
+    let data;
+    try {
+      data = JSON.parse(match[1]);
+    } catch {
+      continue;
+    }
+    const rows = Array.isArray(data) ? data[1] : null;
+    if (Array.isArray(rows) && rows.length > 0 && rows.every((row) => Array.isArray(row) && row[2] === geo)) {
+      return rows;
+    }
+  }
+  throw new Error("no AF_initDataCallback block with trending rows");
+}
+
+async function fetchTrendRowsViaRpc({ html, pageUrl, geo, hl, windowHours }) {
   const sid = html.match(/"FdrFJe":"([^"]+)"/)?.[1];
   const bl = html.match(/"cfb2h":"([^"]+)"/)?.[1];
   if (!sid || !bl) {
@@ -370,8 +402,17 @@ async function fetchGoogleTrends({ geo, hl, windowHours }) {
     throw new Error("Google Trends response did not include the i0OFE payload");
   }
   const outer = JSON.parse(line);
-  const payload = JSON.parse(outer[0][2]);
-  const rows = payload[1] || [];
+  if (outer[0][2] == null) {
+    throw new Error(`i0OFE returned error status ${JSON.stringify(outer[0][5])}`);
+  }
+  const rows = JSON.parse(outer[0][2])?.[1];
+  if (!Array.isArray(rows)) {
+    throw new Error("i0OFE payload did not include trending rows");
+  }
+  return rows;
+}
+
+function mapTrendRows(rows) {
   return rows
     .map((row) => ({
       term: row[0],
